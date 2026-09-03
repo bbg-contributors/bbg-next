@@ -1,0 +1,39 @@
+{
+  "name": "@bbg-next/runtime",
+  "version": "0.0.0",
+  "description": "The browser shell for bbg-next",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit && vue-tsc --noEmit -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@bbg-next/core": "workspace:*",
+    "@bbg-next/view": "workspace:*"
+  },
+  "devDependencies": {
+    "@bbg-next/default-theme": "workspace:*",
+    "@bbg-next/default-theme-vue": "workspace:*"
+  },
+  "inlinedDependencies": {
+    "entities": "8.0.0",
+    "linkify-it": "6.1.0",
+    "markdown-it": "15.0.1",
+    "mdurl": "2.1.0",
+    "punycode.js": "2.3.1",
+    "uc.micro": "3.0.0"
+  }
+}

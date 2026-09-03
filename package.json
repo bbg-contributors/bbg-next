@@ -1,0 +1,57 @@
+{
+  "name": "bbg-next",
+  "version": "0.0.0",
+  "private": true,
+  "description": "a static blog generator",
+  "bugs": {
+    "url": "https://github.com/bbg-contributors/bbg/issues"
+  },
+  "license": "UNLICENSED",
+  "author": {
+    "name": "baiyuanneko",
+    "email": "baiyuanneko@protonmail.com"
+  },
+  "maintainers": [
+    "baiyuanneko",
+    "chihuo2104",
+    "mzwing",
+    "Misaka13514",
+    "scientificworld",
+    "so1ve",
+    "mujitogawa",
+    "JJ-Shep"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bbg-contributors/bbg.git"
+  },
+  "type": "module",
+  "scripts": {
+    "bbg-next": "tsx packages/cli/src/index.ts",
+    "build": "pnpm -r build",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "knip": "knip",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit && pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@mzwing/oxc-config": "^0.1.5",
+    "@types/node": "^24.13.3",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "happy-dom": "^20.13.1",
+    "knip": "^6.34.0",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "tsdown": "^0.22.14",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11",
+    "vue-tsc": "^3.3.11"
+  },
+  "packageManager": "pnpm@12.3.1+sha512.3c14c15408d1489d350f8ed7f93361d26cc707054f6849a4eea3bb7407ff4fe4564b413a1c421a773a176ab1168a8df1c7d548f2cd0dc7d344f58c4e680a5b18"
+}

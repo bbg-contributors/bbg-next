@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  "workspaces": {
+    "packages/cli": {
+      "ignoreDependencies": [
+        // resolved at runtime in src/assets.ts; never imported, they are browser bundles
+        "@bbg-next/default-theme",
+        "@bbg-next/default-theme-vue",
+        "@bbg-next/runtime",
+        // clerc's update-notifier plugin declares these as devDeps, so the consumer must supply them
+        "update-notifier",
+        "@types/update-notifier"
+      ]
+    }
+  }
+}

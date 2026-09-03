@@ -1,0 +1,12 @@
+packages:
+  - packages/*
+
+# tsx pulls in esbuild, whose postinstall links its native binary.
+allowBuilds:
+  esbuild: true
+
+# Drop-in typescript that keeps the classic API but checks on tsgo. vue-tsc is built on
+# `typescript/lib/tsc`, which typescript@7 no longer exports, so plain tsc and vue-tsc
+# cannot otherwise share one compiler. Pinned exactly: caret ranges skip prereleases.
+overrides:
+  typescript: npm:typescript-native-bridge@6.0.3-bridge.15.tsgo.7.0.2

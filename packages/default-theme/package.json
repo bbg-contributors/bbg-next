@@ -1,0 +1,27 @@
+{
+  "name": "@bbg-next/default-theme",
+  "version": "0.0.0",
+  "description": "Minimal default theme for bbg-next: bbg-* custom elements",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bbg-next/view": "workspace:*"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "@bbg-next/cli",
+  "version": "0.0.0",
+  "bin": {
+    "bbg-next": "./src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "bin": {
+      "bbg-next": "./dist/index.mjs"
+    },
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bbg-next/adapter": "workspace:*",
+    "@bbg-next/core": "workspace:*",
+    "@bbg-next/default-theme": "workspace:*",
+    "@bbg-next/default-theme-vue": "workspace:*",
+    "@bbg-next/runtime": "workspace:*",
+    "clerc": "^1.3.1",
+    "get-port-please": "^3.2.0",
+    "update-notifier": "^7.3.1"
+  },
+  "devDependencies": {
+    "@types/update-notifier": "^6.0.8"
+  }
+}

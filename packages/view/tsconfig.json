@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // no ambient @types: this is bundled into both the browser runtime and every theme
+    "lib": ["es2023", "dom"],
+    "types": []
+  },
+  "include": ["src"]
+}

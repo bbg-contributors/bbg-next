@@ -1,0 +1,5 @@
+{
+  // Tool configs only. Each package typechecks itself; they do not share a lib set.
+  "extends": "./tsconfig.base.json",
+  "include": ["*.config.ts", "packages/*/*.config.ts"]
+}
