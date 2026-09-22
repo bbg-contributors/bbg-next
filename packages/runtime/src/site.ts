@@ -1,11 +1,13 @@
+import type { RendererRegistry } from './plugins.ts'
 import type { ArticleEntry, Manifest, PageEntry, RouterConfig } from '@bbg-next/core'
 import type { NavLink, ShellModel } from '@bbg-next/view'
-import { manifestPath, renderMarkdown, serializeRoute } from '@bbg-next/core'
+import { manifestPath, serializeRoute } from '@bbg-next/core'
 
 export interface Site {
   readonly manifest: Manifest
   readonly router: RouterConfig
   readonly shell: ShellModel
+  readonly renderers: RendererRegistry
   readonly bySlug: ReadonlyMap<string, { entry: ArticleEntry; unlisted: boolean }>
   readonly pageBySlug: ReadonlyMap<string, PageEntry>
 }
@@ -21,12 +23,16 @@ export async function fetchText(path: string): Promise<string> {
   return response.text()
 }
 
-export async function loadSite(): Promise<Site> {
+export async function loadManifest(): Promise<Manifest> {
   // no-cache revalidates rather than trusting a stale copy after a deploy
   const response = await fetch(resolve(manifestPath), { cache: 'no-cache' })
   if (!response.ok) throw new Error(`Cannot load ${manifestPath}: ${response.status}`)
-  const manifest = (await response.json()) as Manifest
 
+  return (await response.json()) as Manifest
+}
+
+/** Split from `loadManifest` so plugins set up in between: the footer is rendered here. */
+export function createSite(manifest: Manifest, renderers: RendererRegistry): Site {
   // From the document, not the manifest, so the two cannot disagree about where the site is served.
   const router: RouterConfig = {
     mode: manifest.site.router.mode,
@@ -48,11 +54,12 @@ export async function loadSite(): Promise<Site> {
     manifest,
     router,
     bySlug,
+    renderers,
     pageBySlug: new Map(manifest.pages.map(page => [page.slug, page])),
     shell: {
       title: manifest.site.title,
       description: manifest.site.description,
-      footerHtml: manifest.site.footer === '' ? '' : renderMarkdown(manifest.site.footer),
+      footerHtml: manifest.site.footer === '' ? '' : renderers.markdown(manifest.site.footer, {}),
       homeHref: serializeRoute({ type: 'home', page: 1 }, router),
       links,
     },

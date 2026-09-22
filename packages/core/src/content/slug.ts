@@ -17,8 +17,13 @@ export function slugify(input: string): string {
     .replace(edgeJunk, '')
 }
 
-export function slugFromFilename(filename: string): string {
-  return filename.endsWith('.md') ? filename.slice(0, -3) : filename
+export function slugFromFilename(filename: string, extensions: readonly string[]): string {
+  for (const extension of extensions) {
+    const suffix = `.${extension}`
+    if (filename.endsWith(suffix)) return filename.slice(0, -suffix.length)
+  }
+
+  return filename
 }
 
 export function isValidSlug(slug: string): boolean {

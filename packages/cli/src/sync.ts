@@ -12,19 +12,21 @@ export interface SyncResult {
   readonly diagnostics: readonly Diagnostic[]
   /** What was written, so a watcher can tell this write from a hand edit. */
   readonly manifest: string
+  /** Built-in themes and plugins brought up to the version this CLI ships, as `name@version`. */
+  readonly updated: readonly string[]
 }
 
 /** The one writer of generated files. Assets first: an unusable theme fails before anything is written. */
 export async function syncSite(options: SyncOptions): Promise<SyncResult> {
   const { includeDrafts, site, vfs } = options
 
-  await syncAssets(vfs, site.theme)
+  const { diagnostics: assetDiagnostics, plugins, updated } = await syncAssets(vfs, site)
 
-  const { diagnostics, manifest } = await buildManifest({ vfs, site, includeDrafts })
+  const { diagnostics, manifest } = await buildManifest({ vfs, site, includeDrafts, plugins })
   const serialized = serializeManifest(manifest)
 
   await vfs.writeFile(manifestPath, serialized)
   await writeShell(vfs, site)
 
-  return { diagnostics, manifest: serialized }
+  return { diagnostics: [...assetDiagnostics, ...diagnostics], manifest: serialized, updated }
 }

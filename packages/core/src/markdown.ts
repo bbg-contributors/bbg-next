@@ -1,5 +1,5 @@
-import type { Env } from 'markdown-it'
-import MarkdownIt from 'markdown-it'
+import type { Env, MarkdownIt, StateCore, Token } from 'markdown-it'
+import createMarkdownIt from 'markdown-it'
 
 export interface RenderContext {
   /** Directory the document lives in, e.g. `data/articles/`. Relative links resolve against it. */
@@ -18,29 +18,34 @@ export function resolveHref(href: string, baseUrl: string | undefined): string {
   return `${base}${href}`
 }
 
-// html: false is load-bearing — no raw HTML means no sanitiser to ship.
-const md = new MarkdownIt({ html: false, linkify: true })
-
-for (const [rule, attr] of [
-  ['image', 'src'],
-  ['link_open', 'href'],
-] as const) {
-  const previous = md.renderer.rules[rule]
-
-  md.renderer.rules[rule] = (tokens, idx, options, env, self) => {
-    const token = tokens[idx]
-    const baseUrl = (env as RenderContext | undefined)?.baseUrl
-    if (token !== undefined) {
-      const index = token.attrIndex(attr)
-      const value = index >= 0 ? token.attrs?.[index]?.[1] : undefined
-      // Attribute values are `string | number`; only a string can be a path worth resolving.
+function resolveTokens(tokens: readonly Token[], baseUrl: string): void {
+  for (const token of tokens) {
+    const attr = token.type === 'image' ? 'src' : token.type === 'link_open' ? 'href' : undefined
+    if (attr !== undefined) {
+      const value = token.attrGet(attr)
       if (typeof value === 'string') token.attrSet(attr, resolveHref(value, baseUrl))
     }
-
-    return previous === undefined ? self.renderToken(tokens, idx, options) : previous(tokens, idx, options, env, self)
+    // images and links sit in an inline token's children
+    if (token.children !== null) resolveTokens(token.children, baseUrl)
   }
 }
 
-export function renderMarkdown(source: string, context: RenderContext = {}): string {
+/** One instance per site, not a module singleton, so plugins can `use()` it before the first render. */
+export function createMarkdown(): MarkdownIt {
+  // html: false is load-bearing — no raw HTML means no sanitiser to ship.
+  const md = createMarkdownIt({ html: false, linkify: true })
+
+  // A core rule, not a renderer rule: a plugin replacing `renderer.rules.image` would drop this.
+  md.core.ruler.push('bbg_resolve_href', (state: StateCore) => {
+    const baseUrl = (state.env as RenderContext | undefined)?.baseUrl
+    if (baseUrl === undefined || baseUrl === '') return
+
+    resolveTokens(state.tokens, baseUrl)
+  })
+
+  return md
+}
+
+export function renderMarkdown(md: MarkdownIt, source: string, context: RenderContext = {}): string {
   return md.render(source, context as Env)
 }

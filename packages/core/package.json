@@ -21,8 +21,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
-    "markdown-it": "^15.0.1",
-    "valibot": "^1.4.2",
-    "yaml": "^2.9.0"
+    "markdown-it": "^15.0.2",
+    "valibot": "^1.5.0",
+    "yaml": "^2.9.1"
   }
 }

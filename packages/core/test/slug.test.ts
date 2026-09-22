@@ -29,7 +29,22 @@ describe('slugify', () => {
 
 describe('slugFromFilename', () => {
   it('drops the .md suffix and keeps CJK', () => {
-    expect(slugFromFilename('第一篇文章.md')).toBe('第一篇文章')
-    expect(slugFromFilename('hello.md')).toBe('hello')
+    expect(slugFromFilename('第一篇文章.md', ['md'])).toBe('第一篇文章')
+    expect(slugFromFilename('hello.md', ['md'])).toBe('hello')
+  })
+
+  it('drops whatever suffix an installed renderer claims', () => {
+    expect(slugFromFilename('hello.typ', ['md', 'typ'])).toBe('hello')
+    expect(slugFromFilename('notes.adoc', ['md', 'adoc'])).toBe('notes')
+  })
+
+  it('leaves a name whose suffix nobody renders alone', () => {
+    expect(slugFromFilename('hello.typ', ['md'])).toBe('hello.typ')
+    expect(slugFromFilename('no-suffix', ['md'])).toBe('no-suffix')
+  })
+
+  // `.tar.md` must lose only the last segment
+  it('strips one suffix, not every dot', () => {
+    expect(slugFromFilename('release.v1.md', ['md'])).toBe('release.v1')
   })
 })

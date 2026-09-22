@@ -6,10 +6,7 @@ const quitKeys = new Set(['q', 'Q', '\u0003', '\u0004'])
 
 export const interactive = process.stdin.isTTY === true
 
-/**
- * Runs `handler` once: `q` in a terminal, or SIGINT/SIGTERM anywhere. Raw mode stops the tty turning
- * Ctrl+C into SIGINT, must be restored on exit, and may only be entered on a real tty.
- */
+/** Runs `handler` once: `q` in a terminal, or SIGINT/SIGTERM anywhere. Raw mode stops the tty turning Ctrl+C into SIGINT, must be restored on exit, and may only be entered on a real tty. */
 export function onQuit(handler: () => void): void {
   const { stdin } = process
   let finished = false

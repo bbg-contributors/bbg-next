@@ -1,0 +1,6 @@
+.bbg-waline {
+  display: block;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--bbg-waline-rule);
+}

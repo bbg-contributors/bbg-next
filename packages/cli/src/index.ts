@@ -9,9 +9,10 @@ import {
 } from 'clerc'
 import pkg from '../package.json' with { type: 'json' }
 import { init } from './commands/init.ts'
+import { plugin, pluginAdd, pluginRemove } from './commands/plugin.ts'
 import { preview } from './commands/preview.ts'
 import { sync } from './commands/sync.ts'
-import { theme, themeUse } from './commands/theme.ts'
+import { theme, themeAdd, themeUse } from './commands/theme.ts'
 
 // clerc routes rejections to its own error handler.
 void Cli()
@@ -23,5 +24,5 @@ void Cli()
   .use(strictFlagsPlugin())
   .use(completionsPlugin())
   .use(updateNotifierPlugin({ pkg }))
-  .command([init, sync, preview, theme, themeUse])
+  .command([init, sync, preview, theme, themeUse, themeAdd, plugin, pluginAdd, pluginRemove])
   .parse()

@@ -45,6 +45,7 @@ async function loadDocument<Schema extends v.GenericSchema<unknown, DocumentMeta
   file: string,
   schema: Schema,
   includeDrafts: boolean,
+  extensions: readonly string[],
   diagnostics: Diagnostic[],
 ): Promise<Loaded<v.InferOutput<Schema>> | null> {
   const path = `${dir}/${file}`
@@ -68,7 +69,7 @@ async function loadDocument<Schema extends v.GenericSchema<unknown, DocumentMeta
   const meta = result.output
   if (meta.draft && !includeDrafts) return null
 
-  const slug = meta.slug ?? slugFromFilename(file)
+  const slug = meta.slug ?? slugFromFilename(file, extensions)
   if (!isValidSlug(slug)) {
     return fail(`Slug ${JSON.stringify(slug)} contains characters that are unsafe in a URL segment`)
   }
@@ -80,9 +81,10 @@ export async function loadArticle(
   vfs: Vfs,
   file: string,
   includeDrafts: boolean,
+  extensions: readonly string[],
   diagnostics: Diagnostic[],
 ): Promise<LoadedArticle | null> {
-  const loaded = await loadDocument(vfs, articlesDir, file, ArticleMetaSchema, includeDrafts, diagnostics)
+  const loaded = await loadDocument(vfs, articlesDir, file, ArticleMetaSchema, includeDrafts, extensions, diagnostics)
   if (loaded === null) return null
 
   const { meta } = loaded
@@ -116,9 +118,10 @@ export async function loadPage(
   vfs: Vfs,
   file: string,
   includeDrafts: boolean,
+  extensions: readonly string[],
   diagnostics: Diagnostic[],
 ): Promise<PageEntry | null> {
-  const loaded = await loadDocument(vfs, pagesDir, file, PageMetaSchema, includeDrafts, diagnostics)
+  const loaded = await loadDocument(vfs, pagesDir, file, PageMetaSchema, includeDrafts, extensions, diagnostics)
   if (loaded === null) return null
 
   const { meta } = loaded

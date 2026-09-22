@@ -2,7 +2,7 @@ import process from 'node:process'
 import { createNodeHost } from '@bbg-next/adapter/node'
 import { articlesDir, manifestPath, pagesDir, parseSiteSettings, stringifyFrontMatter } from '@bbg-next/core'
 import { defineCommand, Types } from 'clerc'
-import { defaultTheme, themeNames } from '../assets.ts'
+import { defaultTheme, knownThemes } from '../assets.ts'
 import { syncSite } from '../sync.ts'
 import { reportDiagnostics, style } from '../terminal/report.ts'
 
@@ -28,7 +28,12 @@ export const init = defineCommand(
       lang: { type: String, description: 'BCP-47 language tag', default: 'zh-CN' },
       router: { type: Types.Enum('hash', 'path'), description: 'Routing mode', default: 'hash' },
       base: { type: String, description: 'Path prefix the site is served under', default: '/' },
-      theme: { type: Types.Enum(...themeNames), description: 'Theme to scaffold with', default: defaultTheme },
+      // Not an enum: a theme can be copied in afterwards with `theme add`.
+      theme: {
+        type: String,
+        description: `Theme to scaffold with (built in: ${knownThemes.join(', ')})`,
+        default: defaultTheme,
+      },
       force: { type: Boolean, description: 'Overwrite an existing site', default: false },
     },
   },

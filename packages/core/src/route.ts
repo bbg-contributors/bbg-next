@@ -1,5 +1,4 @@
-// One segment grammar for both modes: [] | ['list', n] | ['post', slug] | ['page', slug].
-// `list` is separate from `page` because `#/page/2` collides with a page slugged `2`.
+// One segment grammar for both modes: [] | ['list', n] | ['post', slug] | ['page', slug]. `list` is separate from `page` because `#/page/2` collides with a page slugged `2`.
 
 export type Route =
   | { readonly type: 'home'; readonly page: number }

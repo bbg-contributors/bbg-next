@@ -23,19 +23,24 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
     "@bbg-next/adapter": "workspace:*",
     "@bbg-next/core": "workspace:*",
     "@bbg-next/default-theme": "workspace:*",
     "@bbg-next/default-theme-vue": "workspace:*",
+    "@bbg-next/plugin-anchor": "workspace:*",
+    "@bbg-next/plugin-hitokoto": "workspace:*",
+    "@bbg-next/plugin-waline": "workspace:*",
     "@bbg-next/runtime": "workspace:*",
     "clerc": "^1.3.1",
     "get-port-please": "^3.2.0",
+    "semver": "^7.8.5",
     "update-notifier": "^7.3.1"
   },
   "devDependencies": {
+    "@types/semver": "^7.8.0",
     "@types/update-notifier": "^6.0.8"
   }
 }

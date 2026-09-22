@@ -1,7 +1,7 @@
 import type { Site } from './site.ts'
 import type { ArticleEntry, Route } from '@bbg-next/core'
 import type { ArticleCard, ArticleListModel, ArticleModel, PageLink, PageModel } from '@bbg-next/view'
-import { articlesDir, pagesDir, renderMarkdown, serializeRoute, stripFrontMatter } from '@bbg-next/core'
+import { articlesDir, pagesDir, serializeRoute, stripFrontMatter } from '@bbg-next/core'
 import { themeElements } from '@bbg-next/view'
 import { fetchText } from './site.ts'
 
@@ -70,7 +70,9 @@ async function buildArticle(site: Site, slug: string): Promise<ArticleModel | nu
     created: found.entry.created,
     updated: found.entry.updated,
     unlisted: found.unlisted,
-    html: renderMarkdown(await readBody(articlesDir, found.entry.file), { baseUrl: `${articlesDir}/` }),
+    html: site.renderers.for(found.entry.file)(await readBody(articlesDir, found.entry.file), {
+      baseUrl: `${articlesDir}/`,
+    }),
   }
 }
 
@@ -80,7 +82,7 @@ async function buildPage(site: Site, slug: string): Promise<PageModel | null> {
 
   return {
     title: entry.title,
-    html: renderMarkdown(await readBody(pagesDir, entry.file), { baseUrl: `${pagesDir}/` }),
+    html: site.renderers.for(entry.file)(await readBody(pagesDir, entry.file), { baseUrl: `${pagesDir}/` }),
   }
 }
 

@@ -19,10 +19,13 @@
   },
   "scripts": {
     "build": "vite build",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit && vue-tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
     "@bbg-next/view": "workspace:*",
-    "vue": "^3.5.42"
+    "vue": "^3.5.43"
+  },
+  "devDependencies": {
+    "@bbg-next/runtime": "workspace:*"
   }
 }

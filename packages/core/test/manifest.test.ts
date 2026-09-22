@@ -1,3 +1,4 @@
+import type { PluginIndexEntry } from '../src/site/schema.ts'
 import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
 import { buildManifest } from '../src/site/manifest.ts'
@@ -12,8 +13,8 @@ function article(front: string, body = 'Body text.\n'): string {
 
 const at = (iso: string) => `created: ${iso}`
 
-async function build(files: Record<string, string>, includeDrafts = false) {
-  return buildManifest({ vfs: createMemoryVfs(files), site, includeDrafts })
+async function build(files: Record<string, string>, includeDrafts = false, plugins: readonly PluginIndexEntry[] = []) {
+  return buildManifest({ vfs: createMemoryVfs(files), site, includeDrafts, plugins })
 }
 
 describe('draft vs hidden', () => {
@@ -169,6 +170,49 @@ describe('failures are reported, not swallowed', () => {
     expect(manifest.articles).toEqual([])
     expect(manifest.pages).toEqual([])
     expect(diagnostics).toEqual([])
+  })
+})
+
+describe('content extensions', () => {
+  const typst: PluginIndexEntry = {
+    name: 'typst',
+    version: '1.0.0',
+    extensions: ['typ'],
+    dependencies: {},
+    hasConfig: false,
+  }
+  const files = {
+    'data/articles/a.md': article(`title: A\n${at('2026-01-02T00:00:00Z')}`),
+    'data/articles/b.typ': article(`title: B\n${at('2026-01-01T00:00:00Z')}`),
+  }
+
+  it('ignores a suffix no installed renderer claims', async () => {
+    const { manifest } = await build(files)
+    expect(manifest.articles.map(entry => entry.slug)).toEqual(['a'])
+  })
+
+  it('picks up a suffix a plugin claims, and strips it from the slug', async () => {
+    const { manifest } = await build(files, false, [typst])
+    expect(manifest.articles.map(entry => entry.slug)).toEqual(['a', 'b'])
+  })
+
+  it('records the plugin index it was given', async () => {
+    const { manifest } = await build(files, false, [typst])
+    expect(manifest.plugins).toEqual([typst])
+  })
+
+  // one namespace across renderers: a.md and a.typ would both want /a
+  it('reports a slug collision between two renderers', async () => {
+    const { diagnostics, manifest } = await build(
+      {
+        'data/articles/a.md': article(`title: A\n${at('2026-01-02T00:00:00Z')}`),
+        'data/articles/a.typ': article(`title: Also A\n${at('2026-01-01T00:00:00Z')}`),
+      },
+      false,
+      [typst],
+    )
+    expect(manifest.articles).toHaveLength(1)
+    expect(diagnostics[0]?.message).toContain('already used')
   })
 })
 

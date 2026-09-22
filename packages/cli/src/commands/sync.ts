@@ -21,9 +21,11 @@ export const sync = defineCommand(
 
     const { root, vfs } = createNodeHost(dir ?? '.')
     const site = await loadSiteSettings(vfs)
-    const { diagnostics } = await syncSite({ vfs, site, includeDrafts: drafts })
+    const { diagnostics, updated } = await syncSite({ vfs, site, includeDrafts: drafts })
 
     reportDiagnostics(diagnostics)
     process.stdout.write(`${style.green('synced')} ${root} ${style.dim(`theme ${site.theme}`)}\n`)
+
+    for (const item of updated) process.stdout.write(`  ${style.green('updated')} ${style.bold(item)}\n`)
   },
 )

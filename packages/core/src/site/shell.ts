@@ -22,8 +22,7 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, char => escapes[char] ?? char)
 }
 
-// `path` needs one: the SPA fallback serves the document from /post/hello/, so relative fetches must
-// still reach the site root. `hash` without one works under any subpath the author never configured.
+// `path` needs one: the SPA fallback serves the document from /post/hello/, so relative fetches must still reach the site root. `hash` without one works under any subpath the author never configured.
 function baseHref(site: SiteSettings): string | null {
   const base = normaliseBase(site.router.base)
   if (site.router.mode === 'path') return base
@@ -54,10 +53,7 @@ ${base === null ? '' : `<base href="${escapeHtml(base)}">\n`}<title>${title}</ti
 `
 }
 
-/**
- * Writes the machine-managed files at the site root. 404.html is the SPA fallback `path` mode needs on
- * GitHub Pages, and is deleted on the way back to `hash` so a stale copy cannot shadow a real 404.
- */
+/** Writes the machine-managed files at the site root. 404.html is the SPA fallback `path` mode needs on GitHub Pages, and is deleted on the way back to `hash` so a stale copy cannot shadow a real 404. */
 export async function writeShell(vfs: Vfs, site: SiteSettings): Promise<void> {
   const html = indexHtml(site)
 

@@ -1,9 +1,10 @@
-import type { Manifest } from '@bbg-next/core'
+import type { Manifest, PluginIndexEntry } from '@bbg-next/core'
+import type { PluginModule } from '@bbg-next/plugin'
 import type { ThemeModule } from '@bbg-next/view'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { start } from '../src/boot.ts'
 
-// Every theme must pass this unchanged. Wiring only: happy-dom has no layout, so looks still need a browser.
+// Every theme must pass this unchanged. Wiring only, and one theme per file: `customElements` is per document.
 
 const origin = 'http://localhost:3000'
 
@@ -17,7 +18,9 @@ const manifest: Manifest = {
     theme: 'default-theme',
     postsPerPage: 2,
     router: { mode: 'hash', base: '/' },
+    plugins: [],
   },
+  plugins: [],
   articles: [
     {
       slug: 'first',
@@ -66,7 +69,6 @@ const manifest: Manifest = {
 }
 
 const files: Readonly<Record<string, string>> = {
-  '/data/site.json': JSON.stringify(manifest),
   '/data/articles/first.md': '---\ntitle: 第一篇文章\n---\n\n# Heading\n\nBody with ![pic](pic.png)\n',
   '/data/articles/second.md': '---\ntitle: Second\n---\n\nSecond body.\n',
   '/data/articles/third.md': '---\ntitle: Third\n---\n\nThird body.\n',
@@ -74,12 +76,31 @@ const files: Readonly<Record<string, string>> = {
   '/data/pages/about.md': '---\ntitle: About\n---\n\nAbout body.\n',
 }
 
-export function stubFetch(): void {
+/** Serves the fixture site, with `override` merged into its manifest. */
+function stubFetch(override: Partial<Manifest> = {}): void {
+  const served: Readonly<Record<string, string>> = {
+    ...files,
+    '/data/site.json': JSON.stringify({ ...manifest, ...override }),
+  }
+
   vi.stubGlobal('fetch', async (input: string | URL) => {
-    const body = files[new URL(String(input), origin).pathname]
+    const body = served[new URL(String(input), origin).pathname]
 
     return body === undefined ? new Response('not found', { status: 404 }) : new Response(body, { status: 200 })
   })
+}
+
+const probePlugin: PluginIndexEntry = {
+  name: 'probe',
+  version: '1.0.0',
+  extensions: [],
+  dependencies: {},
+  hasConfig: false,
+}
+
+/** The fixture site with one plugin enabled, for tests that need the runtime to load one. */
+export function stubFetchWithProbe(): void {
+  stubFetch({ plugins: [probePlugin], site: { ...manifest.site, plugins: [probePlugin.name] } })
 }
 
 // Navigation is fire-and-forget and awaits a fetch, so draining microtasks is not enough.
@@ -106,16 +127,18 @@ export function describeThemeContract(theme: ThemeModule): void {
   // One happy-dom document is shared here, so a stale click listener would preventDefault first.
   let teardown: (() => void) | undefined
 
-  async function boot(hash = ''): Promise<void> {
+  // the real loader imports an absolute http URL, which Node cannot do
+  async function boot(hash = '', setup?: PluginModule['setup']): Promise<void> {
     document.body.innerHTML = '<bbg-outlet></bbg-outlet>'
     location.hash = hash
 
-    // the real loader imports an absolute http URL, which Node cannot do
-    teardown = await start(async () => theme)
+    if (setup !== undefined) stubFetchWithProbe()
+
+    teardown = await start(async () => theme, setup === undefined ? undefined : async () => ({ setup }))
     await flush()
   }
 
-  beforeEach(stubFetch)
+  beforeEach(() => void stubFetch())
 
   afterEach(() => {
     teardown?.()
@@ -209,6 +232,53 @@ export function describeThemeContract(theme: ThemeModule): void {
       await boot('#/post/first')
 
       expect(outlet().querySelector('.bbg-content img')?.getAttribute('src')).toBe('data/articles/pic.png')
+    })
+  })
+
+  describe('plugins', () => {
+    // The hook fires straight after replaceChildren; a theme rendering later would hand plugins an empty element.
+    it('has the theme’s output in place by the time a rendered hook runs', async () => {
+      const seen: (string | undefined)[] = []
+
+      await boot(
+        '#/post/first',
+        context =>
+          void context.onRendered(({ element }) => {
+            seen.push(element.querySelector('.bbg-content h1')?.textContent ?? undefined)
+          }),
+      )
+
+      expect(seen).toEqual(['Heading'])
+    })
+
+    it('tears a hook down before the next navigation', async () => {
+      const events: string[] = []
+
+      await boot(
+        '',
+        context =>
+          void context.onRendered(({ route }) => {
+            events.push(`up:${route.type}`)
+
+            return () => void events.push(`down:${route.type}`)
+          }),
+      )
+
+      click(outlet().querySelector('.bbg-card-title a') as Element)
+      await flush()
+
+      expect(events).toEqual(['up:home', 'down:home', 'up:article'])
+    })
+  })
+
+  describe('light DOM', () => {
+    // Plugins walk the rendered DOM; a shadow root would silently hide it from all of them.
+    it('leaves rendered content reachable from the document', async () => {
+      await boot('#/post/first')
+
+      const article = document.querySelector('bbg-article-view')
+      expect(article?.shadowRoot ?? null).toBeNull()
+      expect(document.querySelector('.bbg-content h1')).not.toBeNull()
     })
   })
 }

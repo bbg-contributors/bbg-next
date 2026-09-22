@@ -1,14 +1,17 @@
 import type { Vfs } from '../vfs.ts'
 import type { Diagnostic } from './entries.ts'
-import type { ArticleEntry, Manifest, SiteSettings } from './schema.ts'
+import type { ArticleEntry, Manifest, PluginIndexEntry, SiteSettings } from './schema.ts'
 import { articlesDir, pagesDir } from '../paths.ts'
 import { loadArticle, loadPage } from './entries.ts'
+import { contentExtensions } from './plugins.ts'
 import { schemaVersion } from './schema.ts'
 
 export interface BuildManifestOptions {
   readonly vfs: Vfs
   readonly site: SiteSettings
   readonly includeDrafts: boolean
+  /** In load order. Also settles which suffixes count as content. */
+  readonly plugins: readonly PluginIndexEntry[]
 }
 
 export interface BuildManifestResult {
@@ -53,24 +56,27 @@ function rejectDuplicateSlugs<T extends { slug: string; file: string }>(
   return kept
 }
 
-function isMarkdown(name: string): boolean {
-  return name.endsWith('.md') && !name.startsWith('.')
+function isContent(name: string, extensions: readonly string[]): boolean {
+  return !name.startsWith('.') && extensions.some(extension => name.endsWith(`.${extension}`))
 }
 
 export async function buildManifest(options: BuildManifestOptions): Promise<BuildManifestResult> {
-  const { vfs, site, includeDrafts } = options
+  const { vfs, site, includeDrafts, plugins } = options
+  const extensions = contentExtensions(plugins)
   const diagnostics: Diagnostic[] = []
 
   // sorted so the first file wins a duplicate slug whatever order the filesystem lists in
   async function loadAll<T>(dir: string, load: (file: string) => Promise<T | null>): Promise<T[]> {
-    const files = (await vfs.list(dir)).filter(isMarkdown).sort()
+    const files = (await vfs.list(dir)).filter(name => isContent(name, extensions)).sort()
     const loaded = await Promise.all(files.map(load))
 
     return loaded.filter(item => item !== null)
   }
 
-  const loadedArticles = await loadAll(articlesDir, async file => loadArticle(vfs, file, includeDrafts, diagnostics))
-  const loadedPages = await loadAll(pagesDir, async file => loadPage(vfs, file, includeDrafts, diagnostics))
+  const loadedArticles = await loadAll(articlesDir, async file =>
+    loadArticle(vfs, file, includeDrafts, extensions, diagnostics),
+  )
+  const loadedPages = await loadAll(pagesDir, async file => loadPage(vfs, file, includeDrafts, extensions, diagnostics))
 
   // One namespace across listed and hidden: a listed post must not shadow a hidden one's direct link.
   const deduped = rejectDuplicateSlugs(
@@ -85,6 +91,7 @@ export async function buildManifest(options: BuildManifestOptions): Promise<Buil
     manifest: {
       schemaVersion,
       site,
+      plugins,
       articles: deduped.filter(entry => !hiddenSlugs.has(entry.slug)).sort(compareArticles),
       hidden: deduped.filter(entry => hiddenSlugs.has(entry.slug)).sort(compareArticles),
       pages: rejectDuplicateSlugs(loadedPages, pagesDir, diagnostics),

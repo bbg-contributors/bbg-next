@@ -91,8 +91,7 @@ export const preview = defineCommand(
         .catch(() => refresh())
     })
 
-    // Armed before the URL is printed, or a keypress in between is still handled by the cooked tty.
-    // Settling rather than process.exit lets Node exit once the last handles are released.
+    // Armed before the URL is printed, or a keypress in between is still handled by the cooked tty. Settling rather than process.exit lets Node exit once the last handles are released.
     const quit = new Promise<void>(settle => {
       onQuit(() => {
         void Promise.all([stopWatching(), server.close()]).finally(() => {

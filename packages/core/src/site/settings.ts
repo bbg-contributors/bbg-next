@@ -1,8 +1,8 @@
 import type { Vfs } from '../vfs.ts'
-import type { SiteSettings } from './schema.ts'
+import type { PluginMeta, SiteSettings, ThemeMeta } from './schema.ts'
 import * as v from 'valibot'
 import { manifestPath } from '../paths.ts'
-import { SiteSettingsSchema } from './schema.ts'
+import { PluginMetaSchema, SiteSettingsSchema, ThemeMetaSchema } from './schema.ts'
 
 // named so the CLI prints `SiteError: …`
 class SiteError extends Error {
@@ -13,6 +13,20 @@ class SiteError extends Error {
 export function parseSiteSettings(input: unknown): SiteSettings {
   const result = v.safeParse(SiteSettingsSchema, input)
   if (!result.success) throw new SiteError(`Invalid site settings: ${result.issues[0].message}`)
+
+  return result.output
+}
+
+export function parsePluginMeta(input: unknown): PluginMeta {
+  const result = v.safeParse(PluginMetaSchema, input)
+  if (!result.success) throw new SiteError(`Invalid plugin.json: ${result.issues[0].message}`)
+
+  return result.output
+}
+
+export function parseThemeMeta(input: unknown): ThemeMeta {
+  const result = v.safeParse(ThemeMetaSchema, input)
+  if (!result.success) throw new SiteError(`Invalid theme.json: ${result.issues[0].message}`)
 
   return result.output
 }

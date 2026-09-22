@@ -8,7 +8,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./testing": "./testing/index.ts"
   },
   "publishConfig": {
     "exports": {
@@ -22,16 +23,13 @@
   },
   "dependencies": {
     "@bbg-next/core": "workspace:*",
+    "@bbg-next/plugin": "workspace:*",
     "@bbg-next/view": "workspace:*"
   },
-  "devDependencies": {
-    "@bbg-next/default-theme": "workspace:*",
-    "@bbg-next/default-theme-vue": "workspace:*"
-  },
   "inlinedDependencies": {
-    "entities": "8.0.0",
+    "entities": "8.1.0",
     "linkify-it": "6.1.0",
-    "markdown-it": "15.0.1",
+    "markdown-it": "15.0.2",
     "mdurl": "2.1.0",
     "punycode.js": "2.3.1",
     "uc.micro": "3.0.0"

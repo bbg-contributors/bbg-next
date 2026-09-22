@@ -1,0 +1,27 @@
+.bbg-hitokoto {
+  margin: 0 0 1.75rem;
+  padding: 0.9rem 1.1rem;
+  border-left: 3px solid var(--bbg-hitokoto-rule);
+  border-radius: 2px;
+  background: var(--bbg-hitokoto-bg);
+  color: var(--bbg-hitokoto-fg);
+  opacity: 0;
+  transition: opacity 200ms ease-in-out;
+}
+
+.bbg-hitokoto.is-loaded {
+  opacity: 1;
+}
+
+.bbg-hitokoto blockquote {
+  margin: 0;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.bbg-hitokoto figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.85em;
+  text-align: right;
+  opacity: 0.65;
+}
