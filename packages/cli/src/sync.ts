@@ -6,21 +6,23 @@ export interface SyncOptions {
   readonly vfs: Vfs
   readonly site: SiteSettings
   readonly includeDrafts: boolean
+  /** Rewrite the built-in themes and plugins whatever version is installed. */
+  readonly force: boolean
 }
 
 export interface SyncResult {
   readonly diagnostics: readonly Diagnostic[]
   /** What was written, so a watcher can tell this write from a hand edit. */
   readonly manifest: string
-  /** Built-in themes and plugins brought up to the version this CLI ships, as `name@version`. */
+  /** Built-in themes and plugins written from what this CLI ships, as `name@version`. */
   readonly updated: readonly string[]
 }
 
 /** The one writer of generated files. Assets first: an unusable theme fails before anything is written. */
 export async function syncSite(options: SyncOptions): Promise<SyncResult> {
-  const { includeDrafts, site, vfs } = options
+  const { force, includeDrafts, site, vfs } = options
 
-  const { diagnostics: assetDiagnostics, plugins, updated } = await syncAssets(vfs, site)
+  const { diagnostics: assetDiagnostics, plugins, updated } = await syncAssets(vfs, site, force)
 
   const { diagnostics, manifest } = await buildManifest({ vfs, site, includeDrafts, plugins })
   const serialized = serializeManifest(manifest)

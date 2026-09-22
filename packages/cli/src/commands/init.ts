@@ -64,7 +64,7 @@ export const init = defineCommand(
     )
     await vfs.writeFile(`${pagesDir}/about.md`, stringifyFrontMatter({ title: 'About', updated: now }, samplePage))
 
-    const { diagnostics } = await syncSite({ vfs, site, includeDrafts: false })
+    const { diagnostics } = await syncSite({ vfs, site, includeDrafts: false, force })
     reportDiagnostics(diagnostics)
 
     process.stdout.write(`${style.green('created')} ${root}\n  ${style.dim('next:')} bbg-next preview ${dir ?? '.'}\n`)

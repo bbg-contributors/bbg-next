@@ -81,7 +81,12 @@ export const pluginAdd = defineCommand(
     const scaffolded = meta.configurable && !(await vfs.exists(config))
     if (scaffolded) await vfs.writeFile(config, '{}\n')
 
-    const { diagnostics } = await syncSite({ vfs, site: { ...site, plugins }, includeDrafts: ctx.flags.drafts })
+    const { diagnostics } = await syncSite({
+      vfs,
+      site: { ...site, plugins },
+      includeDrafts: ctx.flags.drafts,
+      force: false,
+    })
     reportDiagnostics(diagnostics)
 
     const label = already ? 'updated' : 'added'
@@ -125,7 +130,12 @@ export const pluginRemove = defineCommand(
     if (hadConfig) await vfs.remove(config)
 
     const plugins = site.plugins.filter(item => item !== name)
-    const { diagnostics } = await syncSite({ vfs, site: { ...site, plugins }, includeDrafts: ctx.flags.drafts })
+    const { diagnostics } = await syncSite({
+      vfs,
+      site: { ...site, plugins },
+      includeDrafts: ctx.flags.drafts,
+      force: false,
+    })
 
     reportDiagnostics(diagnostics)
     process.stdout.write(`${style.green('removed')} ${style.bold(name)}${hadConfig ? ` ${style.dim(config)}` : ''}\n`)

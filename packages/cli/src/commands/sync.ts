@@ -12,16 +12,21 @@ export const sync = defineCommand(
     parameters: ['[dir]'],
     flags: {
       drafts: { type: Boolean, description: 'Include drafts', default: false },
+      force: {
+        type: Boolean,
+        description: 'Rewrite the bundled themes and plugins whatever version is installed',
+        default: false,
+      },
     },
   },
   // oxlint-disable-next-line typescript/no-misused-promises -- clerc awaits the handler itself
   async ctx => {
     const { dir } = ctx.parameters
-    const { drafts } = ctx.flags
+    const { drafts, force } = ctx.flags
 
     const { root, vfs } = createNodeHost(dir ?? '.')
     const site = await loadSiteSettings(vfs)
-    const { diagnostics, updated } = await syncSite({ vfs, site, includeDrafts: drafts })
+    const { diagnostics, updated } = await syncSite({ vfs, site, includeDrafts: drafts, force })
 
     reportDiagnostics(diagnostics)
     process.stdout.write(`${style.green('synced')} ${root} ${style.dim(`theme ${site.theme}`)}\n`)

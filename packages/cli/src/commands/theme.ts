@@ -40,7 +40,12 @@ export const themeUse = defineCommand(
     const { dir, name } = ctx.parameters
     const { vfs } = createNodeHost(dir ?? '.')
     const site = await loadSiteSettings(vfs)
-    const { diagnostics } = await syncSite({ vfs, site: { ...site, theme: name }, includeDrafts: ctx.flags.drafts })
+    const { diagnostics } = await syncSite({
+      vfs,
+      site: { ...site, theme: name },
+      includeDrafts: ctx.flags.drafts,
+      force: false,
+    })
 
     reportDiagnostics(diagnostics)
     process.stdout.write(
@@ -72,6 +77,7 @@ export const themeAdd = defineCommand(
       vfs,
       site: { ...site, theme: meta.name },
       includeDrafts: ctx.flags.drafts,
+      force: false,
     })
 
     reportDiagnostics(diagnostics)

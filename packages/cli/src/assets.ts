@@ -110,16 +110,17 @@ async function installedVersion<M extends Meta>(kind: AssetKind<M>, vfs: Vfs, na
   }
 }
 
-/** Built-ins track the CLI, but only forward: a site may hold a build newer than this CLI ships. */
+/** Built-ins track the CLI, but only forward: a site may hold a build newer than this CLI ships. `force` overwrites it anyway. */
 async function refresh<M extends Meta>(
   kind: AssetKind<M>,
   vfs: Vfs,
   name: string,
   packageName: string,
+  force: boolean,
   diagnostics: Diagnostic[],
 ): Promise<string | null> {
   const { bundle, meta } = await readBuilt(kind, distOf(packageName))
-  const current = await installedVersion(kind, vfs, name)
+  const current = force ? null : await installedVersion(kind, vfs, name)
 
   if (current !== null && semver.gte(current, meta.version)) {
     if (semver.gt(current, meta.version)) {
@@ -138,9 +139,9 @@ async function refresh<M extends Meta>(
   return `${name}@${meta.version}`
 }
 
-async function syncTheme(vfs: Vfs, theme: string, diagnostics: Diagnostic[]): Promise<string | null> {
+async function syncTheme(vfs: Vfs, theme: string, force: boolean, diagnostics: Diagnostic[]): Promise<string | null> {
   const packageName = themeKind.packages.get(theme)
-  if (packageName !== undefined) return refresh(themeKind, vfs, theme, packageName, diagnostics)
+  if (packageName !== undefined) return refresh(themeKind, vfs, theme, packageName, force, diagnostics)
 
   if (!(await vfs.exists(themePath(theme)))) {
     throw new Error(
@@ -152,14 +153,19 @@ async function syncTheme(vfs: Vfs, theme: string, diagnostics: Diagnostic[]): Pr
   return null
 }
 
-async function syncPlugins(vfs: Vfs, names: readonly string[], diagnostics: Diagnostic[]): Promise<string[]> {
+async function syncPlugins(
+  vfs: Vfs,
+  names: readonly string[],
+  force: boolean,
+  diagnostics: Diagnostic[],
+): Promise<string[]> {
   const updated: string[] = []
 
   for (const name of names) {
     const packageName = pluginKind.packages.get(name)
     if (packageName === undefined) continue
 
-    const done = await refresh(pluginKind, vfs, name, packageName, diagnostics)
+    const done = await refresh(pluginKind, vfs, name, packageName, force, diagnostics)
     if (done !== null) updated.push(done)
   }
 
@@ -179,15 +185,15 @@ interface SyncAssetsResult {
   readonly updated: readonly string[]
 }
 
-export async function syncAssets(vfs: Vfs, site: SiteSettings): Promise<SyncAssetsResult> {
+export async function syncAssets(vfs: Vfs, site: SiteSettings, force: boolean): Promise<SyncAssetsResult> {
   const diagnostics: Diagnostic[] = []
 
   await vfs.copyIn(await bundleIn(distOf('@bbg-next/runtime')), runtimePath)
 
   // Both before loadPlugins, which reads the versions they refresh.
   const refreshed = [
-    await syncTheme(vfs, site.theme, diagnostics),
-    ...(await syncPlugins(vfs, site.plugins, diagnostics)),
+    await syncTheme(vfs, site.theme, force, diagnostics),
+    ...(await syncPlugins(vfs, site.plugins, force, diagnostics)),
   ]
   const plugins = await loadPlugins(vfs, site.plugins, diagnostics)
 
