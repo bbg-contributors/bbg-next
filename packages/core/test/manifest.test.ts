@@ -1,4 +1,4 @@
-import type { PluginIndexEntry } from '../src/site/schema.ts'
+import type { PluginIndexEntry, ThemeIndexEntry } from '../src/site/schema.ts'
 import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
 import { buildManifest } from '../src/site/manifest.ts'
@@ -6,6 +6,7 @@ import { SiteSettingsSchema } from '../src/site/schema.ts'
 import { createMemoryVfs } from './memoryVfs.ts'
 
 const site = v.parse(SiteSettingsSchema, { title: 'Test blog', postsPerPage: 2 })
+const theme: ThemeIndexEntry = { name: 'default-theme', version: '1.2.3' }
 
 function article(front: string, body = 'Body text.\n'): string {
   return `---\n${front}\n---\n\n${body}`
@@ -14,7 +15,7 @@ function article(front: string, body = 'Body text.\n'): string {
 const at = (iso: string) => `created: ${iso}`
 
 async function build(files: Record<string, string>, includeDrafts = false, plugins: readonly PluginIndexEntry[] = []) {
-  return buildManifest({ vfs: createMemoryVfs(files), site, includeDrafts, plugins })
+  return buildManifest({ vfs: createMemoryVfs(files), site, includeDrafts, theme, plugins })
 }
 
 describe('draft vs hidden', () => {
@@ -137,6 +138,17 @@ describe('metadata', () => {
     })
     expect(manifest.articles[0]?.tags).toEqual(['x', 'y'])
   })
+
+  it('leaves comments on unless front matter turns them off', async () => {
+    const { manifest } = await build({
+      'data/articles/open.md': article(`title: Open\n${at('2026-01-02T00:00:00Z')}`),
+      'data/articles/closed.md': article(`title: Closed\ncomments: false\n${at('2026-01-01T00:00:00Z')}`),
+    })
+    expect(manifest.articles.map(entry => [entry.slug, entry.comments])).toEqual([
+      ['open', true],
+      ['closed', false],
+    ])
+  })
 })
 
 describe('failures are reported, not swallowed', () => {
@@ -227,5 +239,39 @@ describe('pages', () => {
       'data/pages/about.md': article('title: About me\nnavLabel: About\nshowInNav: false'),
     })
     expect(manifest.pages[0]).toMatchObject({ navLabel: 'About', showInNav: false })
+  })
+
+  it('leaves comments on unless front matter turns them off', async () => {
+    const { manifest } = await build({
+      'data/pages/about.md': article('title: About'),
+      'data/pages/links.md': article('title: Links\ncomments: false'),
+    })
+    expect(manifest.pages.map(page => [page.slug, page.comments])).toEqual([
+      ['about', true],
+      ['links', false],
+    ])
+  })
+})
+
+describe('theme', () => {
+  it('records the installed theme, so plugins can tell which one they run with', async () => {
+    const { manifest } = await build({})
+    expect(manifest.theme).toEqual(theme)
+  })
+})
+
+describe('seed', () => {
+  const parse = (seed: unknown) => v.safeParse(SiteSettingsSchema, { title: 'T', seed })
+
+  it('is left out when the site sets none, so each theme falls back to its own', () => {
+    expect(v.parse(SiteSettingsSchema, { title: 'T' }).seed).toBeUndefined()
+  })
+
+  it('takes a six-digit hex colour', () => {
+    expect(parse('#0d6efd').success).toBe(true)
+  })
+
+  it('refuses anything else, rather than handing a theme a colour it cannot read', () => {
+    for (const seed of ['0d6efd', '#0d6', '#0d6efd80', 'blue']) expect(parse(seed).success).toBe(false)
   })
 })

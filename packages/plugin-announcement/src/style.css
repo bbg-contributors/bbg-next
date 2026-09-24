@@ -1,0 +1,39 @@
+/* A card like the theme's own, from its shared tokens. */
+
+.bbg-announcement {
+  margin: 1.875rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: var(--bbg-radius, 4px);
+  background: var(--bbg-surface, transparent);
+  box-shadow: var(--bbg-shadow, 0 1px 3px rgb(0 0 0 / 20%));
+  color: var(--bbg-fg, inherit);
+}
+
+.bbg-announcement h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.bbg-announcement svg {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+.bbg-announcement :is(p, ul, ol, blockquote, pre) {
+  margin: 0 0 0.5rem;
+}
+
+.bbg-announcement :is(p, ul, ol, blockquote, pre):last-child {
+  margin-bottom: 0;
+}
+
+.bbg-announcement a {
+  color: var(--bbg-accent, inherit);
+  text-decoration: underline;
+}

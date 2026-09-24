@@ -74,6 +74,40 @@ describe('createMarkdown', () => {
   })
 })
 
+describe('heading permalinks', () => {
+  const article: RenderContext = { baseUrl: 'data/articles/', href: '#/post/hello' }
+
+  it('gives a heading an id and opens it with an empty link to itself', () => {
+    expect(render('## Hello, *World*\n', article)).toBe(
+      '<h2 id="Hello-World"><a class="bbg-anchor" href="#/post/hello#Hello-World" aria-labelledby="Hello-World"></a>Hello, <em>World</em></h2>\n',
+    )
+  })
+
+  it('numbers a repeated heading', () => {
+    const html = render('# Notes\n\n## Notes\n\n## Notes\n', article)
+    expect([...html.matchAll(/ id="([^"]+)"/g)].map(match => match[1])).toEqual(['Notes', 'Notes-2', 'Notes-3'])
+  })
+
+  it('keeps CJK in the id, percent-encoding it only in the link', () => {
+    const html = render('## 第一节 介绍\n', article)
+    expect(html).toContain('id="第一节-介绍"')
+    expect(html).toContain(`href="#/post/hello#${encodeURIComponent('第一节-介绍')}"`)
+  })
+
+  it('skips a heading with nothing to slug', () => {
+    expect(render('## ???\n', article)).toBe('<h2>???</h2>\n')
+  })
+
+  // The footer, which has no document to link into.
+  it('leaves headings bare without an href', () => {
+    expect(render('## Hello\n', { baseUrl: 'data/articles/' })).toBe('<h2>Hello</h2>\n')
+  })
+
+  it('points a hand-written fragment link into the document', () => {
+    expect(render('[see](#Hello)\n', article)).toContain('href="#/post/hello#Hello"')
+  })
+})
+
 describe('resolveHref', () => {
   it.each([
     ['pic.png', 'data/articles/', 'data/articles/pic.png'],
@@ -82,9 +116,41 @@ describe('resolveHref', () => {
     ['https://x/y.png', 'data/articles/', 'https://x/y.png'],
     ['//cdn/y.png', 'data/articles/', '//cdn/y.png'],
     ['mailto:a@b.c', 'data/articles/', 'mailto:a@b.c'],
+    ['?page=2', 'data/articles/', '?page=2'],
     ['#section', 'data/articles/', '#section'],
     ['pic.png', undefined, 'pic.png'],
   ])('%s + %s -> %s', (href, base, expected) => {
-    expect(resolveHref(href, base)).toBe(expected)
+    expect(resolveHref(href, base === undefined ? {} : { baseUrl: base })).toBe(expected)
   })
+
+  it('puts a fragment after the document’s href', () => {
+    expect(resolveHref('#section', { baseUrl: 'data/articles/', href: '/blog/post/hello/' })).toBe(
+      '/blog/post/hello/#section',
+    )
+  })
+})
+
+describe('fences named after a bbg- element', () => {
+  it('become that element, carrying their content', () => {
+    expect(render('```bbg-friends\nname: 小明\n```\n')).toBe('<bbg-friends data-source="name: 小明\n"></bbg-friends>\n')
+  })
+
+  it('carry the directory the document resolves its own relative links against', () => {
+    expect(render('```bbg-friends\nx\n```\n', { baseUrl: 'data/pages/' })).toBe(
+      '<bbg-friends data-source="x\n" data-base="data/pages/"></bbg-friends>\n',
+    )
+  })
+
+  it('keep their content inert', () => {
+    const html = render('```bbg-encrypted\n"><script>alert(1)</script>\n```\n')
+    expect(html).not.toContain('<script>')
+    expect(html).toContain('data-source="&quot;&gt;&lt;script&gt;')
+  })
+
+  it.each(['js', 'bbg', 'bbg-', 'bbg-Friends', 'bbg-friends extra', 'bbg--friends'])(
+    'leave a %s fence as code',
+    info => {
+      expect(render(`\`\`\`${info}\nx\n\`\`\`\n`)).toContain('<pre><code')
+    },
+  )
 })

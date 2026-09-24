@@ -1,0 +1,9 @@
+/* Swapped in over style.css whenever the runtime says the scheme is dark. */
+
+:root {
+  --bbg-fg: #e6e8e4;
+  --bbg-bg: #14171a;
+  --bbg-muted: #949b98;
+  --bbg-accent: #6cc8a1;
+  --bbg-border: #2a2f31;
+}

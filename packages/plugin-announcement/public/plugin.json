@@ -1,0 +1,8 @@
+{
+  "name": "announcement",
+  "version": "0.1.0",
+  "dependencies": {
+    "markdown": "^1.0.0"
+  },
+  "requiredOptions": ["text"]
+}

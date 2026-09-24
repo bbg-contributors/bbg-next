@@ -16,6 +16,9 @@ const TimestampSchema = v.pipe(
   }),
 )
 
+/** Core draws no comments itself: this is the one switch every comment plugin reads. */
+const CommentsSchema = v.optional(v.boolean(), true)
+
 const TagsSchema = v.pipe(
   v.array(v.pipe(v.string(), v.trim(), v.minLength(1))),
   v.transform(tags => [...new Set(tags)]),
@@ -33,6 +36,7 @@ export const ArticleMetaSchema = v.object({
   /** In the manifest but out of every listing, so direct links still resolve. */
   hidden: v.optional(v.boolean(), false),
   excerpt: v.optional(v.pipe(v.string(), v.trim())),
+  comments: CommentsSchema,
 })
 
 export const PageMetaSchema = v.object({
@@ -42,4 +46,5 @@ export const PageMetaSchema = v.object({
   draft: v.optional(v.boolean(), false),
   showInNav: v.optional(v.boolean(), true),
   navLabel: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1))),
+  comments: CommentsSchema,
 })

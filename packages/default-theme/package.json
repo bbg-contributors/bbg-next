@@ -1,7 +1,7 @@
 {
   "name": "@bbg-next/default-theme",
   "version": "0.0.0",
-  "description": "Minimal default theme for bbg-next: bbg-* custom elements",
+  "description": "The default bbg-next theme, built with custom elements",
   "files": [
     "dist"
   ],
@@ -22,9 +22,14 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
-    "@bbg-next/view": "workspace:*"
+    "@bbg-next/view": "workspace:*",
+    "@material/material-color-utilities": "^0.3.0",
+    "lucide": "^1.47.0"
   },
   "devDependencies": {
-    "@bbg-next/runtime": "workspace:*"
+    "@bbg-next/runtime": "workspace:*",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3"
   }
 }

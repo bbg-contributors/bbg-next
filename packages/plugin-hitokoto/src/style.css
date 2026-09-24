@@ -1,10 +1,13 @@
+/* A card like the theme's own where it shares its tokens, and the plugin's own palette where it does not. */
+
 .bbg-hitokoto {
-  margin: 0 0 1.75rem;
-  padding: 0.9rem 1.1rem;
-  border-left: 3px solid var(--bbg-hitokoto-rule);
-  border-radius: 2px;
-  background: var(--bbg-hitokoto-bg);
-  color: var(--bbg-hitokoto-fg);
+  margin: 1.875rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--bbg-accent, var(--bbg-hitokoto-rule));
+  border-radius: var(--bbg-radius, 2px);
+  background: var(--bbg-surface, var(--bbg-hitokoto-bg));
+  box-shadow: var(--bbg-shadow, none);
+  color: var(--bbg-fg, var(--bbg-hitokoto-fg));
   opacity: 0;
   transition: opacity 200ms ease-in-out;
 }
@@ -23,5 +26,5 @@
   margin-top: 0.4rem;
   font-size: 0.85em;
   text-align: right;
-  opacity: 0.65;
+  color: var(--bbg-muted, color-mix(in srgb, currentColor 65%, transparent));
 }

@@ -1,9 +1,11 @@
-// One segment grammar for both modes: [] | ['list', n] | ['post', slug] | ['page', slug]. `list` is separate from `page` because `#/page/2` collides with a page slugged `2`.
+// One segment grammar for both modes: [] | ['list', n] | ['post', slug] | ['page', slug] | ['archive'] | ['tag', name]. `list` is separate from `page` because `#/page/2` collides with a page slugged `2`.
 
 export type Route =
   | { readonly type: 'home'; readonly page: number }
   | { readonly type: 'article'; readonly slug: string }
   | { readonly type: 'page'; readonly slug: string }
+  | { readonly type: 'archive' }
+  | { readonly type: 'tag'; readonly tag: string }
 
 export interface RouterConfig {
   readonly mode: 'hash' | 'path'
@@ -30,11 +32,16 @@ function toSegments(route: Route): string[] {
       return ['post', route.slug]
     case 'page':
       return ['page', route.slug]
+    case 'archive':
+      return ['archive']
+    case 'tag':
+      return ['tag', route.tag]
   }
 }
 
 function fromSegments(segments: readonly string[]): Route | null {
   if (segments.length === 0) return { type: 'home', page: 1 }
+  if (segments.length === 1) return segments[0] === 'archive' ? { type: 'archive' } : null
 
   const [head, tail] = segments
   if (segments.length !== 2 || head === undefined || tail === undefined || tail === '') return null
@@ -49,6 +56,8 @@ function fromSegments(segments: readonly string[]): Route | null {
       return { type: 'article', slug: tail }
     case 'page':
       return { type: 'page', slug: tail }
+    case 'tag':
+      return { type: 'tag', tag: tail }
     default:
       return null
   }
@@ -58,17 +67,15 @@ function splitPath(path: string): string[] {
   return path.split('/').filter(segment => segment !== '')
 }
 
-/** Hash hrefs are document-relative by design. */
-export function serialize(route: Route, config: RouterConfig): string {
+/** Hash hrefs are document-relative by design. `fragment` is an element id within the document. */
+export function serialize(route: Route, config: RouterConfig, fragment = ''): string {
   const encoded = toSegments(route).map(segment => encodeURIComponent(segment))
+  const href =
+    config.mode === 'hash'
+      ? `#/${encoded.join('/')}`
+      : `${normaliseBase(config.base)}${encoded.map(segment => `${segment}/`).join('')}`
 
-  if (config.mode === 'hash') {
-    return encoded.length === 0 ? '#/' : `#/${encoded.join('/')}`
-  }
-
-  const base = normaliseBase(config.base)
-
-  return encoded.length === 0 ? base : `${base}${encoded.join('/')}/`
+  return fragment === '' ? href : `${href}#${encodeURIComponent(fragment)}`
 }
 
 function decodeSegment(segment: string | undefined): string | null {
@@ -97,17 +104,24 @@ export interface Locationish {
   readonly hash: string
 }
 
+/** The route's part of the URL, then the document's fragment. `hash` mode spends the URL's own fragment on the route, so there the document's follows a second `#`. */
+function split(url: Locationish, config: RouterConfig): readonly [path: string, fragment: string] {
+  const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash
+  if (config.mode === 'path') return [url.pathname, hash]
+
+  const at = hash.indexOf('#')
+
+  return at === -1 ? [hash, ''] : [hash.slice(0, at), hash.slice(at + 1)]
+}
+
 /** `null` when outside the site or off-grammar — callers render a 404. */
 export function parse(url: Locationish, config: RouterConfig): Route | null {
-  if (config.mode === 'hash') {
-    const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash
-
-    return decodeSegments(splitPath(hash))
-  }
+  const [path] = split(url, config)
+  if (config.mode === 'hash') return decodeSegments(splitPath(path))
 
   // Split before decoding: a `%2F` inside a slug would otherwise become a real separator.
   const baseSegments = splitPath(normaliseBase(config.base))
-  const pathSegments = splitPath(url.pathname)
+  const pathSegments = splitPath(path)
   if (pathSegments.length < baseSegments.length) return null
 
   for (const [index, expected] of baseSegments.entries()) {
@@ -115,4 +129,9 @@ export function parse(url: Locationish, config: RouterConfig): Route | null {
   }
 
   return decodeSegments(pathSegments.slice(baseSegments.length))
+}
+
+/** The id of the element the URL points at within the document, `''` for none. */
+export function parseFragment(url: Locationish, config: RouterConfig): string {
+  return decodeSegment(split(url, config)[1]) ?? ''
 }

@@ -5,10 +5,10 @@ import type {
   PluginApi,
   PluginContext,
   PluginModule,
-  RenderedHandler,
   RenderedView,
   Renderer,
 } from '@bbg-next/plugin'
+import type { ColorSchemeControl, PluginInfo } from '@bbg-next/view'
 import { createMarkdown, defaultExtensions, pluginConfigPath, pluginPath, renderMarkdown } from '@bbg-next/core'
 import { resolve } from './site.ts'
 
@@ -41,9 +41,9 @@ export interface RendererRegistry {
 
 export interface PluginHost {
   readonly renderers: RendererRegistry
-  readonly rendered: (view: RenderedView) => () => void
-  /** Releases the document-level listeners this took out. */
-  readonly teardown: () => void
+  readonly rendered: (view: RenderedView) => void
+  /** The plugins whose setup went through, in load order: what the theme is told is running. */
+  readonly started: readonly PluginInfo[]
 }
 
 const markdownPlugin = 'markdown'
@@ -53,30 +53,42 @@ function report(message: string, ...cause: unknown[]): void {
   console.error(`bbg-next: ${message}`, ...cause)
 }
 
+interface Handlers<T> {
+  readonly add: (handler: (value: T) => void) => void
+  readonly fire: (value: T) => void
+}
+
+/** Plugin callbacks of one kind, `what` naming it. One that throws is reported, and the rest still run. */
+function handlers<T>(what: string): Handlers<T> {
+  const added: ((value: T) => void)[] = []
+
+  return {
+    add: handler => void added.push(handler),
+    fire: value => {
+      for (const handler of added) {
+        try {
+          handler(value)
+        } catch (cause) {
+          report(`a plugin failed while handling ${what}`, cause)
+        }
+      }
+    },
+  }
+}
+
 /** Must finish before the first render: a plugin extending markdown has to get at it first. */
-export async function setupPlugins(manifest: Manifest, load: PluginLoader = importPlugin): Promise<PluginHost> {
+export async function setupPlugins(
+  manifest: Manifest,
+  colorScheme: ColorSchemeControl,
+  load: PluginLoader = importPlugin,
+): Promise<PluginHost> {
   const renderers = new Map<string, Renderer>()
-  const handlers: RenderedHandler[] = []
   const apis = new Map<string, PluginApi>()
   const ready = new Set([markdownPlugin])
 
-  const schemeHandlers: ((scheme: ColorScheme) => void)[] = []
-  const darkQuery = matchMedia('(prefers-color-scheme: dark)')
-  const colorScheme = (): ColorScheme => (darkQuery.matches ? 'dark' : 'light')
-
-  const onSchemeChange = (): void => {
-    const scheme = colorScheme()
-
-    for (const handler of schemeHandlers) {
-      try {
-        handler(scheme)
-      } catch (cause) {
-        report('a plugin failed while handling a colour scheme change', cause)
-      }
-    }
-  }
-
-  darkQuery.addEventListener('change', onSchemeChange)
+  const rendered = handlers<RenderedView>('a render')
+  const schemes = handlers<ColorScheme>('a colour scheme change')
+  colorScheme.subscribe(schemes.fire)
 
   const md = createMarkdown()
   const markdown: Renderer = (source, context) => renderMarkdown(md, source, context)
@@ -106,11 +118,12 @@ export async function setupPlugins(manifest: Manifest, load: PluginLoader = impo
     return {
       options,
       site: manifest.site,
-      onRendered: handler => void handlers.push(handler),
+      theme: manifest.theme,
+      onRendered: rendered.add,
       // Subscribed only once it has survived the first call, so a plugin that fails to start stays out.
       onColorScheme: handler => {
-        handler(colorScheme())
-        schemeHandlers.push(handler)
+        handler(colorScheme.current())
+        schemes.add(handler)
       },
       registerRenderer: (extension, render) => {
         if (!entry.extensions.includes(extension)) {
@@ -136,6 +149,8 @@ export async function setupPlugins(manifest: Manifest, load: PluginLoader = impo
     }
   }
 
+  const started: PluginInfo[] = []
+
   for (const { entry, loading, options } of pending) {
     const unmet = Object.keys(entry.dependencies).filter(name => !ready.has(name))
     if (unmet.length > 0) {
@@ -146,6 +161,7 @@ export async function setupPlugins(manifest: Manifest, load: PluginLoader = impo
     try {
       const api = (await loading).setup(contextFor(entry, await options))
       ready.add(entry.name)
+      started.push({ name: entry.name, version: entry.version })
       if (api !== undefined) apis.set(entry.name, api)
     } catch (cause) {
       report(`plugin ${entry.name} failed to start`, cause)
@@ -153,33 +169,12 @@ export async function setupPlugins(manifest: Manifest, load: PluginLoader = impo
   }
 
   return {
-    teardown: () => void darkQuery.removeEventListener('change', onSchemeChange),
+    started,
+    rendered: rendered.fire,
 
     renderers: {
       markdown,
       for: file => renderers.get(file.slice(file.lastIndexOf('.') + 1)) ?? markdown,
-    },
-    rendered: view => {
-      const teardowns: (() => void)[] = []
-
-      for (const handler of handlers) {
-        try {
-          const teardown = handler(view)
-          if (teardown !== undefined) teardowns.push(teardown)
-        } catch (cause) {
-          report('a plugin failed while handling a render', cause)
-        }
-      }
-
-      return () => {
-        for (const teardown of teardowns) {
-          try {
-            teardown()
-          } catch (cause) {
-            report('a plugin failed while tearing down', cause)
-          }
-        }
-      }
     },
   }
 }

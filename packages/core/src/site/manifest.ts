@@ -1,6 +1,6 @@
 import type { Vfs } from '../vfs.ts'
 import type { Diagnostic } from './entries.ts'
-import type { ArticleEntry, Manifest, PluginIndexEntry, SiteSettings } from './schema.ts'
+import type { ArticleEntry, Manifest, PluginIndexEntry, SiteSettings, ThemeIndexEntry } from './schema.ts'
 import { articlesDir, pagesDir } from '../paths.ts'
 import { loadArticle, loadPage } from './entries.ts'
 import { contentExtensions } from './plugins.ts'
@@ -10,6 +10,7 @@ export interface BuildManifestOptions {
   readonly vfs: Vfs
   readonly site: SiteSettings
   readonly includeDrafts: boolean
+  readonly theme: ThemeIndexEntry
   /** In load order. Also settles which suffixes count as content. */
   readonly plugins: readonly PluginIndexEntry[]
 }
@@ -61,7 +62,7 @@ function isContent(name: string, extensions: readonly string[]): boolean {
 }
 
 export async function buildManifest(options: BuildManifestOptions): Promise<BuildManifestResult> {
-  const { vfs, site, includeDrafts, plugins } = options
+  const { vfs, site, includeDrafts, theme, plugins } = options
   const extensions = contentExtensions(plugins)
   const diagnostics: Diagnostic[] = []
 
@@ -91,6 +92,7 @@ export async function buildManifest(options: BuildManifestOptions): Promise<Buil
     manifest: {
       schemaVersion,
       site,
+      theme,
       plugins,
       articles: deduped.filter(entry => !hiddenSlugs.has(entry.slug)).sort(compareArticles),
       hidden: deduped.filter(entry => hiddenSlugs.has(entry.slug)).sort(compareArticles),

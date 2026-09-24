@@ -1,7 +1,7 @@
 {
-  "name": "@bbg-next/plugin-anchor",
+  "name": "@bbg-next/plugin-friends",
   "version": "0.0.0",
-  "description": "Heading anchors for bbg-next, for whatever renders the document",
+  "description": "Draws a friend-links card for each friend a page lists",
   "files": [
     "dist"
   ],
@@ -19,7 +19,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
     "@bbg-next/plugin": "workspace:*"

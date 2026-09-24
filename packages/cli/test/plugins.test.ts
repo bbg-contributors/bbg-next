@@ -177,7 +177,7 @@ describe('config files', () => {
   })
 
   it('marks a plugin without a config file, so the runtime skips the fetch', async () => {
-    const { entries, diagnostics } = await load([{ meta: meta('anchor', { configurable: false }) }])
+    const { entries, diagnostics } = await load([{ meta: meta('bare', { configurable: false }) }])
 
     expect(entries[0]?.hasConfig).toBe(false)
     expect(diagnostics).toEqual([])
@@ -224,12 +224,12 @@ describe('config files', () => {
 
   it('warns about a config for a plugin that reads none, and keeps the plugin', async () => {
     const { names, entries, diagnostics } = await load([
-      { meta: meta('anchor', { configurable: false }), options: { x: 1 } },
+      { meta: meta('bare', { configurable: false }), options: { x: 1 } },
     ])
 
-    expect(names).toEqual(['anchor'])
+    expect(names).toEqual(['bare'])
     expect(entries[0]?.hasConfig).toBe(false)
-    expect(diagnostics[0]).toMatchObject({ level: 'warn', file: 'data/plugins/anchor.json' })
+    expect(diagnostics[0]).toMatchObject({ level: 'warn', file: 'data/plugins/bare.json' })
   })
 
   // A misspelled filename is otherwise silent: the options simply never arrive.
@@ -263,8 +263,8 @@ describe('installed files', () => {
   // `theme add --name` renames on install; a hand-copied directory can still disagree.
   it('reports a plugin.json that names a directory other than its own', async () => {
     const diagnostics: Diagnostic[] = []
-    const files = { [pluginPath('anchor')]: '', [pluginMetaPath('anchor')]: JSON.stringify(meta('elsewhere')) }
-    const entries = await loadPlugins(readOnlyVfs(files), ['anchor'], diagnostics)
+    const files = { [pluginPath('bare')]: '', [pluginMetaPath('bare')]: JSON.stringify(meta('elsewhere')) }
+    const entries = await loadPlugins(readOnlyVfs(files), ['bare'], diagnostics)
 
     expect(entries).toEqual([])
     expect(diagnostics[0]?.message).toMatch(/but sits in/)

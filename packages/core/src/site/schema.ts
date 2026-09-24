@@ -19,6 +19,10 @@ export const SiteSettingsSchema = v.object({
   ),
   /** Load order. Options live in `data/plugins/<name>.json`. */
   plugins: v.optional(v.array(v.pipe(v.string(), v.minLength(1))), []),
+  /** The site's brand colour, and nothing more: each theme builds its own palette from it, or from a default of its own. */
+  seed: v.optional(
+    v.pipe(v.string(), v.regex(/^#[\da-f]{6}$/i, 'The seed must be a six-digit hex colour, like #0d6efd')),
+  ),
 })
 
 export type SiteSettings = v.InferOutput<typeof SiteSettingsSchema>
@@ -64,6 +68,7 @@ export interface ArticleEntry {
   readonly updated: number
   readonly pinned: boolean
   readonly excerpt: string
+  readonly comments: boolean
 }
 
 export interface PageEntry {
@@ -73,6 +78,7 @@ export interface PageEntry {
   readonly updated: number
   readonly showInNav: boolean
   readonly navLabel: string
+  readonly comments: boolean
 }
 
 export interface PluginIndexEntry {
@@ -85,11 +91,18 @@ export interface PluginIndexEntry {
   readonly hasConfig: boolean
 }
 
+export interface ThemeIndexEntry {
+  readonly name: string
+  readonly version: string
+}
+
 export const schemaVersion = 1
 
 export interface Manifest {
   readonly schemaVersion: typeof schemaVersion
   readonly site: SiteSettings
+  /** Generated: the theme installed under `bbg/themes`, so plugins can tell which one they are running with. */
+  readonly theme: ThemeIndexEntry
   /** Generated: what is installed under `bbg/plugins`, in load order. */
   readonly plugins: readonly PluginIndexEntry[]
   readonly articles: readonly ArticleEntry[]

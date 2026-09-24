@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import type { TagLink } from '@bbg-next/view'
 import { computed } from 'vue'
 
-const props = defineProps<{ created: number; tags: readonly string[]; pinned: boolean }>()
+const props = defineProps<{ created: number; tags: readonly TagLink[]; pinned: boolean }>()
 
 const date = computed(() => {
   if (props.created === 0) return ''
@@ -15,6 +16,6 @@ const date = computed(() => {
   <div class="bbg-meta">
     <span v-if="pinned" class="bbg-pin">Pinned</span>
     <time v-if="date !== ''">{{ date }}</time>
-    <span v-for="tag of tags" :key="tag" class="bbg-tag">#{{ tag }}</span>
+    <a v-for="tag of tags" :key="tag.name" :href="tag.href" class="bbg-tag">#{{ tag.name }}</a>
   </div>
 </template>

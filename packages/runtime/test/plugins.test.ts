@@ -1,9 +1,11 @@
 // @vitest-environment happy-dom
-import type { PluginLoader } from '../src/plugins.ts'
+import type { PluginHost, PluginLoader } from '../src/plugins.ts'
+import type { ColorSchemeHandle } from '../src/scheme.ts'
 import type { Manifest, PluginIndexEntry } from '@bbg-next/core'
 import type { ColorScheme, MarkdownApi, PluginContext, PluginModule } from '@bbg-next/plugin'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setupPlugins } from '../src/plugins.ts'
+import { createColorScheme } from '../src/scheme.ts'
 
 function entry(name: string, extra: Partial<PluginIndexEntry> = {}): PluginIndexEntry {
   return { name, version: '1.0.0', extensions: [], dependencies: {}, hasConfig: false, ...extra }
@@ -22,6 +24,7 @@ function manifestWith(plugins: readonly PluginIndexEntry[]): Manifest {
       router: { mode: 'hash', base: '/' },
       plugins: plugins.map(item => item.name),
     },
+    theme: { name: 'default-theme', version: '1.0.0' },
     plugins,
     articles: [],
     hidden: [],
@@ -41,7 +44,12 @@ function loaderFor(modules: Readonly<Record<string, PluginModule>>): PluginLoade
   }
 }
 
-const view = { element: document.createElement('div'), route: { type: 'home', page: 1 } as const }
+/** boot owns the colour scheme; most of these tests only need one to exist. */
+async function setup(manifest: Manifest, load: PluginLoader, scheme = createColorScheme()): Promise<PluginHost> {
+  return setupPlugins(manifest, scheme.colorScheme, load)
+}
+
+const view = { element: document.createElement('div'), route: { type: 'home', page: 1 } as const, comments: false }
 
 describe('setupPlugins', () => {
   beforeEach(() => {
@@ -53,7 +61,7 @@ describe('setupPlugins', () => {
     const order: string[] = []
     const greeted: string[] = []
 
-    await setupPlugins(
+    await setup(
       manifestWith([entry('base'), entry('user', { dependencies: { base: '^1.0.0' } })]),
       loaderFor({
         base: {
@@ -80,7 +88,7 @@ describe('setupPlugins', () => {
   it('starts every bundle downloading before the first setup runs', async () => {
     const events: string[] = []
 
-    await setupPlugins(manifestWith([entry('one'), entry('two')]), async url => {
+    await setup(manifestWith([entry('one'), entry('two')]), async url => {
       const name = url.split('/').at(-2)
       events.push(`load:${name}`)
 
@@ -93,7 +101,7 @@ describe('setupPlugins', () => {
   it('refuses a require the plugin never declared', async () => {
     let caught: unknown
 
-    await setupPlugins(
+    await setup(
       manifestWith([entry('base'), entry('sneak')]),
       loaderFor({
         base: { setup: () => ({}) },
@@ -115,7 +123,7 @@ describe('setupPlugins', () => {
   it('keeps the site up when a plugin throws, and skips what depended on it', async () => {
     const ran: string[] = []
 
-    const host = await setupPlugins(
+    const host = await setup(
       manifestWith([entry('broken'), entry('dependent', { dependencies: { broken: '^1.0.0' } }), entry('unrelated')]),
       loaderFor({
         broken: {
@@ -134,14 +142,55 @@ describe('setupPlugins', () => {
   })
 
   it('survives a plugin bundle that will not load', async () => {
-    const host = await setupPlugins(manifestWith([entry('missing')]), loaderFor({}))
+    const host = await setup(manifestWith([entry('missing')]), loaderFor({}))
 
     expect(host.renderers.markdown('# Hi\n', {})).toContain('<h1>Hi</h1>')
   })
 
+  describe('theme and plugins knowing of each other', () => {
+    it('tells a plugin which theme it runs with', async () => {
+      const seen: unknown[] = []
+
+      await setup(
+        manifestWith([entry('paired')]),
+        loaderFor({ paired: { setup: context => void seen.push(context.theme) } }),
+      )
+
+      expect(seen).toEqual([{ name: 'default-theme', version: '1.0.0' }])
+    })
+
+    // The theme dresses up for what is actually running, not for what the site merely asked for.
+    it('reports only the plugins that set up, in load order', async () => {
+      const host = await setup(
+        manifestWith([
+          entry('first'),
+          entry('broken'),
+          entry('dependent', { dependencies: { broken: '^1.0.0' } }),
+          entry('missing'),
+          entry('last', { version: '2.1.0' }),
+        ]),
+        loaderFor({
+          first: { setup: () => {} },
+          broken: {
+            setup: () => {
+              throw new Error('boom')
+            },
+          },
+          dependent: { setup: () => {} },
+          last: { setup: () => {} },
+        }),
+      )
+
+      expect(host.started).toEqual([
+        { name: 'first', version: '1.0.0' },
+        { name: 'last', version: '2.1.0' },
+      ])
+    })
+  })
+
   describe('renderers', () => {
     it('dispatches on the suffix and falls back to markdown', async () => {
-      const host = await setupPlugins(
+      const host = await setup(
         manifestWith([entry('typst', { extensions: ['typ'] })]),
         loaderFor({
           typst: { setup: context => void context.registerRenderer('typ', () => '<h2>from typst</h2>') },
@@ -154,7 +203,7 @@ describe('setupPlugins', () => {
     })
 
     it('keeps the first claim on a suffix', async () => {
-      const host = await setupPlugins(
+      const host = await setup(
         manifestWith([entry('first', { extensions: ['typ'] }), entry('second', { extensions: ['typ'] })]),
         loaderFor({
           first: { setup: context => void context.registerRenderer('typ', () => 'first') },
@@ -166,7 +215,7 @@ describe('setupPlugins', () => {
     })
 
     it('will not let a plugin displace the built-in markdown renderer', async () => {
-      const host = await setupPlugins(
+      const host = await setup(
         manifestWith([entry('rogue', { extensions: ['md'] })]),
         loaderFor({ rogue: { setup: context => void context.registerRenderer('md', () => 'hijacked') } }),
       )
@@ -196,7 +245,7 @@ describe('setupPlugins', () => {
       const seen: unknown[] = []
       const push = (context: PluginContext): void => void seen.push(context.options)
 
-      await setupPlugins(
+      await setup(
         manifestWith([entry('configured', { hasConfig: true }), entry('bare')]),
         loaderFor({ configured: { setup: push }, bare: { setup: push } }),
       )
@@ -208,7 +257,7 @@ describe('setupPlugins', () => {
     it('starts every fetch before the first setup runs', async () => {
       const events = serve({ '/data/plugins/one.json': {}, '/data/plugins/two.json': {} })
 
-      await setupPlugins(
+      await setup(
         manifestWith([entry('one', { hasConfig: true }), entry('two', { hasConfig: true })]),
         loaderFor({
           one: { setup: () => void events.push('setup:one') },
@@ -224,7 +273,7 @@ describe('setupPlugins', () => {
       serve({})
       const seen: unknown[] = []
 
-      const host = await setupPlugins(
+      const host = await setup(
         manifestWith([entry('configured', { hasConfig: true })]),
         loaderFor({ configured: { setup: context => void seen.push(context.options) } }),
       )
@@ -262,7 +311,7 @@ describe('setupPlugins', () => {
       const set = stubScheme('light')
       const seen: ColorScheme[] = []
 
-      await setupPlugins(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }))
+      await setup(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }))
       expect(seen).toEqual(['light'])
 
       set('dark')
@@ -274,7 +323,7 @@ describe('setupPlugins', () => {
       stubScheme('dark')
       const seen: ColorScheme[] = []
 
-      await setupPlugins(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }))
+      await setup(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }))
 
       expect(seen).toEqual(['dark'])
     })
@@ -283,7 +332,7 @@ describe('setupPlugins', () => {
       const set = stubScheme('light')
       const seen: ColorScheme[] = []
 
-      await setupPlugins(
+      await setup(
         manifestWith([entry('bad'), entry('good')]),
         loaderFor({
           bad: {
@@ -305,7 +354,7 @@ describe('setupPlugins', () => {
       const set = stubScheme('light')
       let calls = 0
 
-      const host = await setupPlugins(
+      const host = await setup(
         manifestWith([entry('broken')]),
         loaderFor({
           broken: {
@@ -325,12 +374,13 @@ describe('setupPlugins', () => {
       expect(host.renderers.markdown('# Hi\n', {})).toContain('<h1>Hi</h1>')
     })
 
-    it('stops listening once torn down', async () => {
+    it('stops listening once the scheme is torn down', async () => {
       const set = stubScheme('light')
       const seen: ColorScheme[] = []
+      const scheme: ColorSchemeHandle = createColorScheme()
 
-      const host = await setupPlugins(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }))
-      host.teardown()
+      await setup(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }), scheme)
+      scheme.teardown()
       set('dark')
 
       expect(seen).toEqual(['light'])
@@ -338,7 +388,7 @@ describe('setupPlugins', () => {
   })
 
   it('lets a plugin extend markdown before anything is rendered', async () => {
-    const host = await setupPlugins(
+    const host = await setup(
       manifestWith([entry('bolder', { dependencies: { markdown: '^1.0.0' } })]),
       loaderFor({
         bolder: {
@@ -354,35 +404,25 @@ describe('setupPlugins', () => {
   })
 
   describe('rendered hooks', () => {
-    it('runs every handler, then their teardowns', async () => {
+    it('runs every handler', async () => {
       const events: string[] = []
 
-      const host = await setupPlugins(
+      const host = await setup(
         manifestWith([entry('one'), entry('two')]),
         loaderFor({
-          one: {
-            setup: context =>
-              void context.onRendered(() => {
-                events.push('one')
-
-                return () => void events.push('one:down')
-              }),
-          },
+          one: { setup: context => void context.onRendered(() => void events.push('one')) },
           two: { setup: context => void context.onRendered(() => void events.push('two')) },
         }),
       )
 
-      const teardown = host.rendered(view)
+      host.rendered(view)
       expect(events).toEqual(['one', 'two'])
-
-      teardown()
-      expect(events).toEqual(['one', 'two', 'one:down'])
     })
 
     it('isolates a handler that throws from the rest', async () => {
       const events: string[] = []
 
-      const host = await setupPlugins(
+      const host = await setup(
         manifestWith([entry('bad'), entry('good')]),
         loaderFor({
           bad: {
@@ -397,27 +437,6 @@ describe('setupPlugins', () => {
 
       expect(() => host.rendered(view)).not.toThrow()
       expect(events).toEqual(['good'])
-    })
-
-    it('isolates a teardown that throws from the rest', async () => {
-      const events: string[] = []
-
-      const host = await setupPlugins(
-        manifestWith([entry('bad'), entry('good')]),
-        loaderFor({
-          bad: {
-            setup: context =>
-              void context.onRendered(() => () => {
-                throw new Error('boom')
-              }),
-          },
-          good: { setup: context => void context.onRendered(() => () => void events.push('good:down')) },
-        }),
-      )
-
-      const teardown = host.rendered(view)
-      expect(() => teardown()).not.toThrow()
-      expect(events).toEqual(['good:down'])
     })
   })
 })

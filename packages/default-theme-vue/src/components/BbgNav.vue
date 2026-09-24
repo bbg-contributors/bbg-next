@@ -7,11 +7,18 @@ defineProps<{ model: ShellModel }>()
 <template>
   <header class="bbg-site-header">
     <h1 class="bbg-site-title">
-      <a :href="model.homeHref">{{ model.title }}</a>
+      <a :href="model.home.href">{{ model.title }}</a>
     </h1>
     <p v-if="model.description !== ''" class="bbg-site-description">{{ model.description }}</p>
-    <nav v-if="model.links.length > 0" class="bbg-site-nav">
-      <a v-for="item of model.links" :key="item.href" :href="item.href">{{ item.label }}</a>
+    <nav class="bbg-site-nav">
+      <a
+        v-for="item of model.links"
+        :key="item.href"
+        :href="item.href"
+        :aria-current="item.current ? 'page' : undefined"
+        >{{ item.label }}</a
+      >
+      <a :href="model.archive.href" :aria-current="model.archive.current ? 'page' : undefined">Archive</a>
     </nav>
   </header>
 </template>

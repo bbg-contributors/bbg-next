@@ -1,0 +1,140 @@
+/* A round avatar on the left, the name and a two-line description on the right, in a grid that fills the row.
+   A theme may set --bbg-friends-avatar, --bbg-friends-min and --bbg-friends-card, or restyle anything by repeating a selector here under an element of its own. */
+
+bbg-friends {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.bbg-friends-shuffle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-self: end;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--bbg-muted, inherit);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.bbg-friends-shuffle:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--bbg-accent, currentColor);
+  outline-offset: 3px;
+}
+
+.bbg-friends-track {
+  position: relative;
+  width: 2rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: var(--bbg-border, #bbb);
+  transition: background-color 0.2s;
+}
+
+.bbg-friends-track::before {
+  content: '';
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--bbg-surface, #fff);
+  transition: transform 0.2s;
+}
+
+.bbg-friends-shuffle[aria-checked='true'] .bbg-friends-track {
+  background: var(--bbg-accent, #0d6efd);
+}
+
+.bbg-friends-shuffle[aria-checked='true'] .bbg-friends-track::before {
+  transform: translateX(0.875rem);
+}
+
+.bbg-friends-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--bbg-friends-min, 15rem), 100%), 1fr));
+  gap: 0.75rem;
+}
+
+/* Off screen a card is neither laid out nor painted, and its avatar is fetched only as it nears the screen. */
+.bbg-friend {
+  display: grid;
+  grid-template-columns: var(--bbg-friends-avatar, 3rem) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  column-gap: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--bbg-border, #ddd);
+  border-radius: var(--bbg-radius, 6px);
+  background: var(--bbg-friends-card, transparent);
+  color: var(--bbg-fg, inherit);
+  text-decoration: none;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 4.75rem;
+  transition: border-color 0.2s;
+}
+
+.bbg-friend:hover {
+  border-color: var(--bbg-accent, currentColor);
+}
+
+.bbg-friend::after {
+  content: none;
+}
+
+.bbg-friend-avatar {
+  display: grid;
+  grid-row: 1 / 3;
+  place-items: center;
+  align-self: center;
+  width: var(--bbg-friends-avatar, 3rem);
+  height: var(--bbg-friends-avatar, 3rem);
+  max-height: none;
+  border: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background: color-mix(in srgb, var(--bbg-accent, #888) 16%, transparent);
+  color: var(--bbg-accent, inherit);
+  font-size: calc(var(--bbg-friends-avatar, 3rem) * 0.42);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bbg-friend-avatar {
+    transition: transform 0.6s ease-in-out;
+  }
+
+  .bbg-friend-avatar:hover {
+    transform: rotate(360deg);
+  }
+}
+
+.bbg-friend-name {
+  align-self: end;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bbg-friend-name:last-child {
+  grid-row: 1 / 3;
+  align-self: center;
+}
+
+.bbg-friend-description {
+  display: -webkit-box;
+  align-self: start;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--bbg-muted, inherit);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}

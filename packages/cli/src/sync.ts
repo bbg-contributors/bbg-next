@@ -22,9 +22,9 @@ export interface SyncResult {
 export async function syncSite(options: SyncOptions): Promise<SyncResult> {
   const { force, includeDrafts, site, vfs } = options
 
-  const { diagnostics: assetDiagnostics, plugins, updated } = await syncAssets(vfs, site, force)
+  const { diagnostics: assetDiagnostics, theme, plugins, updated } = await syncAssets(vfs, site, force)
 
-  const { diagnostics, manifest } = await buildManifest({ vfs, site, includeDrafts, plugins })
+  const { diagnostics, manifest } = await buildManifest({ vfs, site, includeDrafts, theme, plugins })
   const serialized = serializeManifest(manifest)
 
   await vfs.writeFile(manifestPath, serialized)

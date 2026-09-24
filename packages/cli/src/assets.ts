@@ -1,4 +1,12 @@
-import type { Diagnostic, PluginIndexEntry, PluginMeta, SiteSettings, ThemeMeta, Vfs } from '@bbg-next/core'
+import type {
+  Diagnostic,
+  PluginIndexEntry,
+  PluginMeta,
+  SiteSettings,
+  ThemeIndexEntry,
+  ThemeMeta,
+  Vfs,
+} from '@bbg-next/core'
 import { access, readFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -69,9 +77,12 @@ const pluginKind: AssetKind<PluginMeta> = {
   bundlePath: pluginPath,
   metaPath: pluginMetaPath,
   packages: new Map([
-    ['anchor', '@bbg-next/plugin-anchor'],
+    ['announcement', '@bbg-next/plugin-announcement'],
+    ['friends', '@bbg-next/plugin-friends'],
     ['hitokoto', '@bbg-next/plugin-hitokoto'],
+    ['image-viewer', '@bbg-next/plugin-image-viewer'],
     ['waline', '@bbg-next/plugin-waline'],
+    ['wallpaper', '@bbg-next/plugin-wallpaper'],
   ]),
 }
 
@@ -153,6 +164,20 @@ async function syncTheme(vfs: Vfs, theme: string, force: boolean, diagnostics: D
   return null
 }
 
+/** What the manifest records of the theme, read back after any refresh. */
+async function installedTheme(vfs: Vfs, name: string): Promise<ThemeIndexEntry> {
+  const path = themeMetaPath(name)
+
+  let meta: ThemeMeta
+  try {
+    meta = parseThemeMeta(JSON.parse(await vfs.readFile(path)))
+  } catch (cause) {
+    throw new Error(`${path} is unusable: ${(cause as Error).message}. Reinstall it with \`bbg-next theme add <dir>\`.`)
+  }
+
+  return { name: meta.name, version: meta.version }
+}
+
 async function syncPlugins(
   vfs: Vfs,
   names: readonly string[],
@@ -180,6 +205,7 @@ async function prune(vfs: Vfs, dir: string, keep: readonly string[]): Promise<vo
 }
 
 interface SyncAssetsResult {
+  readonly theme: ThemeIndexEntry
   readonly plugins: readonly PluginIndexEntry[]
   readonly diagnostics: readonly Diagnostic[]
   readonly updated: readonly string[]
@@ -195,6 +221,7 @@ export async function syncAssets(vfs: Vfs, site: SiteSettings, force: boolean): 
     await syncTheme(vfs, site.theme, force, diagnostics),
     ...(await syncPlugins(vfs, site.plugins, force, diagnostics)),
   ]
+  const theme = await installedTheme(vfs, site.theme)
   const plugins = await loadPlugins(vfs, site.plugins, diagnostics)
 
   await prune(vfs, themesDir, [themeDir(site.theme)])
@@ -205,7 +232,7 @@ export async function syncAssets(vfs: Vfs, site: SiteSettings, force: boolean): 
     site.plugins.map(name => pluginDir(name)),
   )
 
-  return { plugins, diagnostics, updated: refreshed.filter(item => item !== null) }
+  return { theme, plugins, diagnostics, updated: refreshed.filter(item => item !== null) }
 }
 
 /** `source` is a built-in name or a directory holding a built bundle. */

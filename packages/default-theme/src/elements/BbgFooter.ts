@@ -1,16 +1,25 @@
-import type { ShellModel } from '@bbg-next/view'
+import type { ShellModel, ThemeContext } from '@bbg-next/view'
 import { el, ModelElement } from './base.ts'
+import { container } from './layout.ts'
+import { tools } from './tools.ts'
 
-export class BbgFooter extends ModelElement<ShellModel> {
-  protected override update(model: ShellModel): void {
-    if (model.footerHtml === '') {
-      this.replaceChildren()
+/** A class per registration: the footer carries the floating controls, and those need the runtime's handle. */
+export function createFooter(context: ThemeContext): CustomElementConstructor {
+  return class BbgFooter extends ModelElement<ShellModel> {
+    readonly #text = el('footer', 'border-t border-fg/5 pt-4 pb-8 text-muted [&_a]:text-accent [&_a]:underline')
+    readonly #column = container(this.#text)
 
-      return
+    // The floating controls are made once and stay, an open dialog included.
+    protected override build(): void {
+      this.replaceChildren(this.#column, tools(context))
     }
 
-    const footer = el('footer', 'bbg-site-footer')
-    footer.innerHTML = model.footerHtml
-    this.replaceChildren(footer)
+    // Only the text follows the model.
+    protected override update(model: ShellModel): void {
+      if (!this.changed('text', model.footerHtml)) return
+
+      this.#text.innerHTML = model.footerHtml
+      this.#column.hidden = model.footerHtml === ''
+    }
   }
 }

@@ -2,7 +2,7 @@ import type { ColorScheme } from '@bbg-next/plugin'
 import { definePlugin, injectStyle, readString, readStrings } from '@bbg-next/plugin'
 import css from './style.css?inline'
 
-// Its own colours, not the theme's: nothing here may depend on what a theme happens to inherit down.
+// The fallbacks behind the shared tokens: nothing here may depend on what a theme happens to inherit down.
 const palette: Record<ColorScheme, string> = {
   light: ':root{--bbg-hitokoto-fg:#1a1a1a;--bbg-hitokoto-rule:#6b6b6b;--bbg-hitokoto-bg:rgba(0,0,0,0.04)}',
   dark: ':root{--bbg-hitokoto-fg:#e8e8e8;--bbg-hitokoto-rule:#9a9a9a;--bbg-hitokoto-bg:rgba(255,255,255,0.05)}',
@@ -30,29 +30,31 @@ export const setup = definePlugin(({ options, onRendered, onColorScheme }) => {
 
   const routes = readStrings(options, 'routes', ['home'])
 
-  onRendered(({ element, route }) => {
-    if (!routes.includes(route.type)) return
+  // One quote for as long as the reader stays on views that show it.
+  let shown: HTMLElement | null = null
+  let fetching = new AbortController()
 
+  const quote = (): HTMLElement => {
     const box = document.createElement('figure')
     box.className = 'bbg-hitokoto'
-    element.prepend(box)
 
     const controller = new AbortController()
+    fetching = controller
 
     void (async () => {
       try {
         const response = await fetch(endpoint, { signal: controller.signal })
         if (!response.ok) throw new Error(`${response.status} from ${endpoint.host}`)
 
-        const quote = (await response.json()) as Quote
-        if (typeof quote.hitokoto !== 'string' || quote.hitokoto === '') throw new Error('no quote in the response')
+        const said = (await response.json()) as Quote
+        if (typeof said.hitokoto !== 'string' || said.hitokoto === '') throw new Error('no quote in the response')
 
         // textContent, not innerHTML: this is somebody else's server talking.
         const text = document.createElement('blockquote')
-        text.textContent = quote.hitokoto
+        text.textContent = said.hitokoto
         box.append(text)
 
-        const credit = attribution(quote)
+        const credit = attribution(said)
         if (credit !== '') {
           const caption = document.createElement('figcaption')
           caption.textContent = credit
@@ -61,11 +63,27 @@ export const setup = definePlugin(({ options, onRendered, onColorScheme }) => {
 
         box.classList.add('is-loaded')
       } catch {
-        // Decoration: leave no trace rather than an empty frame or an error on the page.
-        if (!controller.signal.aborted) box.remove()
+        // Decoration: leave no trace rather than an empty frame or an error on the page, and try again on the next view.
+        if (!controller.signal.aborted) {
+          box.remove()
+          shown = null
+        }
       }
     })()
 
-    return () => controller.abort()
+    return box
+  }
+
+  onRendered(({ element, route }) => {
+    if (!routes.includes(route.type)) {
+      fetching.abort()
+      shown?.remove()
+      shown = null
+
+      return
+    }
+
+    shown ??= quote()
+    if (shown.parentElement !== element) element.prepend(shown)
   })
 })

@@ -110,6 +110,7 @@ export async function loadArticle(
       updated: meta.updated ?? created,
       pinned: meta.pinned,
       excerpt: meta.excerpt ?? deriveExcerpt(loaded.body),
+      comments: meta.comments,
     },
   }
 }
@@ -133,5 +134,6 @@ export async function loadPage(
     updated: meta.updated ?? 0,
     showInNav: meta.showInNav,
     navLabel: meta.navLabel ?? meta.title,
+    comments: meta.comments,
   }
 }

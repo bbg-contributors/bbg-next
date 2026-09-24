@@ -1,3 +1,4 @@
+export { decrypt, decryptDocument, encryptDocument, encryptedElement } from './content/encryption.ts'
 export { stripFrontMatter } from './content/frontmatterSplit.ts'
 export { stringifyFrontMatter } from './content/frontmatter.ts'
 export { isValidSlug } from './content/slug.ts'
@@ -20,7 +21,13 @@ export {
   themePath,
   themesDir,
 } from './paths.ts'
-export { parse as parseRoute, type Route, type RouterConfig, serialize as serializeRoute } from './route.ts'
+export {
+  parseFragment,
+  parse as parseRoute,
+  type Route,
+  type RouterConfig,
+  serialize as serializeRoute,
+} from './route.ts'
 export { type Diagnostic } from './site/entries.ts'
 export { outletElement, writeShell } from './site/shell.ts'
 export { buildManifest, serializeManifest } from './site/manifest.ts'
@@ -32,6 +39,7 @@ export {
   type PluginIndexEntry,
   type PluginMeta,
   type SiteSettings,
+  type ThemeIndexEntry,
   type ThemeMeta,
 } from './site/schema.ts'
 export { loadSiteSettings, parsePluginMeta, parseSiteSettings, parseThemeMeta } from './site/settings.ts'

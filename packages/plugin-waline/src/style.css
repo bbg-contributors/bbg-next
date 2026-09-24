@@ -1,6 +1,31 @@
+/* Waline's own colours under names of ours, read where waline sets them, so a theme without tokens leaves it stock. */
+:root {
+  --bbg-waline-theme: var(--waline-theme-color);
+  --bbg-waline-on-theme: var(--waline-white);
+  --bbg-waline-active: var(--waline-active-color);
+  --bbg-waline-fg: var(--waline-color);
+  --bbg-waline-bg: var(--waline-bg-color);
+  --bbg-waline-border: var(--waline-border-color);
+  --bbg-waline-light: var(--waline-light-grey);
+  --bbg-waline-dark: var(--waline-dark-grey);
+}
+
+/* A card like the theme's own where it shares its tokens. */
 .bbg-waline {
   display: block;
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--bbg-waline-rule);
+  margin: 1.875rem 0;
+  padding: 1rem;
+  border-radius: var(--bbg-radius, 0);
+  background: var(--bbg-surface, transparent);
+  box-shadow: var(--bbg-shadow, none);
+
+  --waline-theme-color: var(--bbg-accent, var(--bbg-waline-theme));
+  /* Waline's name for the text on its theme-coloured buttons, whatever the scheme. */
+  --waline-white: var(--bbg-on-accent, var(--bbg-waline-on-theme));
+  --waline-active-color: var(--bbg-accent, var(--bbg-waline-active));
+  --waline-color: var(--bbg-fg, var(--bbg-waline-fg));
+  --waline-bg-color: var(--bbg-surface, var(--bbg-waline-bg));
+  --waline-border-color: var(--bbg-border, var(--bbg-waline-border));
+  --waline-light-grey: var(--bbg-muted, var(--bbg-waline-light));
+  --waline-dark-grey: var(--bbg-muted, var(--bbg-waline-dark));
 }

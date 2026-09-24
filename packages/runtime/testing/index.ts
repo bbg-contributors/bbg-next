@@ -1,4 +1,4 @@
-import type { Manifest, PluginIndexEntry } from '@bbg-next/core'
+import type { Manifest, PluginIndexEntry, SiteSettings } from '@bbg-next/core'
 import type { PluginModule } from '@bbg-next/plugin'
 import type { ThemeModule } from '@bbg-next/view'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -20,6 +20,7 @@ const manifest: Manifest = {
     router: { mode: 'hash', base: '/' },
     plugins: [],
   },
+  theme: { name: 'default-theme', version: '1.0.0' },
   plugins: [],
   articles: [
     {
@@ -31,6 +32,7 @@ const manifest: Manifest = {
       updated: 3,
       pinned: false,
       excerpt: 'Excerpt one',
+      comments: true,
     },
     {
       slug: 'second',
@@ -41,6 +43,7 @@ const manifest: Manifest = {
       updated: 2,
       pinned: false,
       excerpt: 'Excerpt two',
+      comments: true,
     },
     {
       slug: 'third',
@@ -51,6 +54,7 @@ const manifest: Manifest = {
       updated: 1,
       pinned: false,
       excerpt: 'Excerpt three',
+      comments: true,
     },
   ],
   hidden: [
@@ -63,17 +67,33 @@ const manifest: Manifest = {
       updated: 1,
       pinned: false,
       excerpt: 'Shh',
+      comments: true,
     },
   ],
-  pages: [{ slug: 'about', file: 'about.md', title: 'About', updated: 1, showInNav: true, navLabel: 'About' }],
+  // comments off, unlike every article
+  pages: [
+    {
+      slug: 'about',
+      file: 'about.md',
+      title: 'About',
+      updated: 1,
+      showInNav: true,
+      navLabel: 'About',
+      comments: false,
+    },
+  ],
 }
+
+// `## Locked` and a relative image, behind `hunter2`
+const locked =
+  'v1.600000.1627e12601128af4975cd39209bd914f.5762abe80772e8593cf299d7.46e357c11a4ed7f9b8d4e5272c3817ed62674b32bbc5a03f77e2aa927f798bfde20935531f733b624b5f786e38b4abb224c2'
 
 const files: Readonly<Record<string, string>> = {
   '/data/articles/first.md': '---\ntitle: 第一篇文章\n---\n\n# Heading\n\nBody with ![pic](pic.png)\n',
   '/data/articles/second.md': '---\ntitle: Second\n---\n\nSecond body.\n',
   '/data/articles/third.md': '---\ntitle: Third\n---\n\nThird body.\n',
   '/data/articles/secret.md': '---\ntitle: 神秘的文章\n---\n\nOnly by direct link.\n',
-  '/data/pages/about.md': '---\ntitle: About\n---\n\nAbout body.\n',
+  '/data/pages/about.md': `---\ntitle: About\n---\n\nAbout body.\n\n\`\`\`bbg-encrypted\n${locked}\n\`\`\`\n`,
 }
 
 /** Serves the fixture site, with `override` merged into its manifest. */
@@ -99,8 +119,8 @@ const probePlugin: PluginIndexEntry = {
 }
 
 /** The fixture site with one plugin enabled, for tests that need the runtime to load one. */
-export function stubFetchWithProbe(): void {
-  stubFetch({ plugins: [probePlugin], site: { ...manifest.site, plugins: [probePlugin.name] } })
+export function stubFetchWithProbe(site: Partial<SiteSettings> = {}): void {
+  stubFetch({ plugins: [probePlugin], site: { ...manifest.site, ...site, plugins: [probePlugin.name] } })
 }
 
 // Navigation is fire-and-forget and awaits a fetch, so draining microtasks is not enough.
@@ -119,8 +139,17 @@ function outlet(): HTMLElement {
   return element as HTMLElement
 }
 
+const tagHref = `#/tag/${encodeURIComponent('随笔')}`
+
 function click(anchor: Element): void {
   anchor.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }))
+}
+
+/** Back or forward to `hash`, as the browser reports it. */
+async function visit(hash: string): Promise<void> {
+  location.hash = hash
+  dispatchEvent(new PopStateEvent('popstate', { state: null }))
+  await flush()
 }
 
 export function describeThemeContract(theme: ThemeModule): void {
@@ -144,6 +173,7 @@ export function describeThemeContract(theme: ThemeModule): void {
     teardown?.()
     teardown = undefined
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
     location.hash = ''
   })
 
@@ -176,6 +206,39 @@ export function describeThemeContract(theme: ThemeModule): void {
       await boot()
 
       expect(outlet().textContent).not.toContain('神秘的文章')
+    })
+  })
+
+  describe('archive', () => {
+    it('lists every listed article, and never a hidden one', async () => {
+      await boot('#/archive')
+
+      const archive = outlet().querySelector('bbg-archive-view')
+      for (const title of ['第一篇文章', 'Second', 'Third']) expect(archive?.textContent).toContain(title)
+      expect(archive?.textContent).not.toContain('神秘的文章')
+    })
+
+    it('links a card’s tags to their page, which lists only the articles carrying one', async () => {
+      await boot()
+
+      click(outlet().querySelector(`a[href="${tagHref}"]`) as Element)
+      await flush()
+
+      const archive = outlet().querySelector('bbg-archive-view')
+      expect(archive?.textContent).toContain('第一篇文章')
+      expect(archive?.textContent).not.toContain('Second')
+    })
+
+    it('is linked from the nav, which marks it on a tag’s page too', async () => {
+      await boot(tagHref)
+
+      expect(outlet().querySelector('bbg-nav a[href="#/archive"]')?.getAttribute('aria-current')).toBe('page')
+    })
+
+    it('shows not-found for a tag no listed article carries', async () => {
+      await boot('#/tag/nope')
+
+      expect(outlet().querySelector('.bbg-not-found')).not.toBeNull()
     })
   })
 
@@ -220,10 +283,109 @@ export function describeThemeContract(theme: ThemeModule): void {
       expect(outlet().querySelector('bbg-page-view')?.textContent).toContain('About body.')
     })
 
+    // The shell is sent again as the marks move; a theme that only rendered it once would keep marking the first.
+    it('marks the nav link to what is on screen, and moves the mark along', async () => {
+      const marked = (): string | undefined =>
+        outlet().querySelector('.bbg-site-nav [aria-current="page"]')?.textContent ?? undefined
+
+      await boot()
+      expect(marked()).toBeUndefined()
+
+      click(outlet().querySelector('.bbg-site-nav a') as Element)
+      await flush()
+      expect(marked()).toBe('About')
+
+      location.hash = '#/'
+      dispatchEvent(new PopStateEvent('popstate', { state: { route: { type: 'home', page: 1 } } }))
+      await flush()
+      expect(marked()).toBeUndefined()
+    })
+
+    it('keeps the shell on screen as the reader moves, rather than drawing it again', async () => {
+      await boot()
+      const link = outlet().querySelector('.bbg-site-nav a')
+      const footer = outlet().querySelector('bbg-footer strong')
+
+      click(link as Element)
+      await flush()
+
+      expect(outlet().querySelector('.bbg-site-nav a')).toBe(link)
+      expect(outlet().querySelector('bbg-footer strong')).toBe(footer)
+    })
+
     it('shows not-found for an unknown slug', async () => {
       await boot('#/post/nope')
 
       expect(outlet().querySelector('.bbg-not-found')).not.toBeNull()
+    })
+
+    it('scrolls to the heading the URL names once the article is in', async () => {
+      const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView')
+      await boot('#/post/first#Heading')
+
+      expect(scrolled.mock.contexts).toEqual([outlet().querySelector('.bbg-content h1')])
+    })
+
+    it('moves within an article without rendering it again', async () => {
+      await boot('#/post/first')
+      const article = outlet().querySelector('bbg-article-view')
+      const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView')
+
+      click(outlet().querySelector('.bbg-anchor') as Element)
+      await flush()
+
+      expect(location.hash).toBe('#/post/first#Heading')
+      expect(outlet().querySelector('bbg-article-view')).toBe(article)
+      expect(scrolled.mock.contexts).toEqual([outlet().querySelector('.bbg-content h1')])
+    })
+
+    // The browser would restore a position before the view is back, so the runtime does it once the view has rendered.
+    it('takes the reader back to where they left the list', async () => {
+      await boot()
+      const list: unknown = history.state
+      scrollTo({ top: 80, behavior: 'instant' })
+
+      click(outlet().querySelector('.bbg-card-title a') as Element)
+      await flush()
+      expect(scrollY).toBe(0)
+
+      location.hash = '#/'
+      dispatchEvent(new PopStateEvent('popstate', { state: list }))
+      await flush()
+
+      expect(outlet().querySelector('bbg-article-list')).not.toBeNull()
+      expect(scrollY).toBe(80)
+    })
+
+    it('takes the reader back within an article without rendering it again', async () => {
+      await boot('#/post/first')
+      const top: unknown = history.state
+      const article = outlet().querySelector('bbg-article-view')
+      scrollTo({ top: 30, behavior: 'instant' })
+
+      click(outlet().querySelector('.bbg-anchor') as Element)
+      await flush()
+      scrollTo({ top: 400, behavior: 'instant' })
+
+      location.hash = '#/post/first'
+      dispatchEvent(new PopStateEvent('popstate', { state: top }))
+      await flush()
+
+      expect(scrollY).toBe(30)
+      expect(outlet().querySelector('bbg-article-view')).toBe(article)
+    })
+
+    it('follows an address-bar edit to where it points', async () => {
+      await boot('#/post/first')
+      const article = outlet().querySelector('bbg-article-view')
+      const scrolled = vi.spyOn(Element.prototype, 'scrollIntoView')
+
+      location.hash = '#/post/first#Heading'
+      dispatchEvent(new PopStateEvent('popstate', { state: null }))
+      await flush()
+
+      expect(scrolled.mock.contexts).toEqual([outlet().querySelector('.bbg-content h1')])
+      expect(outlet().querySelector('bbg-article-view')).toBe(article)
     })
   })
 
@@ -232,6 +394,28 @@ export function describeThemeContract(theme: ThemeModule): void {
       await boot('#/post/first')
 
       expect(outlet().querySelector('.bbg-content img')?.getAttribute('src')).toBe('data/articles/pic.png')
+    })
+
+    it('opens an encrypted block into markdown rendered as the page around it is', async () => {
+      await boot('#/page/about')
+
+      const block = outlet().querySelector('bbg-encrypted')
+      const input = block?.querySelector('input')
+      if (!block || !input) throw new Error('no encrypted block drawn')
+
+      input.value = 'hunter2'
+      block.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
+
+      await vi.waitFor(() => expect(block.querySelector('img')?.getAttribute('src')).toBe('data/pages/pic.png'))
+      expect(block.querySelector('h2 > a.bbg-anchor')?.getAttribute('href')).toBe('#/page/about#Locked')
+    })
+
+    it('keeps the permalink a heading opens with', async () => {
+      await boot('#/post/first')
+
+      const heading = outlet().querySelector('.bbg-content h1')
+      expect(heading?.id).toBe('Heading')
+      expect(heading?.firstElementChild?.matches('a.bbg-anchor[href="#/post/first#Heading"]')).toBe(true)
     })
   })
 
@@ -251,23 +435,38 @@ export function describeThemeContract(theme: ThemeModule): void {
       expect(seen).toEqual(['Heading'])
     })
 
-    it('tears a hook down before the next navigation', async () => {
-      const events: string[] = []
+    it('hands a hook the view on screen after every navigation, the same element while the kind stays', async () => {
+      const seen: [string, Element][] = []
 
       await boot(
-        '',
-        context =>
-          void context.onRendered(({ route }) => {
-            events.push(`up:${route.type}`)
+        '#/post/first',
+        context => void context.onRendered(({ element, route }) => void seen.push([route.type, element])),
+      )
+      await visit('#/post/second')
+      await visit('#/page/about')
 
-            return () => void events.push(`down:${route.type}`)
+      expect(seen.map(([type]) => type)).toEqual(['article', 'article', 'page'])
+      expect(seen[1]?.[1]).toBe(seen[0]?.[1])
+      expect(seen[2]?.[1]).not.toBe(seen[1]?.[1])
+    })
+
+    it('leaves what a plugin put into the view where it is while the view stays', async () => {
+      const mark = document.createElement('aside')
+      let placed = false
+
+      // Placed once only, so a theme that redraws the whole view is caught taking it out.
+      await boot(
+        '#/post/first',
+        context =>
+          void context.onRendered(({ element }) => {
+            if (!placed) element.prepend(mark)
+            placed = true
           }),
       )
+      await visit('#/post/second')
 
-      click(outlet().querySelector('.bbg-card-title a') as Element)
-      await flush()
-
-      expect(events).toEqual(['up:home', 'down:home', 'up:article'])
+      expect(mark.isConnected).toBe(true)
+      expect(outlet().querySelector('bbg-article-view .bbg-content')?.textContent).toContain('Second body.')
     })
   })
 

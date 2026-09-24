@@ -1,6 +1,6 @@
 import type { Route, RouterConfig } from '../src/route.ts'
 import { describe, expect, it } from 'vitest'
-import { normaliseBase, parse, serialize } from '../src/route.ts'
+import { normaliseBase, parse, parseFragment, serialize } from '../src/route.ts'
 
 const hash: RouterConfig = { mode: 'hash', base: '/' }
 const pathRoot: RouterConfig = { mode: 'path', base: '/' }
@@ -17,6 +17,10 @@ const routes: readonly Route[] = [
   { type: 'page', slug: '关于' },
   // why pagination uses `list` and pages use `page`
   { type: 'page', slug: '2' },
+  { type: 'archive' },
+  { type: 'tag', tag: '随笔' },
+  // a tag is free text, so it may carry what a slug never can
+  { type: 'tag', tag: 'C# / .NET?' },
 ]
 
 function locate(href: string, config: RouterConfig): URL {
@@ -33,9 +37,32 @@ describe('route symmetry', () => {
       it(`${label} round-trips ${JSON.stringify(route)}`, () => {
         const href = serialize(route, config)
         expect(parse(locate(href, config), config)).toEqual(route)
+        expect(parseFragment(locate(href, config), config)).toBe('')
+      })
+
+      it(`${label} round-trips ${JSON.stringify(route)} with a fragment`, () => {
+        const url = locate(serialize(route, config, '第一节-intro'), config)
+        expect(parse(url, config)).toEqual(route)
+        expect(parseFragment(url, config)).toBe('第一节-intro')
       })
     }
   }
+})
+
+describe('fragments', () => {
+  it('follow a second # in hash mode, since the first belongs to the route', () => {
+    expect(serialize({ type: 'article', slug: 'hello' }, hash, 'intro')).toBe('#/post/hello#intro')
+  })
+
+  it('are the URL’s own in path mode', () => {
+    expect(serialize({ type: 'article', slug: 'hello' }, pathSub, 'intro')).toBe('/my-blog/post/hello/#intro')
+  })
+
+  it('come back empty from malformed percent-encoding instead of throwing', () => {
+    const url = new URL('http://example.com/#/post/hello#%E0%A4%A')
+    expect(parse(url, hash)).toEqual({ type: 'article', slug: 'hello' })
+    expect(parseFragment(url, hash)).toBe('')
+  })
 })
 
 describe('hash mode', () => {
@@ -43,6 +70,7 @@ describe('hash mode', () => {
     expect(serialize({ type: 'article', slug: 'hello' }, hash)).toBe('#/post/hello')
     expect(serialize({ type: 'home', page: 1 }, hash)).toBe('#/')
     expect(serialize({ type: 'home', page: 3 }, hash)).toBe('#/list/3')
+    expect(serialize({ type: 'archive' }, hash)).toBe('#/archive')
   })
 
   it('percent-encodes CJK slugs', () => {
@@ -87,6 +115,8 @@ describe('rejections', () => {
     ['#/list/1.5', 'fractional page'],
     ['#/nope/x', 'unknown prefix'],
     ['#/post/a/b', 'too many segments'],
+    ['#/tag', 'tag without a name'],
+    ['#/archive/2', 'archive with a page'],
   ])('rejects %s (%s)', href => {
     expect(parse(new URL(href, 'http://example.com/'), hash)).toBeNull()
   })

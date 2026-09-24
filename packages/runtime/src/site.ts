@@ -1,15 +1,19 @@
 import type { RendererRegistry } from './plugins.ts'
-import type { ArticleEntry, Manifest, PageEntry, RouterConfig } from '@bbg-next/core'
-import type { NavLink, ShellModel } from '@bbg-next/view'
+import type { Wording } from './wording.ts'
+import type { ArticleEntry, Manifest, PageEntry, Route, RouterConfig } from '@bbg-next/core'
+import type { ShellModel } from '@bbg-next/view'
 import { manifestPath, serializeRoute } from '@bbg-next/core'
+import { wordingFor } from './wording.ts'
 
 export interface Site {
   readonly manifest: Manifest
   readonly router: RouterConfig
-  readonly shell: ShellModel
+  /** For what is on screen: the `current` flags follow the route. */
+  readonly shell: (route: Route | null) => ShellModel
   readonly renderers: RendererRegistry
   readonly bySlug: ReadonlyMap<string, { entry: ArticleEntry; unlisted: boolean }>
   readonly pageBySlug: ReadonlyMap<string, PageEntry>
+  readonly words: Wording
 }
 
 export function resolve(path: string): string {
@@ -43,12 +47,17 @@ export function createSite(manifest: Manifest, renderers: RendererRegistry): Sit
   for (const entry of manifest.articles) bySlug.set(entry.slug, { entry, unlisted: false })
   for (const entry of manifest.hidden) bySlug.set(entry.slug, { entry, unlisted: true })
 
-  const links: NavLink[] = manifest.pages
+  const nav = manifest.pages
     .filter(page => page.showInNav)
     .map(page => ({
+      slug: page.slug,
       label: page.navLabel,
       href: serializeRoute({ type: 'page', slug: page.slug }, router),
     }))
+
+  const homeHref = serializeRoute({ type: 'home', page: 1 }, router)
+  const archiveHref = serializeRoute({ type: 'archive' }, router)
+  const footerHtml = manifest.site.footer === '' ? '' : renderers.markdown(manifest.site.footer, {})
 
   return {
     manifest,
@@ -56,12 +65,18 @@ export function createSite(manifest: Manifest, renderers: RendererRegistry): Sit
     bySlug,
     renderers,
     pageBySlug: new Map(manifest.pages.map(page => [page.slug, page])),
-    shell: {
+    words: wordingFor(manifest.site.lang),
+    shell: route => ({
       title: manifest.site.title,
       description: manifest.site.description,
-      footerHtml: manifest.site.footer === '' ? '' : renderers.markdown(manifest.site.footer, {}),
-      homeHref: serializeRoute({ type: 'home', page: 1 }, router),
-      links,
-    },
+      footerHtml,
+      home: { href: homeHref, current: route?.type === 'home' },
+      archive: { href: archiveHref, current: route?.type === 'archive' || route?.type === 'tag' },
+      links: nav.map(({ slug, label, href }) => ({
+        label,
+        href,
+        current: route?.type === 'page' && route.slug === slug,
+      })),
+    }),
   }
 }

@@ -1,4 +1,7 @@
 // The runtime/plugin contract. A plugin extends what gets rendered, or reacts to what was.
+// It may also define a `bbg-<its name>` element, which authors place with a fence of that name: the fence's content arrives in `data-source`, and in `data-base` the directory the document resolves its own relative links against.
+// Style what you draw unlayered, so a theme's resets cannot flatten it, and document any `--bbg-<your name>-*` property a theme may set to fit you in.
+// Give your buttons the `bbg-button` class: the runtime draws a plain one from the shared tokens, a theme may draw it its own way or add effects such as a ripple, and any rule of yours outranks the runtime's.
 
 import type { RenderContext, Route, SiteSettings } from '@bbg-next/core'
 import type { MarkdownIt } from 'markdown-it'
@@ -9,27 +12,37 @@ export type { RenderContext, Route, SiteSettings } from '@bbg-next/core'
 /** Front matter is already stripped. */
 export type Renderer = (source: string, context: RenderContext) => string
 
-/** Return a teardown and the runtime calls it before the next navigation. */
-export type RenderedHandler = (view: RenderedView) => void | (() => void)
+/** Called after every navigation with the view on screen. Its element stays from one view of a kind to the next, and what you put in it stays with it: keep what still holds, change only what differs, and take out what no longer belongs. */
+export type RenderedHandler = (view: RenderedView) => void
 
 export type ColorScheme = 'light' | 'dark'
 
 export interface RenderedView {
-  /** Already connected, and light DOM, so it is queryable. */
+  /** Already connected, and light DOM, so it is queryable. A different element than last time means the last one, and all you put in it, is gone. */
   readonly element: HTMLElement
   readonly route: Route
+  /** Whether a comment thread belongs here: only on an article or a page, and only if its front matter leaves `comments` on. */
+  readonly comments: boolean
 }
 
 /** What `setup` returns, handed to plugins that declared this one as a dependency. */
 export type PluginApi = object
 
+/** The theme installed, for a plugin made to go with a particular one. */
+export interface ThemeInfo {
+  readonly name: string
+  readonly version: string
+}
+
 export interface PluginContext {
   /** From `data/plugins/<name>.json`, `{}` without one. Unvalidated: validate what you read. */
   readonly options: Readonly<Record<string, unknown>>
+  /** `site.seed` is the site's brand colour, if it set one, for a plugin that derives shades of its own. */
   readonly site: SiteSettings
+  readonly theme: ThemeInfo
   /** Format-agnostic work goes here. */
   readonly onRendered: (handler: RenderedHandler) => void
-  /** Called with the scheme now, and again whenever it changes. The theme's own colours are not yours to read. */
+  /** Called with the scheme now, and again whenever it changes. A theme's colours reach you only through the shared tokens `--bbg-fg`, `--bbg-muted`, `--bbg-accent`, `--bbg-on-accent`, `--bbg-bg`, `--bbg-surface`, `--bbg-border`, `--bbg-radius` and `--bbg-shadow`, any of which may be unset, so read each with a fallback. */
   readonly onColorScheme: (handler: (scheme: ColorScheme) => void) => void
   /** Claim a suffix, no dot. Must match `extensions` in plugin.json, which is what sync reads. */
   readonly registerRenderer: (extension: string, render: Renderer) => void
@@ -62,6 +75,11 @@ export function readStrings(options: Options, key: string, fallback: readonly st
   if (!Array.isArray(value)) return fallback
 
   return value.every(item => typeof item === 'string') ? value : fallback
+}
+
+/** A word you draw yourself, in the site's language, keyed on its first subtag. `fallback` is what every other language gets. */
+export function wordFor(lang: string, words: Readonly<Record<string, string>>, fallback: string): string {
+  return words[lang.slice(0, 2).toLowerCase()] ?? fallback
 }
 
 /** Keyed on `id`: calling it again replaces that stylesheet, which is how a plugin repaints. */
