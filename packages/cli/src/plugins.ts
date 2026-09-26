@@ -2,6 +2,7 @@ import type { Diagnostic, PluginIndexEntry, PluginMeta, Vfs } from '@bbg-next/co
 import {
   builtinPlugins,
   defaultExtensions,
+  parseOptions,
   parsePluginMeta,
   pluginConfigDir,
   pluginConfigPath,
@@ -115,11 +116,6 @@ function resolvePluginOrder(
 async function readConfig(vfs: Vfs, meta: PluginMeta, diagnostics: Diagnostic[]): Promise<InstalledPlugin | null> {
   const path = pluginConfigPath(meta.name)
   const bare = { meta, options: {}, hasConfig: false }
-  const reject = (message: string): null => {
-    diagnostics.push({ level: 'error', file: path, message })
-
-    return null
-  }
 
   if (!(await vfs.exists(path))) return bare
 
@@ -129,18 +125,13 @@ async function readConfig(vfs: Vfs, meta: PluginMeta, diagnostics: Diagnostic[])
     return bare
   }
 
-  let parsed: unknown
   try {
-    parsed = JSON.parse(await vfs.readFile(path))
+    return { meta, options: parseOptions(await vfs.readFile(path)), hasConfig: true }
   } catch (cause) {
-    return reject(`Not valid JSON: ${(cause as Error).message}`)
-  }
+    diagnostics.push({ level: 'error', file: path, message: (cause as Error).message })
 
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    return reject('Must hold a JSON object of options.')
+    return null
   }
-
-  return { meta, options: parsed as Record<string, unknown>, hasConfig: true }
 }
 
 /** Read, never executed: sync must not run plugin code, and a browser bundle may not survive Node. */

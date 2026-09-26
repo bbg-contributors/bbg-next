@@ -20,7 +20,7 @@ const manifest: Manifest = {
     router: { mode: 'hash', base: '/' },
     plugins: [],
   },
-  theme: { name: 'default-theme', version: '1.0.0' },
+  theme: { name: 'default-theme', version: '1.0.0', hasConfig: false },
   plugins: [],
   articles: [
     {
@@ -96,10 +96,11 @@ const files: Readonly<Record<string, string>> = {
   '/data/pages/about.md': `---\ntitle: About\n---\n\nAbout body.\n\n\`\`\`bbg-encrypted\n${locked}\n\`\`\`\n`,
 }
 
-/** Serves the fixture site, with `override` merged into its manifest. */
-function stubFetch(override: Partial<Manifest> = {}): void {
+/** Serves the fixture site, with `override` merged into its manifest and `extra` beside its files. */
+function stubFetch(override: Partial<Manifest> = {}, extra: Readonly<Record<string, string>> = {}): void {
   const served: Readonly<Record<string, string>> = {
     ...files,
+    ...extra,
     '/data/site.json': JSON.stringify({ ...manifest, ...override }),
   }
 
@@ -118,9 +119,19 @@ const probePlugin: PluginIndexEntry = {
   hasConfig: false,
 }
 
-/** The fixture site with one plugin enabled, for tests that need the runtime to load one. */
-export function stubFetchWithProbe(site: Partial<SiteSettings> = {}): void {
-  stubFetch({ plugins: [probePlugin], site: { ...manifest.site, ...site, plugins: [probePlugin.name] } })
+/** The fixture site with one plugin enabled, for tests that need the runtime to load one, and its theme configured with `themeOptions` if given. */
+export function stubFetchWithProbe(
+  site: Partial<SiteSettings> = {},
+  themeOptions?: Readonly<Record<string, unknown>>,
+): void {
+  stubFetch(
+    {
+      plugins: [probePlugin],
+      site: { ...manifest.site, ...site, plugins: [probePlugin.name] },
+      theme: { ...manifest.theme, hasConfig: themeOptions !== undefined },
+    },
+    themeOptions === undefined ? {} : { '/data/themes/default-theme.json': JSON.stringify(themeOptions) },
+  )
 }
 
 // Navigation is fire-and-forget and awaits a fetch, so draining microtasks is not enough.

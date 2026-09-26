@@ -19,7 +19,7 @@ const manifest: Manifest = {
     router: { mode: 'hash', base: '/' },
     plugins: [],
   },
-  theme: { name: 'default-theme', version: '1.0.0' },
+  theme: { name: 'default-theme', version: '1.0.0', hasConfig: false },
   plugins: [],
   articles: [],
   hidden: [],

@@ -1,7 +1,8 @@
-import type { Diagnostic, PluginMeta, Vfs } from '@bbg-next/core'
+import type { Diagnostic, PluginMeta } from '@bbg-next/core'
 import { pluginConfigPath, pluginMetaPath, pluginPath } from '@bbg-next/core'
 import { describe, expect, it } from 'vitest'
 import { loadPlugins } from '../src/plugins.ts'
+import { readOnlyVfs } from './readOnlyVfs.ts'
 
 function meta(name: string, extra: Partial<PluginMeta> = {}): PluginMeta {
   return {
@@ -18,33 +19,6 @@ function meta(name: string, extra: Partial<PluginMeta> = {}): PluginMeta {
 interface Install {
   readonly meta: PluginMeta
   readonly options?: Readonly<Record<string, unknown>>
-}
-
-/** Only the reads `loadPlugins` makes; writing would be a bug. */
-function readOnlyVfs(files: Readonly<Record<string, string>>): Vfs {
-  const unused = (): never => {
-    throw new Error('loadPlugins must not write')
-  }
-
-  return {
-    exists: async path => Object.hasOwn(files, path),
-
-    readFile: async path => {
-      const content = files[path]
-      if (content === undefined) throw new Error(`ENOENT: ${path}`)
-
-      return content
-    },
-
-    list: async dir =>
-      Object.keys(files)
-        .filter(path => path.startsWith(`${dir}/`))
-        .map(path => path.slice(dir.length + 1)),
-
-    writeFile: unused,
-    remove: unused,
-    copyIn: unused,
-  }
 }
 
 /** Lays the installs out on disk and loads them in the order given, as sync does. */

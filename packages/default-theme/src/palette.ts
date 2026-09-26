@@ -1,6 +1,5 @@
 import type { ColorScheme } from '@bbg-next/view'
 import type { DynamicScheme } from '@material/material-color-utilities'
-// Held at 0.3: 0.4 ships extensionless relative imports, which neither Node nor `nodenext` resolve.
 import { argbFromHex, DynamicColor, Hct, hexFromArgb, SchemeFidelity } from '@material/material-color-utilities'
 
 const defaultSeed = '#0d6efd'
@@ -34,7 +33,7 @@ function slots(scheme: DynamicScheme): Record<string, number> {
 function css(scheme: DynamicScheme): string {
   const declarations = Object.entries(slots(scheme)).map(([slot, argb]) => `--color-${slot}:${hexFromArgb(argb)};`)
 
-  return `:root{color-scheme:${scheme.isDark ? 'dark' : 'light'};--tag-lightness:${scheme.isDark ? '74%' : '38%'};${declarations.join('')}}`
+  return `:root{color-scheme:${scheme.isDark ? 'dark' : 'light'};--tag-lightness:${scheme.isDark ? '74%' : '38%'};--wallpaper-brightness:${scheme.isDark ? 0.4 : 1};${declarations.join('')}}`
 }
 
 /** Both schemes at once, from the site's seed or this theme's own. */

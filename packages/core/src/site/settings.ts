@@ -31,6 +31,22 @@ export function parseThemeMeta(input: unknown): ThemeMeta {
   return result.output
 }
 
+/** A theme's or a plugin's config: any JSON object, left for its reader to validate. */
+export function parseOptions(text: string): Readonly<Record<string, unknown>> {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch (cause) {
+    throw new SiteError(`Not valid JSON: ${(cause as Error).message}`)
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new SiteError('Must hold a JSON object of options.')
+  }
+
+  return parsed as Readonly<Record<string, unknown>>
+}
+
 /** Only the hand-maintained `site` half; the rest is always rebuilt from front matter. */
 export async function loadSiteSettings(vfs: Vfs): Promise<SiteSettings> {
   if (!(await vfs.exists(manifestPath))) {

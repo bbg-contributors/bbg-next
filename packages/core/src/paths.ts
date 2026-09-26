@@ -2,6 +2,7 @@ export const dataDir = 'data'
 export const articlesDir = `${dataDir}/articles`
 export const pagesDir = `${dataDir}/pages`
 export const pluginConfigDir = `${dataDir}/plugins`
+const themeConfigDir = `${dataDir}/themes`
 export const manifestFile = 'site.json'
 export const manifestPath = `${dataDir}/${manifestFile}`
 
@@ -20,6 +21,10 @@ export function themePath(name: string): string {
 
 export function themeMetaPath(name: string): string {
   return `${themeDir(name)}/theme.json`
+}
+
+export function themeConfigPath(name: string): string {
+  return `${themeConfigDir}/${encodeURIComponent(name)}.json`
 }
 
 export function pluginDir(name: string): string {

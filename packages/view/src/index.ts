@@ -107,6 +107,8 @@ export interface ThemeContext {
   readonly colorScheme: ColorSchemeControl
   /** The site's brand colour as `#rrggbb`, if it set one. How it becomes a palette is entirely the theme's call. */
   readonly seed: string | undefined
+  /** From `data/themes/<name>.json`, `{}` without one. Unvalidated: validate what you read. */
+  readonly options: Readonly<Record<string, unknown>>
   /** In load order. */
   readonly plugins: readonly PluginInfo[]
 }

@@ -35,6 +35,13 @@ describe('palettes', () => {
     expect(dark).toContain('color-scheme:dark')
   })
 
+  it('dims a wallpaper in the dark only', () => {
+    const { light, dark } = palettes(undefined)
+
+    expect(light).toContain('--wallpaper-brightness:1;')
+    expect(dark).toContain('--wallpaper-brightness:0.4;')
+  })
+
   it('is the same for the same seed, and different for another', () => {
     expect(palettes('#e8590c')).toEqual(palettes('#e8590c'))
     expect(palettes('#e8590c')).not.toEqual(palettes('#2f9e44'))

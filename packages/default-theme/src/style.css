@@ -142,8 +142,8 @@
     }
   }
 
-  /* A halo in the page's own colour keeps the banner's text clear of a wallpaper. Only then: Chrome draws it a shade darker than a bare dark page. */
-  :root[data-wallpaper] .bbg-hero {
+  /* A halo in the page's own colour keeps the banner's text clear of a wallpaper. Only once one is shown: Chrome draws it a shade darker than a bare dark page. */
+  body:has(> .bbg-wallpaper[data-loaded]) .bbg-hero {
     text-shadow:
       0 0 0.25rem var(--color-page),
       0 0 0.75rem var(--color-page),

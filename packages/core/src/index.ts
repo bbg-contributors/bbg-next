@@ -16,6 +16,7 @@ export {
   pluginPath,
   pluginsDir,
   runtimePath,
+  themeConfigPath,
   themeDir,
   themeMetaPath,
   themePath,
@@ -42,5 +43,5 @@ export {
   type ThemeIndexEntry,
   type ThemeMeta,
 } from './site/schema.ts'
-export { loadSiteSettings, parsePluginMeta, parseSiteSettings, parseThemeMeta } from './site/settings.ts'
+export { loadSiteSettings, parseOptions, parsePluginMeta, parseSiteSettings, parseThemeMeta } from './site/settings.ts'
 export type { Vfs } from './vfs.ts'

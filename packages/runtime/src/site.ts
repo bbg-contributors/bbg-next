@@ -2,7 +2,7 @@ import type { RendererRegistry } from './plugins.ts'
 import type { Wording } from './wording.ts'
 import type { ArticleEntry, Manifest, PageEntry, Route, RouterConfig } from '@bbg-next/core'
 import type { ShellModel } from '@bbg-next/view'
-import { manifestPath, serializeRoute } from '@bbg-next/core'
+import { manifestPath, parseOptions, serializeRoute } from '@bbg-next/core'
 import { wordingFor } from './wording.ts'
 
 export interface Site {
@@ -33,6 +33,21 @@ export async function loadManifest(): Promise<Manifest> {
   if (!response.ok) throw new Error(`Cannot load ${manifestPath}: ${response.status}`)
 
   return (await response.json()) as Manifest
+}
+
+/** A theme's or a plugin's config. One that cannot be read leaves it on `{}`: a blog is no place to fail loudly at a visitor. */
+export async function loadOptions(path: string): Promise<Readonly<Record<string, unknown>>> {
+  try {
+    // no-cache like the manifest: a deploy changes it.
+    const response = await fetch(resolve(path), { cache: 'no-cache' })
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+
+    return parseOptions(await response.text())
+  } catch (cause) {
+    console.error(`bbg-next: cannot read ${path}`, cause)
+
+    return {}
+  }
 }
 
 /** Split from `loadManifest` so plugins set up in between: the footer is rendered here. */

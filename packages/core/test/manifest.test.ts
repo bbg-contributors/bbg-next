@@ -6,7 +6,7 @@ import { SiteSettingsSchema } from '../src/site/schema.ts'
 import { createMemoryVfs } from './memoryVfs.ts'
 
 const site = v.parse(SiteSettingsSchema, { title: 'Test blog', postsPerPage: 2 })
-const theme: ThemeIndexEntry = { name: 'default-theme', version: '1.2.3' }
+const theme: ThemeIndexEntry = { name: 'default-theme', version: '1.2.3', hasConfig: false }
 
 function article(front: string, body = 'Body text.\n'): string {
   return `---\n${front}\n---\n\n${body}`

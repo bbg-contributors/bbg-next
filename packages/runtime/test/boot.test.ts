@@ -80,18 +80,21 @@ describe('what the theme is told', () => {
     return received
   }
 
-  it('hands over the seed and the plugins that started', async () => {
-    stubFetchWithProbe({ seed: '#e8590c' })
+  it('hands over the seed, the theme’s own config and the plugins that started', async () => {
+    stubFetchWithProbe({ seed: '#e8590c' }, { wallpaper: 'background.webp' })
 
     const context = await registered()
     expect(context?.seed).toBe('#e8590c')
+    expect(context?.options).toEqual({ wallpaper: 'background.webp' })
     expect(context?.plugins).toEqual([{ name: 'probe', version: '1.0.0' }])
   })
 
-  it('leaves the seed out when the site set none, so the theme falls back to its own', async () => {
+  it('leaves out what the site did not set, for the theme to fall back on its own', async () => {
     stubFetchWithProbe()
 
-    expect((await registered())?.seed).toBeUndefined()
+    const context = await registered()
+    expect(context?.seed).toBeUndefined()
+    expect(context?.options).toEqual({})
   })
 })
 

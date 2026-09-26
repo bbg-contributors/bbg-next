@@ -10,27 +10,13 @@ import type {
 } from '@bbg-next/plugin'
 import type { ColorSchemeControl, PluginInfo } from '@bbg-next/view'
 import { createMarkdown, defaultExtensions, pluginConfigPath, pluginPath, renderMarkdown } from '@bbg-next/core'
-import { resolve } from './site.ts'
+import { loadOptions, resolve } from './site.ts'
 
 type Options = PluginContext['options']
 
 export type PluginLoader = (url: string) => Promise<PluginModule>
 
 const importPlugin: PluginLoader = async url => (await import(/* @vite-ignore */ url)) as PluginModule
-
-// no-cache like the manifest: a deploy changes it.
-async function fetchConfig(name: string): Promise<Options> {
-  const path = pluginConfigPath(name)
-  const response = await fetch(resolve(path), { cache: 'no-cache' })
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText} for ${path}`)
-
-  const parsed: unknown = await response.json()
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    throw new TypeError(`${path} does not hold a JSON object`)
-  }
-
-  return parsed as Options
-}
 
 export interface RendererRegistry {
   /** By suffix, falling back to markdown. */
@@ -103,22 +89,18 @@ export async function setupPlugins(
     // A skipped plugin is never awaited, and an unhandled rejection is noise.
     void loading.catch(() => {})
 
-    const options = entry.hasConfig
-      ? fetchConfig(entry.name).catch((cause: unknown): Options => {
-          report(`cannot read the config for ${entry.name}`, cause)
-
-          return {}
-        })
-      : Promise.resolve<Options>({})
+    const options = entry.hasConfig ? loadOptions(pluginConfigPath(entry.name)) : Promise.resolve<Options>({})
 
     return { entry, loading, options }
   })
+
+  const theme = { name: manifest.theme.name, version: manifest.theme.version }
 
   function contextFor(entry: PluginIndexEntry, options: Options): PluginContext {
     return {
       options,
       site: manifest.site,
-      theme: manifest.theme,
+      theme,
       onRendered: rendered.add,
       // Subscribed only once it has survived the first call, so a plugin that fails to start stays out.
       onColorScheme: handler => {

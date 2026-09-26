@@ -1,14 +1,14 @@
 import type { PluginLoader } from './plugins.ts'
 import type { RenderContext, Route } from '@bbg-next/core'
 import type { ThemeModule } from '@bbg-next/view'
-import { outletElement, parseFragment, parseRoute, serializeRoute, themePath } from '@bbg-next/core'
+import { outletElement, parseFragment, parseRoute, serializeRoute, themeConfigPath, themePath } from '@bbg-next/core'
 import { injectStyle, themeElements } from '@bbg-next/view'
 import { defineEncrypted } from './encrypted.ts'
 import { setupPlugins } from './plugins.ts'
 import { mount, place, renderRoute, setModel } from './render.ts'
 import { createColorScheme } from './scheme.ts'
 import { createVisits, reveal, scrollBack } from './scroll.ts'
-import { createSite, loadManifest, resolve } from './site.ts'
+import { createSite, loadManifest, loadOptions, resolve } from './site.ts'
 import { css } from './style.ts'
 
 /** Injectable: the default imports an absolute http URL, which only a browser can do. */
@@ -27,6 +27,9 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
   const loadingTheme = loadTheme(resolve(themePath(manifest.site.theme)))
   // or a 404 here looks unhandled until the await below
   void loadingTheme.catch(() => {})
+  const themeOptions = manifest.theme.hasConfig
+    ? loadOptions(themeConfigPath(manifest.site.theme))
+    : Promise.resolve({})
 
   // One for the plugins and the theme alike, so the two can never disagree.
   const scheme = createColorScheme()
@@ -41,7 +44,12 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
   defineEncrypted({ render: markdown => site.renderers.markdown(markdown, context), words: site.words })
 
   const theme = await loadingTheme
-  theme.register({ colorScheme: scheme.colorScheme, seed: manifest.site.seed, plugins: plugins.started })
+  theme.register({
+    colorScheme: scheme.colorScheme,
+    seed: manifest.site.seed,
+    options: await themeOptions,
+    plugins: plugins.started,
+  })
 
   const locate = (url: URL): { route: Route | null; fragment: string } => ({
     route: parseRoute(url, site.router),

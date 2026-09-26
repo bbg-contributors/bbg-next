@@ -24,7 +24,7 @@ function manifestWith(plugins: readonly PluginIndexEntry[]): Manifest {
       router: { mode: 'hash', base: '/' },
       plugins: plugins.map(item => item.name),
     },
-    theme: { name: 'default-theme', version: '1.0.0' },
+    theme: { name: 'default-theme', version: '1.0.0', hasConfig: false },
     plugins,
     articles: [],
     hidden: [],

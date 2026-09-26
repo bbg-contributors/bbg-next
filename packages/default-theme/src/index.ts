@@ -10,6 +10,7 @@ import { BbgPageView } from './elements/BbgPageView.ts'
 import { palettes } from './palette.ts'
 import { ripples } from './ripple.ts'
 import css from './style.css?inline'
+import { layWallpaper } from './wallpaper.ts'
 
 export function register(context: ThemeContext): void {
   defineTheme('bbg-default-theme', css, {
@@ -23,8 +24,6 @@ export function register(context: ThemeContext): void {
 
   startAppearance(context.colorScheme, palettes(context.seed))
   ripples()
-  document.documentElement.toggleAttribute(
-    'data-wallpaper',
-    context.plugins.some(plugin => plugin.name === 'wallpaper'),
-  )
+  const { wallpaper } = context.options
+  if (typeof wallpaper === 'string') layWallpaper(wallpaper)
 }

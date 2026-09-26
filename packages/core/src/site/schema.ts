@@ -8,6 +8,7 @@ export const SiteSettingsSchema = v.object({
   /** BCP-47. Lands verbatim in `<html lang>`. */
   lang: v.optional(v.string(), 'zh-CN'),
   footer: v.optional(v.string(), ''),
+  /** Options live in `data/themes/<name>.json`. */
   theme: v.optional(v.string(), 'default-theme'),
   postsPerPage: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1)), 10),
   router: v.optional(
@@ -94,6 +95,8 @@ export interface PluginIndexEntry {
 export interface ThemeIndexEntry {
   readonly name: string
   readonly version: string
+  /** Sync found a usable `data/themes/<name>.json`; without one the theme gets `{}`. */
+  readonly hasConfig: boolean
 }
 
 export const schemaVersion = 1

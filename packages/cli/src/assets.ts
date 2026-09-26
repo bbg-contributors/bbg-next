@@ -19,6 +19,7 @@ import {
   pluginPath,
   pluginsDir,
   runtimePath,
+  themeConfigPath,
   themeDir,
   themeMetaPath,
   themePath,
@@ -26,6 +27,7 @@ import {
 } from '@bbg-next/core'
 import semver from 'semver'
 import { loadPlugins } from './plugins.ts'
+import { loadTheme } from './themes.ts'
 
 function distOf(packageName: string): string {
   return join(dirname(fileURLToPath(import.meta.resolve(`${packageName}/package.json`))), 'dist')
@@ -82,7 +84,6 @@ const pluginKind: AssetKind<PluginMeta> = {
     ['hitokoto', '@bbg-next/plugin-hitokoto'],
     ['image-viewer', '@bbg-next/plugin-image-viewer'],
     ['waline', '@bbg-next/plugin-waline'],
-    ['wallpaper', '@bbg-next/plugin-wallpaper'],
   ]),
 }
 
@@ -164,20 +165,6 @@ async function syncTheme(vfs: Vfs, theme: string, force: boolean, diagnostics: D
   return null
 }
 
-/** What the manifest records of the theme, read back after any refresh. */
-async function installedTheme(vfs: Vfs, name: string): Promise<ThemeIndexEntry> {
-  const path = themeMetaPath(name)
-
-  let meta: ThemeMeta
-  try {
-    meta = parseThemeMeta(JSON.parse(await vfs.readFile(path)))
-  } catch (cause) {
-    throw new Error(`${path} is unusable: ${(cause as Error).message}. Reinstall it with \`bbg-next theme add <dir>\`.`)
-  }
-
-  return { name: meta.name, version: meta.version }
-}
-
 async function syncPlugins(
   vfs: Vfs,
   names: readonly string[],
@@ -216,12 +203,15 @@ export async function syncAssets(vfs: Vfs, site: SiteSettings, force: boolean): 
 
   await vfs.copyIn(await bundleIn(distOf('@bbg-next/runtime')), runtimePath)
 
-  // Both before loadPlugins, which reads the versions they refresh.
+  // Both before loading, which reads the versions they refresh.
   const refreshed = [
     await syncTheme(vfs, site.theme, force, diagnostics),
     ...(await syncPlugins(vfs, site.plugins, force, diagnostics)),
   ]
-  const theme = await installedTheme(vfs, site.theme)
+  // Laid down for the author to fill in, as `plugin add` does for a plugin, and never over one they wrote.
+  const themeConfig = themeConfigPath(site.theme)
+  if (!(await vfs.exists(themeConfig))) await vfs.writeFile(themeConfig, '{}\n')
+  const theme = await loadTheme(vfs, site.theme, diagnostics)
   const plugins = await loadPlugins(vfs, site.plugins, diagnostics)
 
   await prune(vfs, themesDir, [themeDir(site.theme)])
