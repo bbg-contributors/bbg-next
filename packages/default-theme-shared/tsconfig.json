@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2023", "dom"],
+    // no ambient @types: this is bundled into both builds of the default theme
+    "types": []
+  },
+  "include": ["src"]
+}

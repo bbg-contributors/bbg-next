@@ -15,13 +15,6 @@ export function main(...children: Node[]): HTMLElement {
   return wrapper
 }
 
-/** The slide-in the original played on every navigation, played here over content that has just changed. */
-export function enter(node: HTMLElement): void {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-
-  node.animate({ opacity: [0, 1], translate: ['-20px', '0'] }, { duration: 800, easing: 'ease' })
-}
-
 /** The banner a view opens with, carrying its `h1`. It has no fill of its own: the page's ground, or a wallpaper, shows through. */
 export function banner(): HTMLElement {
   return el('div', 'bbg-hero pt-13 pb-12')

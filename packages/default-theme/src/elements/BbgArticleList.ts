@@ -1,9 +1,9 @@
-import type { Labels } from '../labels.ts'
+import type { Labels } from '@bbg-next/default-theme-shared'
 import type { ArticleCard, ArticleListModel, PageLink } from '@bbg-next/view'
+import { enter, labels } from '@bbg-next/default-theme-shared'
 import { Pin } from 'lucide'
-import { labels } from '../labels.ts'
 import { el, icon, link, markCurrent, ModelElement } from './base.ts'
-import { enter, main } from './layout.ts'
+import { main } from './layout.ts'
 import { metaRow } from './meta.ts'
 
 function title(entry: ArticleCard): HTMLElement {

@@ -1,5 +1,3 @@
-import { el } from './elements/base.ts'
-
 // Matched as the stylesheet matches them: the theme's own controls by the `ripple` utility, the runtime's and plugins' buttons by `bbg-button`.
 const controls = '.ripple, .bbg-button'
 
@@ -11,7 +9,8 @@ function wave(control: HTMLElement, { clientX, clientY }: PointerEvent): () => P
   const diameter = Math.max(Math.hypot(width, height), 48)
 
   // Over the whole control, border and corners included, where the control's own overflow would clip inside its border.
-  const surface = el('span', 'pointer-events-none absolute overflow-hidden rounded-[inherit] motion-reduce:hidden')
+  const surface = document.createElement('span')
+  surface.className = 'pointer-events-none absolute overflow-hidden rounded-[inherit] motion-reduce:hidden'
   Object.assign(surface.style, {
     top: `${-control.clientTop}px`,
     left: `${-control.clientLeft}px`,
@@ -19,7 +18,8 @@ function wave(control: HTMLElement, { clientX, clientY }: PointerEvent): () => P
     height: `${height}px`,
   })
 
-  const node = el('span', 'absolute rounded-full bg-current/12')
+  const node = document.createElement('span')
+  node.className = 'absolute rounded-full bg-current/12'
   Object.assign(node.style, {
     left: `${x - diameter / 2}px`,
     top: `${y - diameter / 2}px`,

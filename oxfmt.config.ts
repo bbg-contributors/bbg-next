@@ -12,5 +12,9 @@ export default oxfmt({
         },
       },
     },
+    {
+      files: ['packages/default-theme-vue/src/**'],
+      options: { sortTailwindcss: { stylesheet: './packages/default-theme-vue/src/style.css' } },
+    },
   ],
 })

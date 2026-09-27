@@ -1,6 +1,7 @@
 import type { PageModel } from '@bbg-next/view'
+import { enter } from '@bbg-next/default-theme-shared'
 import { el, ModelElement } from './base.ts'
-import { banner, enter, main, retitle } from './layout.ts'
+import { banner, main, retitle } from './layout.ts'
 
 export class BbgPageView extends ModelElement<PageModel> {
   readonly #banner = banner()

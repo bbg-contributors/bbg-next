@@ -1,28 +1,11 @@
-import type { Labels } from '../labels.ts'
+import type { Labels } from '@bbg-next/default-theme-shared'
 import type { ArchiveModel, ArticleCard } from '@bbg-next/view'
 import type { IconNode } from 'lucide'
+import { enter, group, labels, tagColor } from '@bbg-next/default-theme-shared'
 import { Calendar, FileText, Tags } from 'lucide'
-import { labels } from '../labels.ts'
 import { el, icon, link, ModelElement } from './base.ts'
-import { banner, enter, main, panel, retitle } from './layout.ts'
-import { stamps, tagColor } from './meta.ts'
-
-/** In the order the articles come, newest first, so the liveliest group leads. */
-function group<Key>(
-  articles: readonly ArticleCard[],
-  keys: (card: ArticleCard) => readonly Key[],
-): Map<Key, ArticleCard[]> {
-  const groups = new Map<Key, ArticleCard[]>()
-  for (const card of articles) {
-    for (const key of keys(card)) {
-      const cards = groups.get(key)
-      if (cards === undefined) groups.set(key, [card])
-      else cards.push(card)
-    }
-  }
-
-  return groups
-}
+import { banner, main, panel, retitle } from './layout.ts'
+import { stamps } from './meta.ts'
 
 function coloured(name: string): HTMLElement {
   const tag = el('span', undefined, `#${name}`)
@@ -114,11 +97,7 @@ function tabs(choices: readonly (readonly [label: string, content: Node[]])[]): 
 function taggedTitle(tag: string, t: Labels): HTMLElement {
   const [before, after] = t.tagged
   const title = el('span')
-
-  title.append(icon(Tags), ' ')
-  if (before !== '') title.append(`${before} `)
-  title.append(coloured(tag))
-  if (after !== '') title.append(` ${after}`)
+  title.append(icon(Tags), ` ${before}`, coloured(tag), after)
 
   return title
 }

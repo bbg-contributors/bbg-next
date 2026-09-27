@@ -22,13 +22,12 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
+    "@bbg-next/default-theme-shared": "workspace:*",
     "@bbg-next/view": "workspace:*",
-    "@material/material-color-utilities": "^0.4.0",
     "lucide": "^1.48.0"
   },
   "devDependencies": {
     "@bbg-next/runtime": "workspace:*",
-    "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/vite": "^4.3.3",
     "tailwindcss": "^4.3.3"
   }

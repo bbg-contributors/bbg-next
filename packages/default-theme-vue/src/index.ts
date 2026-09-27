@@ -1,13 +1,14 @@
 import type { ThemeContext } from '@bbg-next/view'
-import { defineTheme, injectStyle } from '@bbg-next/view'
-import { defineCustomElement } from 'vue'
+import { decorate } from '@bbg-next/default-theme-shared'
+import { defineTheme } from '@bbg-next/view'
+import { createApp, defineCustomElement } from 'vue'
 import BbgArchiveView from './components/BbgArchiveView.vue'
 import BbgArticleList from './components/BbgArticleList.vue'
 import BbgArticleView from './components/BbgArticleView.vue'
 import BbgFooter from './components/BbgFooter.vue'
 import BbgNav from './components/BbgNav.vue'
 import BbgPageView from './components/BbgPageView.vue'
-import dark from './dark.css?inline'
+import Tools from './components/Tools.vue'
 import css from './style.css?inline'
 
 // shadowRoot: false keeps the views in light DOM, so one stylesheet covers the page too.
@@ -24,8 +25,8 @@ export function register(context: ThemeContext): void {
     page: defineCustomElement(BbgPageView, lightDom),
   })
 
-  // After the main stylesheet, so this one wins.
-  context.colorScheme.subscribe(
-    scheme => void injectStyle('bbg-default-theme-vue-scheme', scheme === 'dark' ? dark : ''),
-  )
+  decorate(context)
+  const tools = document.createElement('div')
+  document.body.append(tools)
+  createApp(Tools, { colorScheme: context.colorScheme }).mount(tools)
 }

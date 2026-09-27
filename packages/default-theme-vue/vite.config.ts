@@ -1,4 +1,4 @@
-import vue from '@vitejs/plugin-vue'
-import { browserBundle } from '../../vite.base.config.ts'
+import tailwindcss from '@tailwindcss/vite'
+import { browserBundle, vue } from '../../vite.base.config.ts'
 
-export default browserBundle(vue())
+export default browserBundle(tailwindcss(), vue())

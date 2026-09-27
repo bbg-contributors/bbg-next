@@ -1,4 +1,10 @@
 import type { PluginOption, UserConfig } from 'vite'
+import vuePlugin from '@vitejs/plugin-vue'
+
+/** Keeps template whitespace as HTML does: the formatter writes a line break for a space, which Vue's default drops between two tags. */
+export function vue(): PluginOption {
+  return vuePlugin({ template: { compilerOptions: { whitespace: 'preserve' } } })
+}
 
 // A theme or plugin is fetched straight from a static page, so it must be one self-contained ES module: no bare specifiers left to resolve, and no `process` for a bundled Vue to trip over.
 export function browserBundle(...plugins: PluginOption[]): UserConfig {

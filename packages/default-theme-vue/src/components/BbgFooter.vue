@@ -5,6 +5,11 @@ defineProps<{ model: ShellModel }>()
 </script>
 
 <template>
-  <!-- runtime-rendered, raw HTML disabled -->
-  <footer v-if="model.footerHtml !== ''" class="bbg-site-footer" v-html="model.footerHtml" />
+  <div class="column" :hidden="model.footerHtml === ''">
+    <!-- runtime-rendered, raw HTML disabled -->
+    <footer
+      class="border-t border-fg/5 pt-4 pb-8 text-muted [&_a]:text-accent [&_a]:underline"
+      v-html="model.footerHtml"
+    />
+  </div>
 </template>

@@ -1,4 +1,5 @@
 import type { ThemeContext } from '@bbg-next/view'
+import { decorate } from '@bbg-next/default-theme-shared'
 import { defineTheme } from '@bbg-next/view'
 import { BbgArchiveView } from './elements/BbgArchiveView.ts'
 import { BbgArticleList } from './elements/BbgArticleList.ts'
@@ -7,10 +8,7 @@ import { BbgFooter } from './elements/BbgFooter.ts'
 import { BbgNav } from './elements/BbgNav.ts'
 import { BbgPageView } from './elements/BbgPageView.ts'
 import { tools } from './elements/tools.ts'
-import { paint } from './palette.ts'
-import { ripples } from './ripple.ts'
 import css from './style.css?inline'
-import { layWallpaper } from './wallpaper.ts'
 
 export function register(context: ThemeContext): void {
   defineTheme('bbg-default-theme', css, {
@@ -22,9 +20,6 @@ export function register(context: ThemeContext): void {
     page: BbgPageView,
   })
 
-  paint(context.colorScheme, context.seed)
-  ripples()
+  decorate(context)
   document.body.append(tools(context.colorScheme))
-  const { wallpaper } = context.options
-  if (typeof wallpaper === 'string') layWallpaper(wallpaper)
 }

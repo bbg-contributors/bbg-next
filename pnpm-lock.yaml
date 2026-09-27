@@ -293,12 +293,12 @@ importers:
 
   packages/default-theme:
     dependencies:
+      '@bbg-next/default-theme-shared':
+        specifier: workspace:*
+        version: link:../default-theme-shared
       '@bbg-next/view':
         specifier: workspace:*
         version: link:../view
-      '@material/material-color-utilities':
-        specifier: ^0.4.0
-        version: 0.4.0(patch_hash=579e9f0956d2095faaf50863957af118e451940072533d4c577ea0c136d4e7f9)
       lucide:
         specifier: ^1.48.0
         version: 1.48.0
@@ -306,9 +306,6 @@ importers:
       '@bbg-next/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@tailwindcss/forms':
-        specifier: ^0.5.11
-        version: 0.5.11(tailwindcss@4.3.3)
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -316,11 +313,33 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3
 
-  packages/default-theme-vue:
+  packages/default-theme-shared:
     dependencies:
       '@bbg-next/view':
         specifier: workspace:*
         version: link:../view
+      '@material/material-color-utilities':
+        specifier: ^0.4.0
+        version: 0.4.0(patch_hash=579e9f0956d2095faaf50863957af118e451940072533d4c577ea0c136d4e7f9)
+      '@tailwindcss/forms':
+        specifier: ^0.5.11
+        version: 0.5.11(tailwindcss@4.3.3)
+    devDependencies:
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
+
+  packages/default-theme-vue:
+    dependencies:
+      '@bbg-next/default-theme-shared':
+        specifier: workspace:*
+        version: link:../default-theme-shared
+      '@bbg-next/view':
+        specifier: workspace:*
+        version: link:../view
+      '@lucide/vue':
+        specifier: ^1.48.0
+        version: 1.48.0(vue@3.5.43(typescript-native-bridge@6.0.3-bridge.15.tsgo.7.0.2))
       vue:
         specifier: ^3.5.43
         version: 3.5.43(typescript-native-bridge@6.0.3-bridge.15.tsgo.7.0.2)
@@ -328,6 +347,12 @@ importers:
       '@bbg-next/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@tailwindcss/vite':
+        specifier: ^4.3.3
+        version: 4.3.3(vite@8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
 
   packages/plugin:
     dependencies:
@@ -753,6 +778,11 @@ packages:
 
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
+
+  '@lucide/vue@1.48.0':
+    resolution: {integrity: sha512-3/Nwx/RsqQ4ZrrSML1GNsSWCSDyLnBgoF/eEr1q9G6iZymn3+WKtzIj7Dbc/Nxrt9WOPuGrJ58S+CBiamK+36w==}
+    peerDependencies:
+      vue: '>=3.0.1'
 
   '@material/material-color-utilities@0.4.0':
     resolution: {integrity: sha512-dlq6VExJReb8dhjj3a/yTigr3ncNwoFmL5Iy2ENtbDX03EmNeOEdZ+vsaGrj7RTuO+mB7L58II4LCsl4NpM8uw==}
@@ -3608,6 +3638,10 @@ snapshots:
       keyv: 5.6.0
 
   '@keyv/serialize@1.1.1': {}
+
+  '@lucide/vue@1.48.0(vue@3.5.43(typescript-native-bridge@6.0.3-bridge.15.tsgo.7.0.2))':
+    dependencies:
+      vue: 3.5.43(typescript-native-bridge@6.0.3-bridge.15.tsgo.7.0.2)
 
   '@material/material-color-utilities@0.4.0(patch_hash=579e9f0956d2095faaf50863957af118e451940072533d4c577ea0c136d4e7f9)': {}
 

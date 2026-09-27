@@ -1,6 +1,6 @@
 import type { ShellModel } from '@bbg-next/view'
+import { labels } from '@bbg-next/default-theme-shared'
 import { Menu } from 'lucide'
-import { labels } from '../labels.ts'
 import { el, iconButton, link, markCurrent, ModelElement } from './base.ts'
 import { banner, container, retitle } from './layout.ts'
 

@@ -1,0 +1,24 @@
+{
+  "name": "@bbg-next/default-theme-shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The look and wording both builds of the default theme share",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./style.css": "./src/style.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@bbg-next/view": "workspace:*",
+    "@material/material-color-utilities": "^0.4.0",
+    "@tailwindcss/forms": "^0.5.11"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.3.3"
+  }
+}

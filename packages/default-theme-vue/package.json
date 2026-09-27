@@ -22,10 +22,14 @@
     "typecheck": "vue-tsc --noEmit && vue-tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
+    "@bbg-next/default-theme-shared": "workspace:*",
     "@bbg-next/view": "workspace:*",
+    "@lucide/vue": "^1.48.0",
     "vue": "^3.5.43"
   },
   "devDependencies": {
-    "@bbg-next/runtime": "workspace:*"
+    "@bbg-next/runtime": "workspace:*",
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3"
   }
 }

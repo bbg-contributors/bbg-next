@@ -1,8 +1,8 @@
-import type { Labels } from '../labels.ts'
+import type { Labels } from '@bbg-next/default-theme-shared'
 import type { ArticleModel } from '@bbg-next/view'
-import { labels } from '../labels.ts'
+import { enter, labels } from '@bbg-next/default-theme-shared'
 import { el, ModelElement } from './base.ts'
-import { banner, enter, main, retitle } from './layout.ts'
+import { banner, main, retitle } from './layout.ts'
 import { metaRow } from './meta.ts'
 
 function below(model: ArticleModel, t: Labels): Node[] {

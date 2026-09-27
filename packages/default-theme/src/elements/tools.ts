@@ -1,7 +1,7 @@
-import type { Labels } from '../labels.ts'
+import type { Labels } from '@bbg-next/default-theme-shared'
 import type { ColorSchemeControl, ColorSchemePreference } from '@bbg-next/view'
+import { labels } from '@bbg-next/default-theme-shared'
 import { ChevronUp, Moon, Settings, X } from 'lucide'
-import { labels } from '../labels.ts'
 import { el, icon, iconButton } from './base.ts'
 
 function schemeField(colorScheme: ColorSchemeControl, t: Labels): HTMLElement {

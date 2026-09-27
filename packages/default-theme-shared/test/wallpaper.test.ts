@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import type { ColorSchemeControl } from '@bbg-next/view'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { register } from '../src/index.ts'
+import { decorate } from '../src/decorate.ts'
 
 const colorScheme: ColorSchemeControl = {
   current: () => 'light',
@@ -16,7 +16,7 @@ const colorScheme: ColorSchemeControl = {
 
 /** What lies first in the body once the theme starts with this config. */
 function start(options: Readonly<Record<string, unknown>>): Element | null {
-  register({ colorScheme, seed: undefined, options, plugins: [] })
+  decorate({ colorScheme, seed: undefined, options, plugins: [] })
 
   return document.body.firstElementChild
 }
