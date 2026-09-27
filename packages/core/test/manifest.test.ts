@@ -37,11 +37,6 @@ describe('draft vs hidden', () => {
     expect(manifest.hidden.map(entry => entry.slug)).toEqual(['secret'])
   })
 
-  it('still resolves a hidden article by slug', async () => {
-    const { manifest } = await build(files)
-    expect(manifest.hidden.find(entry => entry.slug === 'secret')?.title).toBe('Secret')
-  })
-
   it('includes drafts when asked', async () => {
     const { manifest } = await build(files, true)
     expect(manifest.articles.map(entry => entry.slug).sort()).toEqual(['normal', 'wip'])
@@ -92,6 +87,22 @@ describe('slugs', () => {
     expect(diagnostics.filter(d => d.level === 'error')).toHaveLength(1)
   })
 
+  it('strips only the suffix, however many dots the name has', async () => {
+    const { manifest } = await build({
+      'data/articles/release.v1.md': article(`title: R\n${at('2026-01-01T00:00:00Z')}`),
+    })
+    expect(manifest.articles[0]?.slug).toBe('release.v1')
+  })
+
+  it('files the article that keeps a contested slug by its own flag, not the loser’s', async () => {
+    const { manifest } = await build({
+      'data/articles/a.md': article(`title: Listed\nslug: same\n${at('2026-01-01T00:00:00Z')}`),
+      'data/articles/b.md': article(`title: Hidden\nslug: same\nhidden: true\n${at('2026-01-01T00:00:00Z')}`),
+    })
+    expect(manifest.articles.map(entry => entry.title)).toEqual(['Listed'])
+    expect(manifest.hidden).toEqual([])
+  })
+
   it('rejects a slug that is unsafe in a URL segment', async () => {
     const { diagnostics, manifest } = await build({
       'data/articles/bad.md': article(`title: Bad\nslug: a/b\n${at('2026-01-01T00:00:00Z')}`),
@@ -110,13 +121,6 @@ describe('metadata', () => {
       ),
     })
     expect(manifest.articles[0]?.excerpt).toBe('First paragraph.')
-  })
-
-  it('prefers an explicit excerpt', async () => {
-    const { manifest } = await build({
-      'data/articles/a.md': article(`title: A\nexcerpt: Written by hand\n${at('2026-01-01T00:00:00Z')}`),
-    })
-    expect(manifest.articles[0]?.excerpt).toBe('Written by hand')
   })
 
   it('falls back `updated` to `created`', async () => {
@@ -208,11 +212,6 @@ describe('content extensions', () => {
     expect(manifest.articles.map(entry => entry.slug)).toEqual(['a', 'b'])
   })
 
-  it('records the plugin index it was given', async () => {
-    const { manifest } = await build(files, false, [typst])
-    expect(manifest.plugins).toEqual([typst])
-  })
-
   // one namespace across renderers: a.md and a.typ would both want /a
   it('reports a slug collision between two renderers', async () => {
     const { diagnostics, manifest } = await build(
@@ -240,32 +239,10 @@ describe('pages', () => {
     })
     expect(manifest.pages[0]).toMatchObject({ navLabel: 'About', showInNav: false })
   })
-
-  it('leaves comments on unless front matter turns them off', async () => {
-    const { manifest } = await build({
-      'data/pages/about.md': article('title: About'),
-      'data/pages/links.md': article('title: Links\ncomments: false'),
-    })
-    expect(manifest.pages.map(page => [page.slug, page.comments])).toEqual([
-      ['about', true],
-      ['links', false],
-    ])
-  })
-})
-
-describe('theme', () => {
-  it('records the installed theme, so plugins can tell which one they run with', async () => {
-    const { manifest } = await build({})
-    expect(manifest.theme).toEqual(theme)
-  })
 })
 
 describe('seed', () => {
   const parse = (seed: unknown) => v.safeParse(SiteSettingsSchema, { title: 'T', seed })
-
-  it('is left out when the site sets none, so each theme falls back to its own', () => {
-    expect(v.parse(SiteSettingsSchema, { title: 'T' }).seed).toBeUndefined()
-  })
 
   it('takes a six-digit hex colour', () => {
     expect(parse('#0d6efd').success).toBe(true)

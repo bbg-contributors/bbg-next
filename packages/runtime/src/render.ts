@@ -1,5 +1,5 @@
 import type { Site } from './site.ts'
-import type { ArticleEntry, PageEntry, RenderContext, Route } from '@bbg-next/core'
+import type { ArticleEntry, RenderContext, Route } from '@bbg-next/core'
 import type {
   ArchiveModel,
   ArticleCard,
@@ -32,7 +32,7 @@ interface Missing extends Shown {
   readonly message: string
 }
 
-export type Rendered = Found | Missing
+type Rendered = Found | Missing
 
 /** A property, not an attribute: an attribute would stringify the model. */
 export function setModel(element: HTMLElement, model: unknown): void {
@@ -93,7 +93,7 @@ function buildList(site: Site, page: number): ArticleListModel | null {
   const { articles, site: settings } = site.manifest
   const perPage = settings.postsPerPage
   const totalPages = Math.max(1, Math.ceil(articles.length / perPage))
-  if (page < 1 || page > totalPages) return null
+  if (page > totalPages) return null
 
   const start = (page - 1) * perPage
   const pageLinks: PageLink[] = Array.from({ length: totalPages }, (_unused, index) => {
@@ -125,36 +125,19 @@ function buildArchive(site: Site, tag: string | null): ArchiveModel {
   }
 }
 
-async function readBody(dir: string, file: string): Promise<string> {
-  return stripFrontMatter(await fetchText(`${dir}/${encodeURIComponent(file)}`))
+async function renderDocument(site: Site, dir: string, file: string, route: Route): Promise<[string, RenderContext]> {
+  const context = { baseUrl: `${dir}/`, href: serializeRoute(route, site.router) }
+  const source = stripFrontMatter(await fetchText(`${dir}/${encodeURIComponent(file)}`))
+
+  return [site.renderers.for(file)(source, context), context]
 }
 
-async function buildArticle(
-  site: Site,
-  entry: ArticleEntry,
-  unlisted: boolean,
-  context: RenderContext,
-): Promise<ArticleModel> {
-  return {
-    title: entry.title,
-    tags: tagLinks(site, entry.tags),
-    created: entry.created,
-    updated: entry.updated,
-    unlisted,
-    html: site.renderers.for(entry.file)(await readBody(articlesDir, entry.file), context),
-  }
-}
-
-async function buildPage(site: Site, entry: PageEntry, context: RenderContext): Promise<PageModel> {
-  return {
-    title: entry.title,
-    html: site.renderers.for(entry.file)(await readBody(pagesDir, entry.file), context),
-  }
-}
-
-/** Every view but the list's first page says what it is, then whose site it is. */
 function titled(site: Site, head: string): string {
   return `${head} — ${site.manifest.site.title}`
+}
+
+function view(tag: string, model: unknown, title: string): Found {
+  return { tag, model, title, comments: false, context: {} }
 }
 
 function notFound(site: Site, message: string): Missing {
@@ -162,9 +145,7 @@ function notFound(site: Site, message: string): Missing {
 }
 
 export async function renderRoute(site: Site, route: Route | null): Promise<Rendered> {
-  const siteTitle = site.manifest.site.title
   const { words } = site
-
   if (route === null) return notFound(site, words.noSuchRoute)
 
   switch (route.type) {
@@ -172,63 +153,43 @@ export async function renderRoute(site: Site, route: Route | null): Promise<Rend
       const model = buildList(site, route.page)
       if (model === null) return notFound(site, words.noSuchListPage)
 
-      return {
-        tag: themeElements.articleList,
-        model,
-        title: route.page === 1 ? siteTitle : `${siteTitle} — ${route.page}`,
-        comments: false,
-        context: {},
-      }
+      const { title } = site.manifest.site
+
+      return view(themeElements.articleList, model, route.page === 1 ? title : `${title} — ${route.page}`)
     }
     case 'archive':
-      return {
-        tag: themeElements.archive,
-        model: buildArchive(site, null),
-        title: titled(site, words.archive),
-        comments: false,
-        context: {},
-      }
+      return view(themeElements.archive, buildArchive(site, null), titled(site, words.archive))
     case 'tag': {
       const model = buildArchive(site, route.tag)
       if (model.articles.length === 0) return notFound(site, words.noSuchTag)
 
-      return {
-        tag: themeElements.archive,
-        model,
-        title: titled(site, words.tagged(route.tag)),
-        comments: false,
-        context: {},
-      }
+      return view(themeElements.archive, model, titled(site, words.tagged(route.tag)))
     }
     case 'article': {
       const found = site.bySlug.get(route.slug)
       if (found === undefined) return notFound(site, words.noSuchArticle)
 
-      const context = { baseUrl: `${articlesDir}/`, href: serializeRoute(route, site.router) }
-      const model = await buildArticle(site, found.entry, found.unlisted, context)
-
-      return {
-        tag: themeElements.article,
-        model,
-        title: titled(site, model.title),
-        comments: found.entry.comments,
-        context,
+      const { entry, unlisted } = found
+      const [html, context] = await renderDocument(site, articlesDir, entry.file, route)
+      const model: ArticleModel = {
+        title: entry.title,
+        tags: tagLinks(site, entry.tags),
+        created: entry.created,
+        updated: entry.updated,
+        unlisted,
+        html,
       }
+
+      return { tag: themeElements.article, model, title: titled(site, entry.title), comments: entry.comments, context }
     }
     case 'page': {
       const entry = site.pageBySlug.get(route.slug)
       if (entry === undefined) return notFound(site, words.noSuchPage)
 
-      const context = { baseUrl: `${pagesDir}/`, href: serializeRoute(route, site.router) }
-      const model = await buildPage(site, entry, context)
+      const [html, context] = await renderDocument(site, pagesDir, entry.file, route)
+      const model: PageModel = { title: entry.title, html }
 
-      return {
-        tag: themeElements.page,
-        model,
-        title: titled(site, model.title),
-        comments: entry.comments,
-        context,
-      }
+      return { tag: themeElements.page, model, title: titled(site, entry.title), comments: entry.comments, context }
     }
   }
 }

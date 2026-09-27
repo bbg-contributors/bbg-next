@@ -6,7 +6,6 @@ export { createMarkdown, type RenderContext, renderMarkdown } from './markdown.t
 export {
   articlesDir,
   dataDir,
-  manifestFile,
   manifestPath,
   pagesDir,
   pluginConfigDir,
@@ -30,9 +29,7 @@ export {
   type RouterConfig,
   serialize as serializeRoute,
 } from './route.ts'
-export { type Diagnostic } from './site/entries.ts'
-export { outletElement, writeShell } from './site/shell.ts'
-export { buildManifest, serializeManifest } from './site/manifest.ts'
+export { buildManifest, type Diagnostic, serializeManifest } from './site/manifest.ts'
 export { builtinPlugins, defaultExtensions } from './site/plugins.ts'
 export {
   type ArticleEntry,
@@ -45,4 +42,5 @@ export {
   type ThemeMeta,
 } from './site/schema.ts'
 export { loadSiteSettings, parseOptions, parsePluginMeta, parseSiteSettings, parseThemeMeta } from './site/settings.ts'
+export { outletElement, writeShell } from './site/shell.ts'
 export type { Vfs } from './vfs.ts'

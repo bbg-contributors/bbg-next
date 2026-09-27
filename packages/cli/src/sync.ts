@@ -2,7 +2,7 @@ import type { Diagnostic, SiteSettings, Vfs } from '@bbg-next/core'
 import { buildManifest, manifestPath, serializeManifest, writeShell } from '@bbg-next/core'
 import { syncAssets } from './assets.ts'
 
-export interface SyncOptions {
+interface SyncOptions {
   readonly vfs: Vfs
   readonly site: SiteSettings
   readonly includeDrafts: boolean
@@ -10,7 +10,7 @@ export interface SyncOptions {
   readonly force: boolean
 }
 
-export interface SyncResult {
+interface SyncResult {
   readonly diagnostics: readonly Diagnostic[]
   /** What was written, so a watcher can tell this write from a hand edit. */
   readonly manifest: string

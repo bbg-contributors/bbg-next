@@ -9,7 +9,7 @@ export const setup = definePlugin(context => {
   injectStyle('bbg-plugin-announcement', css)
 
   // The site's own markdown, so raw HTML stays off here too.
-  const html = context.require<MarkdownApi>('markdown').instance.render(readString(options, 'text', ''))
+  const html = context.require<MarkdownApi>('markdown').render(readString(options, 'text', ''))
   const heading = wordFor(site.lang, { zh: '网站公告', ja: 'お知らせ' }, 'Announcement')
   const routes = readStrings(options, 'routes', ['home'])
 

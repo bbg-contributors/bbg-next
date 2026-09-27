@@ -24,7 +24,7 @@ describe('the announcement', () => {
     const context = {
       options: { text: '**Hello**' },
       site: { lang: 'en' },
-      require: () => ({ instance: { render: (source: string) => `<p>${source}</p>` } }),
+      require: () => ({ render: (source: string) => `<p>${source}</p>` }),
       onRendered: (handler: RenderedHandler) => {
         rendered = handler
       },

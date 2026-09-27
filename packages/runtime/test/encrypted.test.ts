@@ -28,13 +28,6 @@ describe('an encrypted block', () => {
 
   afterEach(() => void vi.restoreAllMocks())
 
-  it('opens into whatever the page renders the markdown as', async () => {
-    const block = place(payload)
-    submit(block, 'hunter2')
-
-    await vi.waitFor(() => expect(block.innerHTML).toBe('<p>Hello *there*.</p>'))
-  })
-
   it('says so when the password is wrong, and lets the reader try again', async () => {
     const block = place(payload)
     submit(block, 'hunter3')

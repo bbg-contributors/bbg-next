@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@mzwing/oxc-config": "^0.1.6",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.3",
     "@vitejs/plugin-vue": "^6.0.9",
     "happy-dom": "^20.14.5",
     "knip": "^6.38.0",

@@ -5,19 +5,19 @@
 // Mark what you put into a view with `data-bbg-plugin` set to your name, and leave what others marked alone when you act on a view's content.
 
 import type { RenderContext, Route, SiteSettings } from '@bbg-next/core'
+import type { ColorScheme } from '@bbg-next/view'
 import type { MarkdownIt } from 'markdown-it'
 import { serializeRoute } from '@bbg-next/core'
 
 /** Re-exported so a plugin only ever depends on this package. */
 export type { RenderContext, Route, SiteSettings } from '@bbg-next/core'
+export { type ColorScheme, injectStyle, wordFor } from '@bbg-next/view'
 
 /** Front matter is already stripped. */
 export type Renderer = (source: string, context: RenderContext) => string
 
 /** Called after every navigation with the view on screen. Its element stays from one view of a kind to the next, and what you put in it stays with it: keep what still holds, change only what differs, and take out what no longer belongs. */
 export type RenderedHandler = (view: RenderedView) => void
-
-export type ColorScheme = 'light' | 'dark'
 
 export interface RenderedView {
   /** Already connected, and light DOM, so it is queryable. A different element than last time means the last one, and all you put in it, is gone. */
@@ -79,11 +79,6 @@ export function readStrings(options: Options, key: string, fallback: readonly st
   return value.every(item => typeof item === 'string') ? value : fallback
 }
 
-/** A word you draw yourself, in the site's language, keyed on its first subtag. `fallback` is what every other language gets. */
-export function wordFor(lang: string, words: Readonly<Record<string, string>>, fallback: string): string {
-  return words[lang.slice(0, 2).toLowerCase()] ?? fallback
-}
-
 /** The key of a view's comment thread: its path on a site served from the root, whichever way the site routes, so both modes agree on it. */
 export function threadPath(route: Route): string {
   return serializeRoute(route, { mode: 'path', base: '/' })
@@ -94,26 +89,5 @@ export function permalink(route: Route): string {
   return new URL(`.${threadPath(route)}`, document.baseURI).href
 }
 
-/** Keyed on `id`: calling it again replaces that stylesheet, which is how a plugin repaints. */
-export function injectStyle(id: string, css: string): void {
-  const existing = document.getElementById(id)
-  if (existing !== null) {
-    existing.textContent = css
-
-    return
-  }
-
-  const style = document.createElement('style')
-  style.id = id
-  style.textContent = css
-  document.head.append(style)
-}
-
-/** Depend on it as `{ "markdown": "^1.0.0" }`. Changing this bumps `builtinPlugins` in core. */
-export interface MarkdownApi {
-  readonly use: <Params extends unknown[]>(
-    plugin: (md: MarkdownIt, ...params: Params) => void,
-    ...params: Params
-  ) => void
-  readonly instance: MarkdownIt
-}
+/** The site's markdown-it instance. Depend on it as `{ "markdown": "^1.0.0" }`. Changing this bumps `builtinPlugins` in core. */
+export type MarkdownApi = MarkdownIt

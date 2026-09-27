@@ -7,6 +7,7 @@ import { installPlugin, knownPlugins } from '../assets.ts'
 import { loadPlugins } from '../plugins.ts'
 import { syncSite } from '../sync.ts'
 import { reportDiagnostics, style } from '../terminal/report.ts'
+import { drafts } from './flags.ts'
 
 export const plugin = defineCommand(
   {
@@ -61,7 +62,7 @@ export const pluginAdd = defineCommand(
     parameters: ['<source>', '[dir]'],
     flags: {
       name: { type: String, description: 'Install under this name instead of the plugin’s own', default: '' },
-      drafts: { type: Boolean, description: 'Include drafts', default: false },
+      drafts,
     },
   },
   // oxlint-disable-next-line typescript/no-misused-promises -- clerc awaits the handler itself
@@ -106,7 +107,7 @@ export const pluginRemove = defineCommand(
     description: 'Disable a plugin and drop its files',
     parameters: ['<name>', '[dir]'],
     flags: {
-      drafts: { type: Boolean, description: 'Include drafts', default: false },
+      drafts,
     },
   },
   // oxlint-disable-next-line typescript/no-misused-promises -- clerc awaits the handler itself

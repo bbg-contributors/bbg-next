@@ -5,25 +5,21 @@ const closeDelimiter = /^---[ \t]*$/m
 const trailingNewline = /\r?\n$/
 const leadingBlankLines = /^(?:\r?\n)+/
 
-export class FrontMatterError extends Error {
-  override name = 'FrontMatterError'
-}
-
-export interface FrontMatterSplit {
+interface FrontMatterSplit {
   /** Raw YAML text, or `null` when the document has no front matter. */
   readonly yaml: string | null
   readonly body: string
 }
 
 export function splitFrontMatter(source: string): FrontMatterSplit {
-  const text = source.startsWith('﻿') ? source.slice(1) : source
+  const text = source.startsWith('\uFEFF') ? source.slice(1) : source
 
   const open = openDelimiter.exec(text)
   if (open === null) return { yaml: null, body: text }
 
   const rest = text.slice(open[0].length)
   const close = closeDelimiter.exec(rest)
-  if (close === null) throw new FrontMatterError('Front matter opened with `---` but never closed')
+  if (close === null) throw new Error('Front matter opened with `---` but never closed')
 
   return {
     // `$` under /m stops before the newline, so both sides have to drop it themselves.

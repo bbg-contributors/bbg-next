@@ -130,7 +130,7 @@ export const themeElements = {
 
 export type ThemeElements = Record<keyof typeof themeElements, CustomElementConstructor>
 
-/** Keyed on `id`: calling it again replaces that stylesheet in place, which is how a theme repaints. */
+/** Keyed on `id`: calling it again replaces that stylesheet in place, which is how a theme or plugin repaints. */
 export function injectStyle(id: string, css: string): void {
   const existing = document.getElementById(id)
   if (existing !== null) {
@@ -143,6 +143,11 @@ export function injectStyle(id: string, css: string): void {
   style.id = id
   style.textContent = css
   document.head.append(style)
+}
+
+/** What you draw yourself, in the site's language, keyed on its first subtag. `fallback` is what every other language gets. */
+export function wordFor<T>(lang: string, words: Readonly<Record<string, T>>, fallback: T): T {
+  return words[lang.slice(0, 2).toLowerCase()] ?? fallback
 }
 
 /** What a theme's `register` calls. Idempotent: both the stylesheet and the definitions need guarding. */

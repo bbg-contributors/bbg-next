@@ -25,9 +25,7 @@ function resolvePluginOrder(
   installed: readonly InstalledPlugin[],
   diagnostics: Diagnostic[],
 ): readonly PluginIndexEntry[] {
-  const metas = installed.map(item => item.meta)
-  const byName = new Map(metas.map(meta => [meta.name, meta]))
-  const configured = new Set(installed.filter(item => item.hasConfig).map(item => item.meta.name))
+  const versions = new Map(installed.map(({ meta }) => [meta.name, meta.version]))
   const rejected = new Set<string>()
 
   const reject = (name: string, message: string, file = pluginMetaPath(name)): void => {
@@ -42,7 +40,7 @@ function resolvePluginOrder(
     }
 
     for (const [dependency, range] of Object.entries(meta.dependencies)) {
-      const version = byName.get(dependency)?.version ?? builtinPlugins[dependency]
+      const version = versions.get(dependency) ?? builtinPlugins[dependency]
       if (version === undefined) {
         reject(meta.name, `Needs plugin ${JSON.stringify(dependency)}, which is not installed`)
         continue
@@ -57,7 +55,7 @@ function resolvePluginOrder(
   // Must settle before the cycle check, or a plugin blocked by a rejected one looks like a cycle.
   for (let spreading = true; spreading;) {
     spreading = false
-    for (const meta of metas) {
+    for (const { meta } of installed) {
       if (rejected.has(meta.name)) continue
 
       const broken = Object.keys(meta.dependencies).find(name => rejected.has(name))
@@ -70,27 +68,27 @@ function resolvePluginOrder(
 
   const ordered: PluginIndexEntry[] = []
   const placed = new Set(Object.keys(builtinPlugins))
-  let pending = metas.filter(meta => !rejected.has(meta.name))
+  let pending = installed.filter(({ meta }) => !rejected.has(meta.name))
 
   while (pending.length > 0) {
-    const ready = pending.filter(meta => Object.keys(meta.dependencies).every(name => placed.has(name)))
+    const ready = pending.filter(({ meta }) => Object.keys(meta.dependencies).every(name => placed.has(name)))
     if (ready.length === 0) {
-      const names = pending.map(meta => meta.name)
+      const names = pending.map(({ meta }) => meta.name)
       for (const name of names) reject(name, `Dependency cycle between: ${names.join(', ')}`)
       break
     }
 
-    for (const meta of ready) {
+    for (const { meta, hasConfig } of ready) {
       placed.add(meta.name)
       ordered.push({
         name: meta.name,
         version: meta.version,
         extensions: meta.extensions,
         dependencies: meta.dependencies,
-        hasConfig: configured.has(meta.name),
+        hasConfig,
       })
     }
-    pending = pending.filter(meta => !placed.has(meta.name))
+    pending = pending.filter(({ meta }) => !placed.has(meta.name))
   }
 
   const claimed = new Map(defaultExtensions.map(extension => [extension, 'the built-in markdown renderer']))

@@ -22,7 +22,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@bbg-next/core": "workspace:*"
+    "@bbg-next/core": "workspace:*",
+    "@bbg-next/view": "workspace:*"
   },
   "devDependencies": {
     "markdown-it": "^15.0.2"

@@ -4,6 +4,7 @@ import { loadSiteSettings } from '@bbg-next/core'
 import { defineCommand } from 'clerc'
 import { syncSite } from '../sync.ts'
 import { reportDiagnostics, style } from '../terminal/report.ts'
+import { drafts } from './flags.ts'
 
 export const sync = defineCommand(
   {
@@ -11,7 +12,7 @@ export const sync = defineCommand(
     description: 'Regenerate the manifest, the HTML shell and the bundled assets',
     parameters: ['[dir]'],
     flags: {
-      drafts: { type: Boolean, description: 'Include drafts', default: false },
+      drafts,
       force: {
         type: Boolean,
         description: 'Rewrite the bundled themes and plugins whatever version is installed',
@@ -22,11 +23,11 @@ export const sync = defineCommand(
   // oxlint-disable-next-line typescript/no-misused-promises -- clerc awaits the handler itself
   async ctx => {
     const { dir } = ctx.parameters
-    const { drafts, force } = ctx.flags
+    const { drafts: includeDrafts, force } = ctx.flags
 
     const { root, vfs } = createNodeHost(dir ?? '.')
     const site = await loadSiteSettings(vfs)
-    const { diagnostics, updated } = await syncSite({ vfs, site, includeDrafts: drafts, force })
+    const { diagnostics, updated } = await syncSite({ vfs, site, includeDrafts, force })
 
     reportDiagnostics(diagnostics)
     process.stdout.write(`${style.green('synced')} ${root} ${style.dim(`theme ${site.theme}`)}\n`)

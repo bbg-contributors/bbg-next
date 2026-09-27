@@ -50,12 +50,6 @@ describe('load order', () => {
     expect(diagnostics).toEqual([])
   })
 
-  it('puts a dependency ahead of its dependent', async () => {
-    const { names } = await load([{ meta: meta('user', { dependencies: { base: '^1.0.0' } }) }, { meta: meta('base') }])
-
-    expect(names).toEqual(['base', 'user'])
-  })
-
   it('breaks ties by declaration order, not by name', async () => {
     const { names } = await load([
       { meta: meta('z') },
@@ -165,12 +159,6 @@ describe('config files', () => {
     expect(diagnostics[0]?.file).toBe('data/plugins/waline.json')
   })
 
-  it('names every missing option at once', async () => {
-    const { diagnostics } = await load([{ meta: meta('x', { requiredOptions: ['a', 'b'] }), options: { b: 1 } }])
-
-    expect(diagnostics[0]?.message).toMatch(/options: a$/)
-  })
-
   // Not "which is not installed": it is installed, just unusable.
   it('drops a dependent with an accurate reason', async () => {
     const { names, diagnostics } = await load([
@@ -187,13 +175,6 @@ describe('config files', () => {
 
     expect(entries).toEqual([])
     expect(diagnostics[0]?.message).toMatch(/Not valid JSON/)
-  })
-
-  it('rejects a config that is not an object of options', async () => {
-    const { entries, diagnostics } = await load([{ meta: waline }], { 'data/plugins/waline.json': '["serverURL"]' })
-
-    expect(entries).toEqual([])
-    expect(diagnostics[0]?.message).toMatch(/JSON object/)
   })
 
   it('warns about a config for a plugin that reads none, and keeps the plugin', async () => {

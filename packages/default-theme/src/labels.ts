@@ -1,3 +1,5 @@
+import { wordFor } from '@bbg-next/view'
+
 // The old theme's own wording, chosen by the site language the shell puts on `<html lang>`.
 
 export interface Labels {
@@ -108,9 +110,5 @@ const en: Labels = {
 }
 
 export function labels(): Labels {
-  const lang = document.documentElement.lang.toLowerCase()
-  if (lang.startsWith('zh')) return zh
-  if (lang.startsWith('ja')) return ja
-
-  return en
+  return wordFor(document.documentElement.lang, { zh, ja }, en)
 }

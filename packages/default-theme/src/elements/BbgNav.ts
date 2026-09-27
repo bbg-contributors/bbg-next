@@ -2,7 +2,7 @@ import type { ShellModel } from '@bbg-next/view'
 import { Menu } from 'lucide'
 import { labels } from '../labels.ts'
 import { el, iconButton, link, markCurrent, ModelElement } from './base.ts'
-import { container, hero } from './layout.ts'
+import { banner, container, retitle } from './layout.ts'
 
 // Flush with the title when folded into the menu, as Bootstrap's navbar sets them. The mark under the current one grows in and out as the reader moves.
 function navLink(href: string, label: string): HTMLAnchorElement {
@@ -56,9 +56,9 @@ export class BbgNav extends ModelElement<ShellModel> {
     const header = el('header', 'fixed inset-x-0 top-0 z-10 bg-bar text-on-bar shadow-bar')
     header.append(bar)
 
-    const banner =
-      model.description === '' ? hero(model.title) : hero(model.title, el('p', 'mb-4 text-xl', model.description))
+    const hero = banner()
+    retitle(hero, model.title, ...(model.description === '' ? [] : [el('p', 'mb-4 text-xl', model.description)]))
 
-    this.replaceChildren(header, container(banner))
+    this.replaceChildren(header, container(hero))
   }
 }

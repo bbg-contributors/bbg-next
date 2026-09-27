@@ -1,12 +1,14 @@
+import { join } from 'node:path'
 import process from 'node:process'
 import { createNodeHost } from '@bbg-next/adapter/node'
-import { dataDir, loadSiteSettings, manifestFile, manifestPath } from '@bbg-next/core'
+import { dataDir, loadSiteSettings, manifestPath } from '@bbg-next/core'
 import { defineCommand } from 'clerc'
 import { getPort } from 'get-port-please'
 import { startPreviewServer } from '../server.ts'
 import { syncSite } from '../sync.ts'
 import { reportDiagnostics, style } from '../terminal/report.ts'
 import { interactive, onQuit } from '../terminal/tty.ts'
+import { drafts } from './flags.ts'
 
 /** Coalesces the burst of events a single editor save produces. */
 function debounce(delay: number, action: () => void): () => void {
@@ -27,7 +29,7 @@ export const preview = defineCommand(
       port: { type: Number, description: 'Port to listen on (default: first free from 4321)' },
       host: { type: String, description: 'Host to bind', default: 'localhost' },
       open: { type: Boolean, description: 'Open the site in a browser', default: false },
-      drafts: { type: Boolean, description: 'Include drafts', default: false },
+      drafts,
       sync: {
         type: Boolean,
         description: 'Regenerate the site on every change; --no-sync leaves that to `bbg-next sync`',
@@ -38,10 +40,11 @@ export const preview = defineCommand(
   // oxlint-disable-next-line typescript/no-misused-promises -- clerc awaits the handler itself
   async ctx => {
     const { dir } = ctx.parameters
-    const { drafts, host: hostname, open, port: requestedPort, sync: autoSync } = ctx.flags
+    const { drafts: includeDrafts, host: hostname, open, port: requestedPort, sync: autoSync } = ctx.flags
 
     const host = createNodeHost(dir ?? '.')
     const { vfs } = host
+    const manifestFile = join(host.root, manifestPath)
 
     // Our own write must not loop the watcher.
     let lastWritten = ''
@@ -51,7 +54,7 @@ export const preview = defineCommand(
       const site = await loadSiteSettings(vfs)
       if (!autoSync) return
 
-      const { diagnostics, manifest } = await syncSite({ vfs, site, includeDrafts: drafts, force: false })
+      const { diagnostics, manifest } = await syncSite({ vfs, site, includeDrafts, force: false })
       lastWritten = manifest
 
       reportDiagnostics(diagnostics)
@@ -77,7 +80,7 @@ export const preview = defineCommand(
 
     // Just `data` — overlapping watch roots would deliver every change twice.
     const stopWatching = await host.watch([dataDir], path => {
-      if (!path.endsWith(manifestFile)) {
+      if (path !== manifestFile) {
         refresh()
 
         return
@@ -100,7 +103,7 @@ export const preview = defineCommand(
       })
     })
 
-    const draftsNote = drafts ? 'drafts included' : 'drafts hidden — pass --drafts to include them'
+    const draftsNote = includeDrafts ? 'drafts included' : 'drafts hidden — pass --drafts to include them'
 
     process.stdout.write(
       `${style.green('preview')} ${style.bold(server.url)}\n` +

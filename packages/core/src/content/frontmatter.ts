@@ -1,8 +1,8 @@
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
-import { FrontMatterError, splitFrontMatter } from './frontmatterSplit.ts'
+import { splitFrontMatter } from './frontmatterSplit.ts'
 
 /** Every key survives, not just the ones `meta.ts` knows. */
-export interface FrontMatterDocument {
+interface FrontMatterDocument {
   readonly data: Record<string, unknown>
   readonly body: string
 }
@@ -17,12 +17,12 @@ export function parseFrontMatter(source: string): FrontMatterDocument {
   try {
     parsed = parseYaml(split.yaml)
   } catch (cause) {
-    throw new FrontMatterError(`Invalid YAML in front matter: ${(cause as Error).message}`)
+    throw new Error(`Invalid YAML in front matter: ${(cause as Error).message}`)
   }
 
-  if (parsed === null || parsed === undefined) return { data: {}, body: split.body }
+  if (parsed === null) return { data: {}, body: split.body }
   if (typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new FrontMatterError('Front matter must be a YAML mapping')
+    throw new TypeError('Front matter must be a YAML mapping')
   }
 
   return { data: parsed as Record<string, unknown>, body: split.body }

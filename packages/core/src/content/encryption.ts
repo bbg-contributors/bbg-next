@@ -69,7 +69,7 @@ async function deriveKey(
 }
 
 /** `v1.<iterations>.<salt>.<iv>.<ciphertext>`, the last three in hex. */
-export async function encrypt(plaintext: string, password: string): Promise<string> {
+async function encrypt(plaintext: string, password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const iv = crypto.getRandomValues(new Uint8Array(12))
   const key = await deriveKey(password, salt, iterations, 'encrypt')

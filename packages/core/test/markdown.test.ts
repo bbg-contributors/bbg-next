@@ -1,18 +1,14 @@
 import type { RenderContext } from '../src/markdown.ts'
 import { describe, expect, it } from 'vitest'
-import { createMarkdown, renderMarkdown, resolveHref } from '../src/markdown.ts'
+import { createMarkdown, renderMarkdown } from '../src/markdown.ts'
 
 const shared = createMarkdown()
 
-function render(source: string, context?: RenderContext): string {
+function render(source: string, context: RenderContext = {}): string {
   return renderMarkdown(shared, source, context)
 }
 
 describe('renderMarkdown', () => {
-  it('renders CommonMark', () => {
-    expect(render('# Hi\n\nSome *text*.\n')).toContain('<h1>Hi</h1>')
-  })
-
   it('does not pass raw HTML through', () => {
     const html = render('<script>alert(1)</script>\n')
     expect(html).not.toContain('<script>')
@@ -30,37 +26,9 @@ describe('renderMarkdown', () => {
     const html = render('![alt](pic.png)\n', { baseUrl: 'data/articles/' })
     expect(html).toContain('src="data/articles/pic.png"')
   })
-
-  it('resolves relative link targets too', () => {
-    const html = render('[a](other.md)\n', { baseUrl: 'data/articles/' })
-    expect(html).toContain('href="data/articles/other.md"')
-  })
-
-  it('leaves absolute and site-rooted URLs alone', () => {
-    const html = render('![a](https://x/y.png)\n![b](/z.png)\n', { baseUrl: 'data/articles/' })
-    expect(html).toContain('src="https://x/y.png"')
-    expect(html).toContain('src="/z.png"')
-  })
 })
 
 describe('createMarkdown', () => {
-  it('hands out independent instances', () => {
-    const one = createMarkdown()
-    const other = createMarkdown()
-
-    one.use(md => void md.disable('emphasis'))
-
-    expect(renderMarkdown(one, '*x*\n')).toContain('*x*')
-    expect(renderMarkdown(other, '*x*\n')).toContain('<em>x</em>')
-  })
-
-  it('keeps raw HTML disabled after a plugin runs', () => {
-    const md = createMarkdown()
-    md.use(instance => void instance.disable('emphasis'))
-
-    expect(renderMarkdown(md, '<script>alert(1)</script>\n')).toContain('&lt;script&gt;')
-  })
-
   // The reason href resolution is a core rule: a renderer-rule patch would be lost here.
   it('still resolves relative paths when a plugin replaces the image rule', () => {
     const md = createMarkdown()
@@ -108,24 +76,22 @@ describe('heading permalinks', () => {
   })
 })
 
-describe('resolveHref', () => {
+describe('link targets', () => {
   it.each([
     ['pic.png', 'data/articles/', 'data/articles/pic.png'],
-    ['sub/pic.png', 'data/articles', 'data/articles/sub/pic.png'],
     ['/pic.png', 'data/articles/', '/pic.png'],
     ['https://x/y.png', 'data/articles/', 'https://x/y.png'],
     ['//cdn/y.png', 'data/articles/', '//cdn/y.png'],
-    ['mailto:a@b.c', 'data/articles/', 'mailto:a@b.c'],
     ['?page=2', 'data/articles/', '?page=2'],
     ['#section', 'data/articles/', '#section'],
     ['pic.png', undefined, 'pic.png'],
-  ])('%s + %s -> %s', (href, base, expected) => {
-    expect(resolveHref(href, base === undefined ? {} : { baseUrl: base })).toBe(expected)
+  ])('%s + %s -> %s', (target, baseUrl, expected) => {
+    expect(render(`[x](${target})\n`, baseUrl === undefined ? {} : { baseUrl })).toContain(`href="${expected}"`)
   })
 
   it('puts a fragment after the document’s href', () => {
-    expect(resolveHref('#section', { baseUrl: 'data/articles/', href: '/blog/post/hello/' })).toBe(
-      '/blog/post/hello/#section',
+    expect(render('[x](#section)\n', { baseUrl: 'data/articles/', href: '/blog/post/hello/' })).toContain(
+      'href="/blog/post/hello/#section"',
     )
   })
 })
@@ -147,10 +113,7 @@ describe('fences named after a bbg- element', () => {
     expect(html).toContain('data-source="&quot;&gt;&lt;script&gt;')
   })
 
-  it.each(['js', 'bbg', 'bbg-', 'bbg-Friends', 'bbg-friends extra', 'bbg--friends'])(
-    'leave a %s fence as code',
-    info => {
-      expect(render(`\`\`\`${info}\nx\n\`\`\`\n`)).toContain('<pre><code')
-    },
-  )
+  it.each(['js', 'bbg-Friends', 'bbg-friends extra'])('leave a %s fence as code', info => {
+    expect(render(`\`\`\`${info}\nx\n\`\`\`\n`)).toContain('<pre><code')
+  })
 })

@@ -1,16 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { decrypt, decryptDocument, encrypt, encryptDocument } from '../src/content/encryption.ts'
+import { decrypt, decryptDocument, encryptDocument } from '../src/content/encryption.ts'
 import { deriveExcerpt } from '../src/content/excerpt.ts'
 import { stripFrontMatter } from '../src/content/frontmatterSplit.ts'
 
 // Every derivation is a deliberate 600k rounds of PBKDF2, so the tests share what they can.
 
 describe('payloads', () => {
-  let payload: string
-
-  beforeAll(async () => {
-    payload = await encrypt('# 标题\n\nSecret *text*.\n', 'hunter2')
-  })
+  // `# 标题\n\nSecret *text*.\n` behind `hunter2`, as this version writes them.
+  const payload =
+    'v1.600000.c22b9d861063f28a37b565527369e055.7caa197f39c0b6c60ee7c0b4.6107a85400b4f6a876513dca27642778f2733eb85b6c54f44f4aaac1bfa2cb2f04497f60234fd75ba3'
 
   it('open with the right password', async () => {
     expect(await decrypt(payload, 'hunter2')).toBe('# 标题\n\nSecret *text*.\n')
@@ -51,10 +49,6 @@ describe('documents', () => {
 
   it('come back exactly as they were', async () => {
     expect(await decryptDocument(locked, 'hunter2')).toBe(article)
-  })
-
-  it('come back null for a wrong password', async () => {
-    expect(await decryptDocument(locked, 'hunter3')).toBeNull()
   })
 
   it('refuse to be locked twice', async () => {

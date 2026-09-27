@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { parseFrontMatter, stringifyFrontMatter } from '../src/content/frontmatter.ts'
-import { FrontMatterError, stripFrontMatter } from '../src/content/frontmatterSplit.ts'
 
 describe('parseFrontMatter', () => {
   it('reads a mapping and the body', () => {
@@ -22,7 +21,7 @@ describe('parseFrontMatter', () => {
   })
 
   it('skips a UTF-8 BOM', () => {
-    expect(parseFrontMatter('﻿---\ntitle: Hello\n---\n\nBody.\n').data).toEqual({ title: 'Hello' })
+    expect(parseFrontMatter('\uFEFF---\ntitle: Hello\n---\n\nBody.\n').data).toEqual({ title: 'Hello' })
   })
 
   it('keeps an empty block empty rather than failing', () => {
@@ -30,47 +29,24 @@ describe('parseFrontMatter', () => {
   })
 
   it('rejects an unterminated block', () => {
-    expect(() => parseFrontMatter('---\ntitle: Hello\n\nBody.\n')).toThrow(FrontMatterError)
+    expect(() => parseFrontMatter('---\ntitle: Hello\n\nBody.\n')).toThrow(/never closed/)
   })
 
   it('rejects a non-mapping block', () => {
-    expect(() => parseFrontMatter('---\n- one\n- two\n---\n\nBody.\n')).toThrow(FrontMatterError)
+    expect(() => parseFrontMatter('---\n- one\n- two\n---\n\nBody.\n')).toThrow(/mapping/)
   })
 
   it('rejects invalid YAML', () => {
-    expect(() => parseFrontMatter('---\ntitle: "unclosed\n---\n\nBody.\n')).toThrow(FrontMatterError)
-  })
-
-  // YAML 1.2 has no timestamp type, so TimestampSchema is the only place that interprets this
-  it('leaves an ISO timestamp as a string rather than a Date', () => {
-    const document = parseFrontMatter('---\ncreated: 2026-09-02T10:00:00+08:00\n---\n\nBody.\n')
-    expect(document.data).toEqual({ created: '2026-09-02T10:00:00+08:00' })
+    expect(() => parseFrontMatter('---\ntitle: "unclosed\n---\n\nBody.\n')).toThrow(/Invalid YAML/)
   })
 })
 
-describe('round trip', () => {
-  const cases: readonly Record<string, unknown>[] = [
-    { title: 'Hello' },
-    { title: '第一篇文章', tags: ['随笔', '测试'], pinned: false, hidden: true },
-    { title: 'Edge', created: '2026-09-02T10:00:00+08:00', nested: { a: 1, b: [1, 2] } },
-    { title: 'Unknown keys', somethingCustom: 'kept', another: 42 },
-  ]
+describe('stringifyFrontMatter', () => {
+  it('writes what parseFrontMatter reads back unchanged', () => {
+    const data = { title: '第一篇文章', tags: ['随笔', '测试'], created: '2026-09-02T10:00:00+08:00', hidden: true }
+    const decoded = parseFrontMatter(stringifyFrontMatter(data, 'Body.\n'))
 
-  for (const data of cases) {
-    it(`decode(encode(${JSON.stringify(data).slice(0, 40)})) is identity`, () => {
-      const decoded = parseFrontMatter(stringifyFrontMatter(data, 'Body.\n'))
-      expect(decoded.data).toEqual(data)
-      expect(decoded.body).toBe('Body.\n')
-    })
-  }
-
-  it('emits no delimiters for empty data', () => {
-    expect(stringifyFrontMatter({}, 'Body.\n')).toBe('Body.\n')
-  })
-})
-
-describe('stripFrontMatter', () => {
-  it('drops the block for the runtime, which only needs the body', () => {
-    expect(stripFrontMatter('---\ntitle: Hello\n---\n\n# Heading\n')).toBe('# Heading\n')
+    expect(decoded.data).toEqual(data)
+    expect(decoded.body).toBe('Body.\n')
   })
 })

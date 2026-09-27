@@ -1,4 +1,3 @@
-// Fallback for articles with no `excerpt` in front matter.
 const maxLength = 160
 
 const skipLine = /^(?:#{1,6}\s|[><|]|[-*+]\s|\d+[.)]\s|:{3})/

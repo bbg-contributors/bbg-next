@@ -3,8 +3,7 @@ export const articlesDir = `${dataDir}/articles`
 export const pagesDir = `${dataDir}/pages`
 export const pluginConfigDir = `${dataDir}/plugins`
 const themeConfigDir = `${dataDir}/themes`
-export const manifestFile = 'site.json'
-export const manifestPath = `${dataDir}/${manifestFile}`
+export const manifestPath = `${dataDir}/site.json`
 
 export const runtimePath = 'bbg/runtime.js'
 export const themesDir = 'bbg/themes'

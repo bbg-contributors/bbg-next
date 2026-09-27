@@ -1,23 +1,11 @@
 // @vitest-environment happy-dom
-import type { ColorScheme } from '@bbg-next/view'
+import type { ColorScheme, ColorSchemeControl } from '@bbg-next/view'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createColorScheme } from '../src/scheme.ts'
+import { stubQuery } from './stubQuery.ts'
 
-/** Returns a setter that flips what the OS reports and notifies, the way a browser would. */
-function stubQuery(initial: ColorScheme): (next: ColorScheme) => void {
-  const listeners = new Set<() => void>()
-  const query = {
-    matches: initial === 'dark',
-    addEventListener: (_type: string, listener: () => void) => void listeners.add(listener),
-    removeEventListener: (_type: string, listener: () => void) => void listeners.delete(listener),
-  }
-
-  vi.stubGlobal('matchMedia', () => query)
-
-  return next => {
-    query.matches = next === 'dark'
-    for (const listener of [...listeners]) listener()
-  }
+function scheme(signal = new AbortController().signal): ColorSchemeControl {
+  return createColorScheme(signal)
 }
 
 describe('createColorScheme', () => {
@@ -27,7 +15,7 @@ describe('createColorScheme', () => {
 
   it('resolves auto against the OS and follows it', () => {
     const set = stubQuery('light')
-    const { colorScheme } = createColorScheme()
+    const colorScheme = scheme()
 
     expect(colorScheme.preference()).toBe('auto')
     expect(colorScheme.current()).toBe('light')
@@ -36,21 +24,9 @@ describe('createColorScheme', () => {
     expect(colorScheme.current()).toBe('dark')
   })
 
-  // Themes hear about the scheme through subscribe, never by reading it back off the page.
-  it('keeps off the document', () => {
-    const set = stubQuery('light')
-    const before = document.documentElement.getAttributeNames()
-
-    const { colorScheme } = createColorScheme()
-    colorScheme.set('dark')
-    set('dark')
-
-    expect(document.documentElement.getAttributeNames()).toEqual(before)
-  })
-
   it('lets a preference override the OS, and keeps it when the OS moves', () => {
     const set = stubQuery('light')
-    const { colorScheme } = createColorScheme()
+    const colorScheme = scheme()
 
     colorScheme.set('dark')
     expect(colorScheme.current()).toBe('dark')
@@ -62,7 +38,7 @@ describe('createColorScheme', () => {
 
   it('goes back to following the OS on auto', () => {
     stubQuery('light')
-    const { colorScheme } = createColorScheme()
+    const colorScheme = scheme()
 
     colorScheme.set('dark')
     colorScheme.set('auto')
@@ -72,9 +48,9 @@ describe('createColorScheme', () => {
 
   it('remembers the preference for the next visit', () => {
     stubQuery('light')
-    createColorScheme().colorScheme.set('dark')
+    scheme().set('dark')
 
-    const { colorScheme } = createColorScheme()
+    const colorScheme = scheme()
     expect(colorScheme.preference()).toBe('dark')
     expect(colorScheme.current()).toBe('dark')
   })
@@ -82,7 +58,7 @@ describe('createColorScheme', () => {
   describe('subscribe', () => {
     it('calls back with the scheme now, then on every change', () => {
       const set = stubQuery('light')
-      const { colorScheme } = createColorScheme()
+      const colorScheme = scheme()
       const seen: ColorScheme[] = []
       colorScheme.subscribe(next => void seen.push(next))
 
@@ -94,7 +70,7 @@ describe('createColorScheme', () => {
 
     it('stays quiet when the resolved scheme did not actually move', () => {
       const set = stubQuery('light')
-      const { colorScheme } = createColorScheme()
+      const colorScheme = scheme()
       const seen: ColorScheme[] = []
       colorScheme.subscribe(next => void seen.push(next))
 
@@ -106,7 +82,7 @@ describe('createColorScheme', () => {
 
     it('hands back an unsubscribe that leaves the others alone', () => {
       const set = stubQuery('light')
-      const { colorScheme } = createColorScheme()
+      const colorScheme = scheme()
       const dropped: ColorScheme[] = []
       const kept: ColorScheme[] = []
 
@@ -123,7 +99,7 @@ describe('createColorScheme', () => {
     // A theme element subscribing on connect drops it again on disconnect, which can land mid-dispatch.
     it('survives a handler unsubscribing itself while being told', () => {
       const set = stubQuery('light')
-      const { colorScheme } = createColorScheme()
+      const colorScheme = scheme()
       const seen: ColorScheme[] = []
 
       // assigned after the fact: subscribe calls back before it returns
@@ -139,13 +115,13 @@ describe('createColorScheme', () => {
       expect(seen).toEqual(['light', 'dark'])
     })
 
-    it('stops listening once torn down', () => {
+    it('stops listening once its lifetime ends', () => {
       const set = stubQuery('light')
-      const scheme = createColorScheme()
+      const lifetime = new AbortController()
       const seen: ColorScheme[] = []
-      scheme.colorScheme.subscribe(next => void seen.push(next))
+      scheme(lifetime.signal).subscribe(next => void seen.push(next))
 
-      scheme.teardown()
+      lifetime.abort()
       set('dark')
 
       expect(seen).toEqual(['light'])
@@ -164,7 +140,7 @@ describe('createColorScheme', () => {
       },
     })
 
-    const { colorScheme } = createColorScheme()
+    const colorScheme = scheme()
     expect(colorScheme.preference()).toBe('auto')
 
     colorScheme.set('dark')

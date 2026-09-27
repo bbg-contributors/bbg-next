@@ -8,7 +8,6 @@ export function container(...children: Node[]): HTMLElement {
   return wrapper
 }
 
-/** A view's own content. */
 export function main(...children: Node[]): HTMLElement {
   const wrapper = el('main')
   wrapper.append(...children)
@@ -33,23 +32,6 @@ export function retitle(box: HTMLElement, title: string | Node, ...below: Node[]
   const heading = el('h1', 'mb-2 text-[50px] leading-[1.2] font-medium')
   heading.append(title)
   box.replaceChildren(heading, ...below)
-}
-
-export function hero(title: string | Node, ...below: Node[]): HTMLElement {
-  const box = banner()
-  retitle(box, title, ...below)
-
-  return box
-}
-
-/** Rendered markdown, in an article's card. */
-export function articleCard(): HTMLElement {
-  return el('div', 'bbg-content my-7.5 rounded-md bg-surface px-[4%] py-7.5 shadow-card')
-}
-
-/** Tighter than an article's, as the original's pages were. */
-export function pageCard(): HTMLElement {
-  return el('div', 'bbg-content my-7.5 rounded-md bg-surface p-4 shadow-card')
 }
 
 /** A page's card, holding the theme's own markup rather than rendered markdown. */

@@ -1,13 +1,12 @@
 import * as v from 'valibot'
 
-// ISO string, epoch ms or Date — YAML gives all three. Legacy sites are already +08:00 shifted; never re-apply.
+// ISO string or epoch ms. Legacy sites are already +08:00 shifted; never re-apply.
 const TimestampSchema = v.pipe(
-  v.union([v.string(), v.number(), v.date()]),
-  v.rawTransform<string | number | Date, number>(({ dataset, addIssue, NEVER }) => {
-    const value = dataset.value
-    const ms = value instanceof Date ? value.getTime() : typeof value === 'number' ? value : Date.parse(value)
+  v.union([v.string(), v.number()]),
+  v.rawTransform<string | number, number>(({ dataset, addIssue, NEVER }) => {
+    const ms = typeof dataset.value === 'number' ? dataset.value : Date.parse(dataset.value)
     if (!Number.isFinite(ms)) {
-      addIssue({ message: `Not a valid date: ${JSON.stringify(value)}` })
+      addIssue({ message: `Not a valid date: ${JSON.stringify(dataset.value)}` })
 
       return NEVER
     }
@@ -15,9 +14,6 @@ const TimestampSchema = v.pipe(
     return ms
   }),
 )
-
-/** Core draws no comments itself: this is the one switch every comment plugin reads. */
-const CommentsSchema = v.optional(v.boolean(), true)
 
 const TagsSchema = v.pipe(
   v.array(v.pipe(v.string(), v.trim(), v.minLength(1))),
@@ -36,7 +32,7 @@ export const ArticleMetaSchema = v.object({
   /** In the manifest but out of every listing, so direct links still resolve. */
   hidden: v.optional(v.boolean(), false),
   excerpt: v.optional(v.pipe(v.string(), v.trim())),
-  comments: CommentsSchema,
+  comments: v.optional(v.boolean(), true),
 })
 
 export const PageMetaSchema = v.object({
@@ -46,5 +42,5 @@ export const PageMetaSchema = v.object({
   draft: v.optional(v.boolean(), false),
   showInNav: v.optional(v.boolean(), true),
   navLabel: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1))),
-  comments: CommentsSchema,
+  comments: v.optional(v.boolean(), true),
 })

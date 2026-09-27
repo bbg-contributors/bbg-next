@@ -1,13 +1,5 @@
 import type { Manifest, PluginIndexEntry } from '@bbg-next/core'
-import type {
-  ColorScheme,
-  MarkdownApi,
-  PluginApi,
-  PluginContext,
-  PluginModule,
-  RenderedView,
-  Renderer,
-} from '@bbg-next/plugin'
+import type { ColorScheme, PluginApi, PluginContext, PluginModule, RenderedView, Renderer } from '@bbg-next/plugin'
 import type { ColorSchemeControl, PluginInfo } from '@bbg-next/view'
 import { createMarkdown, defaultExtensions, pluginConfigPath, pluginPath, renderMarkdown } from '@bbg-next/core'
 import { loadOptions, resolve } from './site.ts'
@@ -25,7 +17,7 @@ export interface RendererRegistry {
   readonly markdown: Renderer
 }
 
-export interface PluginHost {
+interface PluginHost {
   readonly renderers: RendererRegistry
   readonly rendered: (view: RenderedView) => void
   /** The plugins whose setup went through, in load order: what the theme is told is running. */
@@ -78,8 +70,7 @@ export async function setupPlugins(
 
   const md = createMarkdown()
   const markdown: Renderer = (source, context) => renderMarkdown(md, source, context)
-  const markdownApi: MarkdownApi = { use: (plugin, ...params) => void md.use(plugin, ...params), instance: md }
-  apis.set(markdownPlugin, markdownApi)
+  apis.set(markdownPlugin, md)
   // Claimed rather than dispatched — `for` already falls back to markdown — so no plugin can take these over.
   for (const extension of defaultExtensions) renderers.set(extension, markdown)
 
@@ -107,16 +98,9 @@ export async function setupPlugins(
         handler(colorScheme.current())
         schemes.add(handler)
       },
+      // The first claim wins; sync reports any clash.
       registerRenderer: (extension, render) => {
-        if (!entry.extensions.includes(extension)) {
-          report(`plugin ${entry.name} renders ".${extension}" without listing it, so sync ignores those files`)
-        }
-        if (renderers.has(extension)) {
-          report(`".${extension}" already has a renderer; ignoring the one from ${entry.name}`)
-
-          return
-        }
-        renderers.set(extension, render)
+        if (!renderers.has(extension)) renderers.set(extension, render)
       },
       require: <T extends PluginApi>(name: string): T => {
         if (!Object.hasOwn(entry.dependencies, name)) {

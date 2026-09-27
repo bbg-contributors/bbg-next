@@ -3,23 +3,20 @@ import createMarkdownIt from 'markdown-it'
 import { slugify } from './content/slug.ts'
 
 export interface RenderContext {
-  /** Directory the document lives in, e.g. `data/articles/`. Relative links resolve against it. */
+  /** Directory the document lives in, with a trailing slash, e.g. `data/articles/`. Relative links resolve against it. */
   readonly baseUrl?: string
   /** Where the document is shown, e.g. `#/post/hello`. Fragment links resolve against it, and only a document with one gets heading permalinks. */
   readonly href?: string
 }
 
-const absoluteHref = /^[a-z][a-z0-9+.-]*:|^\/\/|^\?/i
+const absoluteHref = /^(?:[a-z][a-z\d+.-]*:|[/?])/i
 
 /** Stays relative, which is what makes a non-root `base` work. A fragment goes after the document's href: on its own, `<base>` would take it to the site root and hash routing would read it as a route. */
-export function resolveHref(target: string, { baseUrl, href }: RenderContext): string {
+function resolveHref(target: string, { baseUrl = '', href }: RenderContext): string {
   if (target.startsWith('#')) return href === undefined ? target : `${href}${target}`
-  if (target === '' || baseUrl === undefined || baseUrl === '') return target
-  if (absoluteHref.test(target) || target.startsWith('/')) return target
+  if (target === '' || absoluteHref.test(target)) return target
 
-  const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
-
-  return `${base}${target}`
+  return `${baseUrl}${target}`
 }
 
 function resolveTokens(tokens: readonly Token[], context: RenderContext): void {
@@ -72,9 +69,8 @@ function addPermalinks(state: StateCore): void {
 const elementName = /^bbg-[a-z\d]+(?:-[a-z\d]+)*$/
 
 /** Whoever defines the element draws it, reading the fence's content from `data-source`, and in `data-base` the directory the document's own relative links resolve against. Until then it shows nothing. */
-function fencesToElements(state: StateCore): void {
+function fencesToElements(state: StateCore, baseUrl: string): void {
   const { escapeHtml } = state.md.utils
-  const baseUrl = (state.env as RenderContext | undefined)?.baseUrl ?? ''
   const base = baseUrl === '' ? '' : ` data-base="${escapeHtml(baseUrl)}"`
 
   for (const token of state.tokens) {
@@ -91,18 +87,17 @@ export function createMarkdown(): MarkdownIt {
   // html: false is load-bearing — no raw HTML means no sanitiser to ship.
   const md = createMarkdownIt({ html: false, linkify: true })
 
-  // Core rules, not renderer rules: a plugin replacing `renderer.rules.image` would drop them. Permalinks go first, so their hrefs get resolved too.
-  md.core.ruler.push('bbg_permalinks', (state: StateCore) => {
-    if ((state.env as RenderContext | undefined)?.href !== undefined) addPermalinks(state)
+  // A core rule, not a renderer rule: a plugin replacing `renderer.rules.image` would drop it. Permalinks go first, so their hrefs get resolved too.
+  md.core.ruler.push('bbg', state => {
+    const context = state.env as RenderContext
+    if (context.href !== undefined) addPermalinks(state)
+    resolveTokens(state.tokens, context)
+    fencesToElements(state, context.baseUrl ?? '')
   })
-  md.core.ruler.push('bbg_resolve_href', (state: StateCore) => {
-    resolveTokens(state.tokens, (state.env as RenderContext | undefined) ?? {})
-  })
-  md.core.ruler.push('bbg_elements', fencesToElements)
 
   return md
 }
 
-export function renderMarkdown(md: MarkdownIt, source: string, context: RenderContext = {}): string {
+export function renderMarkdown(md: MarkdownIt, source: string, context: RenderContext): string {
   return md.render(source, context as Env)
 }

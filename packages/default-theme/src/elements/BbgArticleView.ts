@@ -2,7 +2,7 @@ import type { Labels } from '../labels.ts'
 import type { ArticleModel } from '@bbg-next/view'
 import { labels } from '../labels.ts'
 import { el, ModelElement } from './base.ts'
-import { articleCard, banner, enter, main, retitle } from './layout.ts'
+import { banner, enter, main, retitle } from './layout.ts'
 import { metaRow } from './meta.ts'
 
 function below(model: ArticleModel, t: Labels): Node[] {
@@ -23,7 +23,7 @@ function below(model: ArticleModel, t: Labels): Node[] {
 
 export class BbgArticleView extends ModelElement<ArticleModel> {
   readonly #banner = banner()
-  readonly #content = articleCard()
+  readonly #content = el('div', 'bbg-content my-7.5 rounded-md bg-surface px-[4%] py-7.5 shadow-card')
   readonly #main = main(this.#content)
 
   protected override build(): void {

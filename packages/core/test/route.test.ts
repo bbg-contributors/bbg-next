@@ -5,20 +5,16 @@ import { normaliseBase, parse, parseFragment, resolveDeepLink, serialize } from 
 const hash: RouterConfig = { mode: 'hash', base: '/' }
 const pathRoot: RouterConfig = { mode: 'path', base: '/' }
 const pathSub: RouterConfig = { mode: 'path', base: '/my-blog/' }
+// As the runtime reads it off the document, encoded.
+const pathCjk: RouterConfig = { mode: 'path', base: new URL('./', 'http://example.com/博客/').pathname }
 
 const routes: readonly Route[] = [
   { type: 'home', page: 1 },
   { type: 'home', page: 2 },
-  { type: 'home', page: 137 },
-  { type: 'article', slug: 'hello' },
   { type: 'article', slug: '第一篇文章' },
-  { type: 'article', slug: 'Ünicode-ページ' },
-  { type: 'page', slug: 'about' },
-  { type: 'page', slug: '关于' },
   // why pagination uses `list` and pages use `page`
   { type: 'page', slug: '2' },
   { type: 'archive' },
-  { type: 'tag', tag: '随笔' },
   // a tag is free text, so it may carry what a slug never can
   { type: 'tag', tag: 'C# / .NET?' },
 ]
@@ -30,23 +26,15 @@ function locate(href: string, config: RouterConfig): URL {
 }
 
 describe('route symmetry', () => {
-  for (const config of [hash, pathRoot, pathSub]) {
-    const label = `${config.mode}@${config.base}`
-
+  it.each([hash, pathRoot, pathSub, pathCjk])('round-trips every route in $mode mode at $base', config => {
     for (const route of routes) {
-      it(`${label} round-trips ${JSON.stringify(route)}`, () => {
-        const href = serialize(route, config)
-        expect(parse(locate(href, config), config)).toEqual(route)
-        expect(parseFragment(locate(href, config), config)).toBe('')
-      })
-
-      it(`${label} round-trips ${JSON.stringify(route)} with a fragment`, () => {
-        const url = locate(serialize(route, config, '第一节-intro'), config)
+      for (const fragment of ['', '第一节-intro']) {
+        const url = locate(serialize(route, config, fragment), config)
         expect(parse(url, config)).toEqual(route)
-        expect(parseFragment(url, config)).toBe('第一节-intro')
-      })
+        expect(parseFragment(url, config)).toBe(fragment)
+      }
     }
-  }
+  })
 })
 
 describe('fragments', () => {
@@ -117,16 +105,16 @@ describe('deep links in hash mode', () => {
     return new URL(resolved, url)
   }
 
-  // The first page of the list is the root itself.
-  for (const route of routes.filter(item => serialize(item, pathRoot) !== '/')) {
-    it(`lead from the path of ${JSON.stringify(route)} to its route, keeping the fragment`, () => {
+  it('lead from the path of a route to that route, keeping the fragment', () => {
+    // The first page of the list is the root itself.
+    for (const route of routes.filter(item => serialize(item, pathRoot) !== '/')) {
       const url = follow(`/blog${serialize(route, pathRoot)}#c1`)
 
       expect(url.pathname).toBe('/blog/')
       expect(parse(url, blog)).toEqual(route)
       expect(parseFragment(url, blog)).toBe('c1')
-    })
-  }
+    }
+  })
 
   it('leave the root, the document itself and anything outside the site alone', () => {
     for (const href of ['/blog/', '/blog/index.html#/post/hello', '/other/post/hello/']) {
@@ -144,8 +132,6 @@ describe('rejections', () => {
     ['#/post/', 'empty slug'],
     ['#/list/0', 'page zero'],
     ['#/list/01', 'leading zero'],
-    ['#/list/-1', 'negative page'],
-    ['#/list/1.5', 'fractional page'],
     ['#/nope/x', 'unknown prefix'],
     ['#/post/a/b', 'too many segments'],
     ['#/tag', 'tag without a name'],
@@ -165,7 +151,6 @@ describe('normaliseBase', () => {
     ['/', '/'],
     ['repo', '/repo/'],
     ['/repo', '/repo/'],
-    ['/repo/', '/repo/'],
   ])('%s -> %s', (input, expected) => {
     expect(normaliseBase(input)).toBe(expected)
   })

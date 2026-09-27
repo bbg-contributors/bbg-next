@@ -26,13 +26,11 @@ export function scrollBack(top: number, element: HTMLElement): void {
   })
 }
 
-export interface Visits {
+interface Visits {
   /** The state for a new entry, remembering where the one on screen was left. */
   readonly next: () => { readonly entry: string }
   /** Takes up the entry `state` names, marking one the runtime never made, and gives back where that entry was left. */
   readonly resume: (state: unknown) => number | undefined
-  /** Gives the browser its scroll restoration back. */
-  readonly teardown: () => void
 }
 
 /** The key the runtime gave a history entry, or `null` for one it never made, like an address-bar edit. */
@@ -42,9 +40,11 @@ function entryOf(state: unknown): string | null {
     : null
 }
 
-export function createVisits(): Visits {
+/** Gives the browser its scroll restoration back once `signal` aborts. */
+export function createVisits(signal: AbortSignal): Visits {
   const restoration = history.scrollRestoration
   history.scrollRestoration = 'manual'
+  signal.addEventListener('abort', () => void (history.scrollRestoration = restoration))
 
   const positions = new Map<string, number>()
   // Random per load: an entry's state outlives a reload, the positions do not.
@@ -74,7 +74,5 @@ export function createVisits(): Visits {
 
       return positions.get(current)
     },
-
-    teardown: () => void (history.scrollRestoration = restoration),
   }
 }

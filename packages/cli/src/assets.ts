@@ -128,10 +128,12 @@ async function refresh<M extends Meta>(
   kind: AssetKind<M>,
   vfs: Vfs,
   name: string,
-  packageName: string,
   force: boolean,
   diagnostics: Diagnostic[],
 ): Promise<string | null> {
+  const packageName = kind.packages.get(name)
+  if (packageName === undefined) return null
+
   const { bundle, meta } = await readBuilt(kind, distOf(packageName))
   const current = force ? null : await installedVersion(kind, vfs, name)
 
@@ -150,39 +152,6 @@ async function refresh<M extends Meta>(
   await write(kind, vfs, bundle, meta)
 
   return `${name}@${meta.version}`
-}
-
-async function syncTheme(vfs: Vfs, theme: string, force: boolean, diagnostics: Diagnostic[]): Promise<string | null> {
-  const packageName = themeKind.packages.get(theme)
-  if (packageName !== undefined) return refresh(themeKind, vfs, theme, packageName, force, diagnostics)
-
-  if (!(await vfs.exists(themePath(theme)))) {
-    throw new Error(
-      `Unknown theme ${JSON.stringify(theme)}: ${themePath(theme)} is missing.\n` +
-        `Built in: ${knownThemes.join(', ')}. For any other theme run \`bbg-next theme add <dir>\` first.`,
-    )
-  }
-
-  return null
-}
-
-async function syncPlugins(
-  vfs: Vfs,
-  names: readonly string[],
-  force: boolean,
-  diagnostics: Diagnostic[],
-): Promise<string[]> {
-  const updated: string[] = []
-
-  for (const name of names) {
-    const packageName = pluginKind.packages.get(name)
-    if (packageName === undefined) continue
-
-    const done = await refresh(pluginKind, vfs, name, packageName, force, diagnostics)
-    if (done !== null) updated.push(done)
-  }
-
-  return updated
 }
 
 async function prune(vfs: Vfs, dir: string, keep: readonly string[]): Promise<void> {
@@ -205,10 +174,15 @@ export async function syncAssets(vfs: Vfs, site: SiteSettings, force: boolean): 
   await vfs.copyIn(await bundleIn(distOf('@bbg-next/runtime')), runtimePath)
 
   // Both before loading, which reads the versions they refresh.
-  const refreshed = [
-    await syncTheme(vfs, site.theme, force, diagnostics),
-    ...(await syncPlugins(vfs, site.plugins, force, diagnostics)),
-  ]
+  const refreshed = [await refresh(themeKind, vfs, site.theme, force, diagnostics)]
+  for (const name of site.plugins) refreshed.push(await refresh(pluginKind, vfs, name, force, diagnostics))
+
+  if (!(await vfs.exists(themePath(site.theme)))) {
+    throw new Error(
+      `Unknown theme ${JSON.stringify(site.theme)}: ${themePath(site.theme)} is missing.\n` +
+        `Built in: ${knownThemes.join(', ')}. For any other theme run \`bbg-next theme add <dir>\` first.`,
+    )
+  }
   // Laid down for the author to fill in, as `plugin add` does for a plugin, and never over one they wrote.
   const themeConfig = themeConfigPath(site.theme)
   if (!(await vfs.exists(themeConfig))) await vfs.writeFile(themeConfig, '{}\n')

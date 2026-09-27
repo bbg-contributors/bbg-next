@@ -20,7 +20,7 @@ import { createSite, loadManifest, loadOptions, resolve } from './site.ts'
 import { css } from './style.ts'
 
 /** Injectable: the default imports an absolute http URL, which only a browser can do. */
-export type ThemeLoader = (url: string) => Promise<ThemeModule>
+type ThemeLoader = (url: string) => Promise<ThemeModule>
 
 const importTheme: ThemeLoader = async url => (await import(/* @vite-ignore */ url)) as ThemeModule
 
@@ -30,6 +30,8 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
   if (outlet === null) throw new Error(`Missing <${outletElement}> in the document`)
 
   const manifest = await loadManifest()
+  const lifetime = new AbortController()
+  const { signal } = lifetime
 
   // Started before the plugins, which it waits on none of.
   const loadingTheme = loadTheme(resolve(themePath(manifest.site.theme)))
@@ -40,10 +42,10 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
     : Promise.resolve({})
 
   // One for the plugins and the theme alike, so the two can never disagree.
-  const scheme = createColorScheme()
+  const colorScheme = createColorScheme(signal)
 
   // Before createSite, which renders the footer.
-  const plugins = await setupPlugins(manifest, scheme.colorScheme, loadPlugin)
+  const plugins = await setupPlugins(manifest, colorScheme, loadPlugin)
   const site = createSite(manifest, plugins.renderers)
 
   // A block decrypted later renders the way the document around it did.
@@ -52,12 +54,7 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
   defineEncrypted({ render: markdown => site.renderers.markdown(markdown, context), words: site.words })
 
   const theme = await loadingTheme
-  theme.register({
-    colorScheme: scheme.colorScheme,
-    seed: manifest.site.seed,
-    options: await themeOptions,
-    plugins: plugins.started,
-  })
+  theme.register({ colorScheme, seed: manifest.site.seed, options: await themeOptions, plugins: plugins.started })
 
   const locate = (url: URL): { route: Route | null; fragment: string } => ({
     route: parseRoute(url, site.router),
@@ -80,9 +77,11 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
   let shownHref: string | null = null
   const onScreen = (route: Route | null): boolean => route !== null && serializeRoute(route, site.router) === shownHref
 
-  const visits = createVisits()
+  const visits = createVisits(signal)
+  let shows = 0
 
   const show = async (route: Route | null, fragment: string, position?: number): Promise<void> => {
+    const ticket = (shows += 1)
     shownHref = route === null ? null : serializeRoute(route, site.router)
 
     // Ahead of the fetch, so the bar follows the click rather than the network. From one article to another no mark moves, and nothing is sent.
@@ -94,6 +93,9 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
     }
 
     const rendered = await renderRoute(site, route)
+    // The reader has moved on while this was on its way.
+    if (ticket !== shows) return
+
     context = rendered.context
     const element = place(view, rendered)
     // Once it is on screen: plugins need the element connected.
@@ -138,16 +140,11 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
     void navigate(route, fragment)
   }
 
-  addEventListener('popstate', onPopState)
-  document.addEventListener('click', onClick)
+  addEventListener('popstate', onPopState, { signal })
+  document.addEventListener('click', onClick, { signal })
 
   history.replaceState(visits.next(), '', location.href)
   await show(landing.route, landing.fragment)
 
-  return () => {
-    removeEventListener('popstate', onPopState)
-    document.removeEventListener('click', onClick)
-    visits.teardown()
-    scheme.teardown()
-  }
+  return () => lifetime.abort()
 }

@@ -16,33 +16,28 @@ export interface Site {
   readonly words: Wording
 }
 
+// no-cache revalidates rather than trusting a stale copy after a deploy
+const fresh: RequestInit = { cache: 'no-cache' }
+
 export function resolve(path: string): string {
   return new URL(path, document.baseURI).href
 }
 
-export async function fetchText(path: string): Promise<string> {
-  const response = await fetch(resolve(path))
+export async function fetchText(path: string, init?: RequestInit): Promise<string> {
+  const response = await fetch(resolve(path), init)
   if (!response.ok) throw new Error(`${response.status} ${response.statusText} for ${path}`)
 
   return response.text()
 }
 
 export async function loadManifest(): Promise<Manifest> {
-  // no-cache revalidates rather than trusting a stale copy after a deploy
-  const response = await fetch(resolve(manifestPath), { cache: 'no-cache' })
-  if (!response.ok) throw new Error(`Cannot load ${manifestPath}: ${response.status}`)
-
-  return (await response.json()) as Manifest
+  return JSON.parse(await fetchText(manifestPath, fresh)) as Manifest
 }
 
 /** A theme's or a plugin's config. One that cannot be read leaves it on `{}`: a blog is no place to fail loudly at a visitor. */
 export async function loadOptions(path: string): Promise<Readonly<Record<string, unknown>>> {
   try {
-    // no-cache like the manifest: a deploy changes it.
-    const response = await fetch(resolve(path), { cache: 'no-cache' })
-    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
-
-    return parseOptions(await response.text())
+    return parseOptions(await fetchText(path, fresh))
   } catch (cause) {
     console.error(`bbg-next: cannot read ${path}`, cause)
 

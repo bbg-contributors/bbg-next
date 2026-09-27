@@ -1,10 +1,11 @@
 import type { PageModel } from '@bbg-next/view'
-import { ModelElement } from './base.ts'
-import { banner, enter, main, pageCard, retitle } from './layout.ts'
+import { el, ModelElement } from './base.ts'
+import { banner, enter, main, retitle } from './layout.ts'
 
 export class BbgPageView extends ModelElement<PageModel> {
   readonly #banner = banner()
-  readonly #content = pageCard()
+  // Tighter than an article's, as the original's pages were.
+  readonly #content = el('div', 'bbg-content my-7.5 rounded-md bg-surface p-4 shadow-card')
   readonly #main = main(this.#content)
 
   protected override build(): void {

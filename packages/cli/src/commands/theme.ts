@@ -5,6 +5,7 @@ import { defineCommand } from 'clerc'
 import { installTheme, knownThemes } from '../assets.ts'
 import { syncSite } from '../sync.ts'
 import { reportDiagnostics, style } from '../terminal/report.ts'
+import { drafts } from './flags.ts'
 
 export const theme = defineCommand(
   {
@@ -32,7 +33,7 @@ export const themeUse = defineCommand(
     description: 'Switch the site to another theme',
     parameters: ['<name>', '[dir]'],
     flags: {
-      drafts: { type: Boolean, description: 'Include drafts', default: false },
+      drafts,
     },
   },
   // oxlint-disable-next-line typescript/no-misused-promises -- clerc awaits the handler itself
@@ -63,7 +64,7 @@ export const themeAdd = defineCommand(
     parameters: ['<source>', '[dir]'],
     flags: {
       name: { type: String, description: 'Install under this name instead of the directory’s', default: '' },
-      drafts: { type: Boolean, description: 'Include drafts', default: false },
+      drafts,
     },
   },
   // oxlint-disable-next-line typescript/no-misused-promises -- clerc awaits the handler itself

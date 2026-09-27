@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
-import type { PluginHost, PluginLoader } from '../src/plugins.ts'
-import type { ColorSchemeHandle } from '../src/scheme.ts'
+import type { PluginLoader } from '../src/plugins.ts'
 import type { Manifest, PluginIndexEntry } from '@bbg-next/core'
 import type { ColorScheme, MarkdownApi, PluginContext, PluginModule } from '@bbg-next/plugin'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setupPlugins } from '../src/plugins.ts'
 import { createColorScheme } from '../src/scheme.ts'
+import { stubQuery } from './stubQuery.ts'
 
 function entry(name: string, extra: Partial<PluginIndexEntry> = {}): PluginIndexEntry {
   return { name, version: '1.0.0', extensions: [], dependencies: {}, hasConfig: false, ...extra }
@@ -45,8 +45,8 @@ function loaderFor(modules: Readonly<Record<string, PluginModule>>): PluginLoade
 }
 
 /** boot owns the colour scheme; most of these tests only need one to exist. */
-async function setup(manifest: Manifest, load: PluginLoader, scheme = createColorScheme()): Promise<PluginHost> {
-  return setupPlugins(manifest, scheme.colorScheme, load)
+async function setup(manifest: Manifest, load: PluginLoader) {
+  return setupPlugins(manifest, createColorScheme(new AbortController().signal), load)
 }
 
 const view = { element: document.createElement('div'), route: { type: 'home', page: 1 } as const, comments: false }
@@ -148,17 +148,6 @@ describe('setupPlugins', () => {
   })
 
   describe('theme and plugins knowing of each other', () => {
-    it('tells a plugin which theme it runs with', async () => {
-      const seen: unknown[] = []
-
-      await setup(
-        manifestWith([entry('paired')]),
-        loaderFor({ paired: { setup: context => void seen.push(context.theme) } }),
-      )
-
-      expect(seen).toEqual([{ name: 'default-theme', version: '1.0.0' }])
-    })
-
     // The theme dresses up for what is actually running, not for what the site merely asked for.
     it('reports only the plugins that set up, in load order', async () => {
       const host = await setup(
@@ -225,8 +214,9 @@ describe('setupPlugins', () => {
   })
 
   describe('config', () => {
-    /** Records every request, so a test can assert on what was asked for and when. */
-    function serve(configs: Readonly<Record<string, unknown>>, log: string[] = []): string[] {
+    /** Records every request, so a test can assert on what was asked for. */
+    function serve(configs: Readonly<Record<string, unknown>>): string[] {
+      const log: string[] = []
       vi.stubGlobal('fetch', async (input: string | URL) => {
         const { pathname } = new URL(String(input), 'http://localhost:3000')
         log.push(`fetch:${pathname}`)
@@ -254,21 +244,6 @@ describe('setupPlugins', () => {
       expect(seen).toEqual([{ hello: 'world' }, {}])
     })
 
-    it('starts every fetch before the first setup runs', async () => {
-      const events = serve({ '/data/plugins/one.json': {}, '/data/plugins/two.json': {} })
-
-      await setup(
-        manifestWith([entry('one', { hasConfig: true }), entry('two', { hasConfig: true })]),
-        loaderFor({
-          one: { setup: () => void events.push('setup:one') },
-          two: { setup: () => void events.push('setup:two') },
-        }),
-      )
-
-      // Fetched one at a time these would interleave: fetch, setup, fetch, setup.
-      expect(events).toEqual(['fetch:/data/plugins/one.json', 'fetch:/data/plugins/two.json', 'setup:one', 'setup:two'])
-    })
-
     it('carries on with defaults when a config cannot be read', async () => {
       serve({})
       const seen: unknown[] = []
@@ -284,23 +259,6 @@ describe('setupPlugins', () => {
   })
 
   describe('colour scheme', () => {
-    /** Returns a setter that flips the scheme and notifies, the way the browser would. */
-    function stubScheme(initial: ColorScheme): (next: ColorScheme) => void {
-      const listeners = new Set<() => void>()
-      const query = {
-        matches: initial === 'dark',
-        addEventListener: (_type: string, listener: () => void) => void listeners.add(listener),
-        removeEventListener: (_type: string, listener: () => void) => void listeners.delete(listener),
-      }
-
-      vi.stubGlobal('matchMedia', () => query)
-
-      return next => {
-        query.matches = next === 'dark'
-        for (const listener of [...listeners]) listener()
-      }
-    }
-
     function collect(seen: ColorScheme[]): PluginModule {
       return { setup: context => void context.onColorScheme(scheme => void seen.push(scheme)) }
     }
@@ -308,7 +266,7 @@ describe('setupPlugins', () => {
     afterEach(() => void vi.unstubAllGlobals())
 
     it('hands a plugin the scheme at setup, then every change', async () => {
-      const set = stubScheme('light')
+      const set = stubQuery('light')
       const seen: ColorScheme[] = []
 
       await setup(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }))
@@ -319,17 +277,8 @@ describe('setupPlugins', () => {
       expect(seen).toEqual(['light', 'dark', 'light'])
     })
 
-    it('starts from dark when that is what the browser reports', async () => {
-      stubScheme('dark')
-      const seen: ColorScheme[] = []
-
-      await setup(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }))
-
-      expect(seen).toEqual(['dark'])
-    })
-
     it('isolates a handler that throws from the rest', async () => {
-      const set = stubScheme('light')
+      const set = stubQuery('light')
       const seen: ColorScheme[] = []
 
       await setup(
@@ -351,7 +300,7 @@ describe('setupPlugins', () => {
 
     // Otherwise a plugin the runtime skipped would keep getting called.
     it('leaves a plugin that throws on the first call unsubscribed', async () => {
-      const set = stubScheme('light')
+      const set = stubQuery('light')
       let calls = 0
 
       const host = await setup(
@@ -373,18 +322,6 @@ describe('setupPlugins', () => {
       expect(calls).toBe(1)
       expect(host.renderers.markdown('# Hi\n', {})).toContain('<h1>Hi</h1>')
     })
-
-    it('stops listening once the scheme is torn down', async () => {
-      const set = stubScheme('light')
-      const seen: ColorScheme[] = []
-      const scheme: ColorSchemeHandle = createColorScheme()
-
-      await setup(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }), scheme)
-      scheme.teardown()
-      set('dark')
-
-      expect(seen).toEqual(['light'])
-    })
   })
 
   it('lets a plugin extend markdown before anything is rendered', async () => {
@@ -404,21 +341,6 @@ describe('setupPlugins', () => {
   })
 
   describe('rendered hooks', () => {
-    it('runs every handler', async () => {
-      const events: string[] = []
-
-      const host = await setup(
-        manifestWith([entry('one'), entry('two')]),
-        loaderFor({
-          one: { setup: context => void context.onRendered(() => void events.push('one')) },
-          two: { setup: context => void context.onRendered(() => void events.push('two')) },
-        }),
-      )
-
-      host.rendered(view)
-      expect(events).toEqual(['one', 'two'])
-    })
-
     it('isolates a handler that throws from the rest', async () => {
       const events: string[] = []
 

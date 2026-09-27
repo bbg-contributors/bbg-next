@@ -3,12 +3,8 @@ import type { SiteSettings } from './schema.ts'
 import { runtimePath } from '../paths.ts'
 import { normaliseBase } from '../route.ts'
 
-/** The element the runtime replaces on every navigation. Not part of the theme contract. */
+/** The element the runtime renders into. */
 export const outletElement = 'bbg-outlet'
-
-const indexHtmlFile = 'index.html'
-const notFoundHtmlFile = '404.html'
-const nojekyllFile = '.nojekyll'
 
 const escapes: Readonly<Record<string, string>> = {
   '&': '&amp;',
@@ -50,7 +46,7 @@ export async function writeShell(vfs: Vfs, site: SiteSettings): Promise<void> {
   const base = normaliseBase(site.router.base)
   const notFound = shellHtml(site, base)
 
-  await vfs.writeFile(indexHtmlFile, site.router.mode === 'hash' && base === '/' ? shellHtml(site, null) : notFound)
-  await vfs.writeFile(notFoundHtmlFile, notFound)
-  await vfs.writeFile(nojekyllFile, '')
+  await vfs.writeFile('index.html', site.router.mode === 'hash' && base === '/' ? shellHtml(site, null) : notFound)
+  await vfs.writeFile('404.html', notFound)
+  await vfs.writeFile('.nojekyll', '')
 }

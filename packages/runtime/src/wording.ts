@@ -1,3 +1,5 @@
+import { wordFor } from '@bbg-next/view'
+
 // The runtime's own words: the titles of the views it names, what it says when nothing is found, and the password box.
 
 export interface Wording {
@@ -64,11 +66,6 @@ const en: Wording = {
   damaged: 'This encrypted content is damaged.',
 }
 
-/** By the site's language, the way the default theme picks its own. */
 export function wordingFor(lang: string): Wording {
-  const tag = lang.toLowerCase()
-  if (tag.startsWith('zh')) return zh
-  if (tag.startsWith('ja')) return ja
-
-  return en
+  return wordFor(lang, { zh, ja }, en)
 }

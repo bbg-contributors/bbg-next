@@ -4,31 +4,24 @@ import * as v from 'valibot'
 import { manifestPath } from '../paths.ts'
 import { PluginMetaSchema, SiteSettingsSchema, ThemeMetaSchema } from './schema.ts'
 
-// named so the CLI prints `SiteError: …`
-class SiteError extends Error {
-  override name = 'SiteError'
+function parse<Schema extends v.GenericSchema>(schema: Schema, input: unknown, what: string): v.InferOutput<Schema> {
+  const result = v.safeParse(schema, input)
+  if (!result.success) throw new Error(`Invalid ${what}: ${result.issues[0].message}`)
+
+  return result.output
 }
 
 /** So hosts never need valibot themselves. */
 export function parseSiteSettings(input: unknown): SiteSettings {
-  const result = v.safeParse(SiteSettingsSchema, input)
-  if (!result.success) throw new SiteError(`Invalid site settings: ${result.issues[0].message}`)
-
-  return result.output
+  return parse(SiteSettingsSchema, input, 'site settings')
 }
 
 export function parsePluginMeta(input: unknown): PluginMeta {
-  const result = v.safeParse(PluginMetaSchema, input)
-  if (!result.success) throw new SiteError(`Invalid plugin.json: ${result.issues[0].message}`)
-
-  return result.output
+  return parse(PluginMetaSchema, input, 'plugin.json')
 }
 
 export function parseThemeMeta(input: unknown): ThemeMeta {
-  const result = v.safeParse(ThemeMetaSchema, input)
-  if (!result.success) throw new SiteError(`Invalid theme.json: ${result.issues[0].message}`)
-
-  return result.output
+  return parse(ThemeMetaSchema, input, 'theme.json')
 }
 
 /** A theme's or a plugin's config: any JSON object, left for its reader to validate. */
@@ -37,11 +30,11 @@ export function parseOptions(text: string): Readonly<Record<string, unknown>> {
   try {
     parsed = JSON.parse(text)
   } catch (cause) {
-    throw new SiteError(`Not valid JSON: ${(cause as Error).message}`)
+    throw new Error(`Not valid JSON: ${(cause as Error).message}`)
   }
 
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    throw new SiteError('Must hold a JSON object of options.')
+    throw new Error('Must hold a JSON object of options.')
   }
 
   return parsed as Readonly<Record<string, unknown>>
@@ -50,19 +43,19 @@ export function parseOptions(text: string): Readonly<Record<string, unknown>> {
 /** Only the hand-maintained `site` half; the rest is always rebuilt from front matter. */
 export async function loadSiteSettings(vfs: Vfs): Promise<SiteSettings> {
   if (!(await vfs.exists(manifestPath))) {
-    throw new SiteError(`No ${manifestPath} here — is this a bbg-next site? Run \`bbg-next init\` first.`)
+    throw new Error(`No ${manifestPath} here — is this a bbg-next site? Run \`bbg-next init\` first.`)
   }
 
   let parsed: unknown
   try {
     parsed = JSON.parse(await vfs.readFile(manifestPath))
   } catch (cause) {
-    throw new SiteError(`${manifestPath} is not valid JSON: ${(cause as Error).message}`)
+    throw new Error(`${manifestPath} is not valid JSON: ${(cause as Error).message}`)
   }
 
   try {
     return parseSiteSettings((parsed as { site?: unknown } | null)?.site)
   } catch (cause) {
-    throw new SiteError(`In ${manifestPath}: ${(cause as Error).message}`)
+    throw new Error(`In ${manifestPath}: ${(cause as Error).message}`)
   }
 }

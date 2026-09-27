@@ -9,17 +9,15 @@ export type Route =
 
 export interface RouterConfig {
   readonly mode: 'hash' | 'path'
-  /** Path prefix the site is served under. `hash` mode needs it only below that, where a host shows 404.html. */
+  /** Path prefix the site is served under, encoded as in a URL. `hash` mode needs it only below that, where a host shows 404.html. */
   readonly base: string
 }
 
 /** To the `/…/` shape the rest of this module assumes. */
 export function normaliseBase(base: string): string {
-  const trimmed = base.trim()
-  if (trimmed === '' || trimmed === '/') return '/'
-  const withLead = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  const segments = splitPath(base.trim())
 
-  return withLead.endsWith('/') ? withLead : `${withLead}/`
+  return segments.length === 0 ? '/' : `/${segments.join('/')}/`
 }
 
 const pageNumber = /^[1-9]\d*$/
@@ -40,18 +38,14 @@ function toSegments(route: Route): string[] {
 }
 
 function fromSegments(segments: readonly string[]): Route | null {
-  if (segments.length === 0) return { type: 'home', page: 1 }
-  if (segments.length === 1) return segments[0] === 'archive' ? { type: 'archive' } : null
-
-  const [head, tail] = segments
-  if (segments.length !== 2 || head === undefined || tail === undefined || tail === '') return null
+  const [head, tail, ...rest] = segments
+  if (head === undefined) return { type: 'home', page: 1 }
+  if (tail === undefined) return head === 'archive' ? { type: 'archive' } : null
+  if (rest.length > 0) return null
 
   switch (head) {
-    case 'list': {
-      if (!pageNumber.test(tail)) return null
-
-      return { type: 'home', page: Number(tail) }
-    }
+    case 'list':
+      return pageNumber.test(tail) ? { type: 'home', page: Number(tail) } : null
     case 'post':
       return { type: 'article', slug: tail }
     case 'page':
@@ -78,8 +72,7 @@ export function serialize(route: Route, config: RouterConfig, fragment = ''): st
   return fragment === '' ? href : `${href}#${encodeURIComponent(fragment)}`
 }
 
-function decodeSegment(segment: string | undefined): string | null {
-  if (segment === undefined) return null
+function decodeSegment(segment: string): string | null {
   try {
     return decodeURIComponent(segment)
   } catch {
@@ -88,18 +81,13 @@ function decodeSegment(segment: string | undefined): string | null {
 }
 
 function decodeSegments(segments: readonly string[]): Route | null {
-  const decoded: string[] = []
-  for (const segment of segments) {
-    const value = decodeSegment(segment)
-    if (value === null) return null
-    decoded.push(value)
-  }
+  const decoded = segments.map(decodeSegment)
 
-  return fromSegments(decoded)
+  return decoded.every(segment => segment !== null) ? fromSegments(decoded) : null
 }
 
 /** Satisfied by both `URL` and `location`, so core needs neither DOM nor Node types. */
-export interface Locationish {
+interface Locationish {
   readonly pathname: string
   readonly hash: string
 }
@@ -116,19 +104,14 @@ function split(url: Locationish, config: RouterConfig): readonly [path: string, 
 
 /** `null` when outside the site or off-grammar — callers render a 404. */
 export function parse(url: Locationish, config: RouterConfig): Route | null {
-  const [path] = split(url, config)
-  if (config.mode === 'hash') return decodeSegments(splitPath(path))
-
   // Split before decoding: a `%2F` inside a slug would otherwise become a real separator.
-  const baseSegments = splitPath(normaliseBase(config.base))
-  const pathSegments = splitPath(path)
-  if (pathSegments.length < baseSegments.length) return null
+  const segments = splitPath(split(url, config)[0])
+  if (config.mode === 'hash') return decodeSegments(segments)
 
-  for (const [index, expected] of baseSegments.entries()) {
-    if (decodeSegment(pathSegments[index]) !== expected) return null
-  }
+  const base = splitPath(normaliseBase(config.base))
+  if (base.some((segment, index) => segments[index] !== segment)) return null
 
-  return decodeSegments(pathSegments.slice(baseSegments.length))
+  return decodeSegments(segments.slice(base.length))
 }
 
 /** The id of the element the URL points at within the document, `''` for none. */
@@ -136,7 +119,7 @@ export function parseFragment(url: Locationish, config: RouterConfig): string {
   return decodeSegment(split(url, config)[1]) ?? ''
 }
 
-/** `hash` mode below the site's root, as when a host shows 404.html for a path it has no file for: that path is the route, and the whole fragment the document's. Where it leads here, or `null` at the root itself. */
+/** In hash mode, moves a path below the site's root, where 404.html is shown, into the fragment. `null` when there is nothing to move. */
 export function resolveDeepLink(url: Locationish, config: RouterConfig): string | null {
   const root = normaliseBase(config.base)
   if (config.mode === 'path' || !url.pathname.startsWith(root)) return null

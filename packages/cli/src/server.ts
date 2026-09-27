@@ -32,13 +32,13 @@ const reloadSnippet = `<script>
 </script>
 `
 
-export interface PreviewServer {
+interface PreviewServer {
   readonly url: string
   readonly reload: () => void
   readonly close: () => Promise<void>
 }
 
-export interface PreviewServerOptions {
+interface PreviewServerOptions {
   readonly root: string
   readonly host: string
   readonly port: number

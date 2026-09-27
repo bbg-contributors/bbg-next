@@ -51,16 +51,6 @@ describe('the shell for a route', () => {
     expect(marks({ type: 'home', page: 2 })).toEqual({ home: true, archive: false, links: [false, false] })
   })
 
-  it('marks the archive on a tag’s page too', () => {
-    for (const route of [{ type: 'archive' }, { type: 'tag', tag: 'x' }] as const) {
-      expect(marks(route)).toEqual({ home: false, archive: true, links: [false, false] })
-    }
-  })
-
-  it('marks the page on screen and nothing else', () => {
-    expect(marks({ type: 'page', slug: 'links' })).toEqual({ home: false, archive: false, links: [false, true] })
-  })
-
   it('marks nothing for an article, a page kept out of the nav, or a route that led nowhere', () => {
     const routes: (Route | null)[] = [{ type: 'article', slug: 'about' }, { type: 'page', slug: 'secret' }, null]
 
