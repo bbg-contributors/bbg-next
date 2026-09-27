@@ -92,6 +92,9 @@ export async function setupPlugins(
       options,
       site: manifest.site,
       theme,
+      articles: manifest.articles,
+      hidden: manifest.hidden,
+      pages: manifest.pages,
       onRendered: rendered.add,
       // Subscribed only once it has survived the first call, so a plugin that fails to start stays out.
       onColorScheme: handler => {

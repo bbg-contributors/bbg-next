@@ -250,6 +250,9 @@ importers:
       '@bbg-next/plugin-image-viewer':
         specifier: workspace:*
         version: link:../plugin-image-viewer
+      '@bbg-next/plugin-legacy-routes':
+        specifier: workspace:*
+        version: link:../plugin-legacy-routes
       '@bbg-next/plugin-twikoo':
         specifier: workspace:*
         version: link:../plugin-twikoo
@@ -389,6 +392,12 @@ importers:
         version: link:../plugin
 
   packages/plugin-image-viewer:
+    dependencies:
+      '@bbg-next/plugin':
+        specifier: workspace:*
+        version: link:../plugin
+
+  packages/plugin-legacy-routes:
     dependencies:
       '@bbg-next/plugin':
         specifier: workspace:*

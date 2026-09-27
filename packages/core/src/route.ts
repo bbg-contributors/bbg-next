@@ -111,7 +111,10 @@ export function parse(url: Locationish, config: RouterConfig): Route | null {
   const base = splitPath(normaliseBase(config.base))
   if (base.some((segment, index) => segments[index] !== segment)) return null
 
-  return decodeSegments(segments.slice(base.length))
+  const below = segments.slice(base.length)
+
+  // A host serves the root under its file name too.
+  return decodeSegments(below.length === 1 && below[0] === 'index.html' ? [] : below)
 }
 
 /** The id of the element the URL points at within the document, `''` for none. */

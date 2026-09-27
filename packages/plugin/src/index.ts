@@ -4,13 +4,20 @@
 // Give your buttons the `bbg-button` class: the runtime draws a plain one from the shared tokens, a theme may draw it its own way or add effects such as a ripple, and any rule of yours outranks the runtime's.
 // Mark what you put into a view with `data-bbg-plugin` set to your name, and leave what others marked alone when you act on a view's content.
 
-import type { RenderContext, Route, SiteSettings } from '@bbg-next/core'
+import type { ArticleEntry, PageEntry, RenderContext, Route, SiteSettings } from '@bbg-next/core'
 import type { ColorScheme } from '@bbg-next/view'
 import type { MarkdownIt } from 'markdown-it'
 import { serializeRoute } from '@bbg-next/core'
 
 /** Re-exported so a plugin only ever depends on this package. */
-export type { RenderContext, Route, SiteSettings } from '@bbg-next/core'
+export {
+  type ArticleEntry,
+  type PageEntry,
+  type RenderContext,
+  type Route,
+  serializeRoute,
+  type SiteSettings,
+} from '@bbg-next/core'
 export { type ColorScheme, injectStyle, wordFor } from '@bbg-next/view'
 
 /** Front matter is already stripped. */
@@ -42,6 +49,11 @@ export interface PluginContext {
   /** `site.seed` is the site's brand colour, if it set one, for a plugin that derives shades of its own. */
   readonly site: SiteSettings
   readonly theme: ThemeInfo
+  /** Pinned first, then newest. */
+  readonly articles: readonly ArticleEntry[]
+  /** Apart from `articles`, so nothing lists them by accident. */
+  readonly hidden: readonly ArticleEntry[]
+  readonly pages: readonly PageEntry[]
   /** Format-agnostic work goes here. */
   readonly onRendered: (handler: RenderedHandler) => void
   /** Called with the scheme now, and again whenever it changes. A theme's colours reach you only through the shared tokens `--bbg-fg`, `--bbg-muted`, `--bbg-accent`, `--bbg-on-accent`, `--bbg-bg`, `--bbg-surface`, `--bbg-border`, `--bbg-radius` and `--bbg-shadow`, any of which may be unset, so read each with a fallback. */
@@ -52,6 +64,7 @@ export interface PluginContext {
   readonly require: <T extends PluginApi>(name: string) => T
 }
 
+/** Runs before the runtime reads the address, so it may still move it with `history.replaceState`. */
 export type PluginSetup = (context: PluginContext) => PluginApi | void
 
 /** A plugin's module namespace is this shape, the way a theme's is `ThemeModule`. */

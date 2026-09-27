@@ -83,6 +83,7 @@ const pluginKind: AssetKind<PluginMeta> = {
     ['friends', '@bbg-next/plugin-friends'],
     ['hitokoto', '@bbg-next/plugin-hitokoto'],
     ['image-viewer', '@bbg-next/plugin-image-viewer'],
+    ['legacy-routes', '@bbg-next/plugin-legacy-routes'],
     ['twikoo', '@bbg-next/plugin-twikoo'],
     ['waline', '@bbg-next/plugin-waline'],
   ]),

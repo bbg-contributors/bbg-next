@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import type { PluginSetup } from '@bbg-next/plugin'
+import type { PluginSetup, Route } from '@bbg-next/plugin'
 import type { ThemeContext } from '@bbg-next/view'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { start } from '../src/boot.ts'
@@ -116,6 +116,19 @@ describe('what plugins are told', () => {
 
     expect(document.querySelector('.bbg-not-found')).not.toBeNull()
     expect(seen).toEqual([])
+  })
+})
+
+describe('an address a plugin moves as it sets up', () => {
+  it('is where the runtime lands', async () => {
+    const seen: Route[] = []
+
+    await boot(context => {
+      history.replaceState(null, '', '#/post/second')
+      context.onRendered(view => void seen.push(view.route))
+    })
+
+    expect(seen).toEqual([{ type: 'article', slug: 'second' }])
   })
 })
 

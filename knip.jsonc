@@ -10,6 +10,7 @@
         "@bbg-next/plugin-friends",
         "@bbg-next/plugin-hitokoto",
         "@bbg-next/plugin-image-viewer",
+        "@bbg-next/plugin-legacy-routes",
         "@bbg-next/plugin-twikoo",
         "@bbg-next/plugin-waline",
         "@bbg-next/runtime",

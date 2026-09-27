@@ -88,6 +88,10 @@ describe('path mode', () => {
     })
   })
 
+  it('reads the root’s index.html as the root', () => {
+    expect(parse(new URL('http://example.com/my-blog/index.html'), pathSub)).toEqual({ type: 'home', page: 1 })
+  })
+
   it('splits before decoding, so an encoded slash stays inside one segment', () => {
     const url = new URL(`http://example.com/post/${encodeURIComponent('a/b')}/`)
     expect(parse(url, pathRoot)).toEqual({ type: 'article', slug: 'a/b' })
