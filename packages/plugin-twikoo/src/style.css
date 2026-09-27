@@ -1,0 +1,122 @@
+/* A card like the theme's own where it shares its tokens. */
+.bbg-twikoo {
+  display: block;
+  margin: 1.875rem 0;
+  padding: 1rem;
+  border-radius: var(--bbg-radius, 0);
+  background: var(--bbg-surface, transparent);
+  box-shadow: var(--bbg-shadow, none);
+  color: var(--bbg-fg, inherit);
+
+  /* Twikoo writes its blue into its rules; these stand in for it below, and a theme may set them to fit twikoo alone. */
+  --bbg-twikoo-accent: var(--bbg-accent, #409eff);
+  --bbg-twikoo-on-accent: var(--bbg-on-accent, #fff);
+  /* Twikoo's own lighter and darker steps of its blue. */
+  --bbg-twikoo-hover: color-mix(in srgb, var(--bbg-twikoo-accent) 80%, #fff);
+  --bbg-twikoo-active: color-mix(in srgb, var(--bbg-twikoo-accent) 90%, #000);
+}
+
+/* Twikoo's rules that use its blue, with our class in place of its own: as specific as the rule each replaces and injected after twikoo's sheet, so each wins over that rule alone. The admin panel's are left as they are. */
+
+.bbg-twikoo .tk-action-link,
+.bbg-twikoo .tk-action-icon,
+.bbg-twikoo .tk-actions button,
+.bbg-twikoo .tk-button--text,
+.bbg-twikoo .tk-input-group__append .tk-button:hover,
+.bbg-twikoo .tk-nick-link:hover,
+.bbg-twikoo .tk-sort-item.__active,
+.bbg-twikoo .tk-sort-item:focus,
+.bbg-twikoo .tk-icon.__comments {
+  color: var(--bbg-twikoo-accent);
+}
+
+.bbg-twikoo .tk-sort-item {
+  color: color-mix(in srgb, var(--bbg-twikoo-accent) 60%, transparent);
+}
+
+.bbg-twikoo .tk-icon.__comments.__active {
+  color: var(--bbg-twikoo-on-accent);
+  background: var(--bbg-twikoo-accent);
+  box-shadow: 0 0 0 0.2rem var(--bbg-twikoo-accent);
+}
+
+.bbg-twikoo .tk-input__inner:focus {
+  border-color: var(--bbg-twikoo-accent);
+}
+
+.bbg-twikoo .tk-button:not(.tk-button--primary):not(.tk-button--text):not(.is-disabled):is(:active, :focus, :hover) {
+  color: var(--bbg-twikoo-accent);
+  background-color: color-mix(in srgb, var(--bbg-twikoo-accent) 6%, transparent);
+  border-color: color-mix(in srgb, var(--bbg-twikoo-accent) 50%, transparent);
+}
+
+.bbg-twikoo .tk-button--primary {
+  color: var(--bbg-twikoo-on-accent);
+  background: var(--bbg-twikoo-accent);
+  border-color: var(--bbg-twikoo-accent);
+}
+
+.bbg-twikoo .tk-button--primary:not(.is-disabled):is(:focus, :hover) {
+  color: var(--bbg-twikoo-on-accent);
+  background: var(--bbg-twikoo-hover);
+  border-color: var(--bbg-twikoo-hover);
+}
+
+.bbg-twikoo .tk-button--primary:not(.is-disabled):active {
+  color: var(--bbg-twikoo-on-accent);
+  background: var(--bbg-twikoo-active);
+  border-color: var(--bbg-twikoo-active);
+}
+
+.bbg-twikoo .tk-button--primary.is-disabled,
+.bbg-twikoo .tk-button--primary.is-disabled:is(:active, :focus, :hover) {
+  color: color-mix(in srgb, var(--bbg-twikoo-on-accent) 63%, transparent);
+  background-color: color-mix(in srgb, var(--bbg-twikoo-accent) 50%, transparent);
+}
+
+.bbg-twikoo .tk-button--text:not(.is-disabled):is(:focus, :hover) {
+  color: var(--bbg-twikoo-hover);
+}
+
+.bbg-twikoo .tk-button--text:not(.is-disabled):active {
+  color: var(--bbg-twikoo-active);
+}
+
+.bbg-twikoo .tk-pagination-pager.__current {
+  color: var(--bbg-twikoo-on-accent);
+  background-color: var(--bbg-twikoo-accent);
+}
+
+.bbg-twikoo .tk-loading-spinner .path {
+  stroke: var(--bbg-twikoo-accent);
+}
+
+/* Twikoo leaves comment text, and the pictures in it and in its emoji panel, to the browser's own styles, which a theme's reset takes away. */
+
+.bbg-twikoo :is(.tk-content, .tk-preview-container) :is(p, ul, ol, blockquote, pre) {
+  margin: 0 0 0.5rem;
+}
+
+.bbg-twikoo :is(.tk-content, .tk-preview-container) :is(p, ul, ol, blockquote, pre):last-child {
+  margin-bottom: 0;
+}
+
+.bbg-twikoo :is(.tk-content, .tk-preview-container) :is(ul, ol) {
+  padding-left: 1.5em;
+  list-style: revert;
+}
+
+.bbg-twikoo :is(.tk-content, .tk-preview-container) blockquote {
+  padding-left: 0.75em;
+  border-left: 3px solid var(--bbg-border, #9093994f);
+  color: var(--bbg-muted, inherit);
+}
+
+.bbg-twikoo :is(.tk-content, .tk-preview-container) a {
+  color: var(--bbg-twikoo-accent);
+  text-decoration: underline;
+}
+
+.bbg-twikoo :is(.tk-content, .tk-preview-container, .OwO-item) img {
+  display: inline;
+}

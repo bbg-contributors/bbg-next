@@ -1,14 +1,8 @@
-import type { Route } from '@bbg-next/plugin'
 import type { WalineInitOptions, WalineInstance } from '@waline/client'
-import { definePlugin, injectStyle } from '@bbg-next/plugin'
+import { definePlugin, injectStyle, threadPath } from '@bbg-next/plugin'
 import { init } from '@waline/client'
 import walineCss from '@waline/client/style?inline'
 import css from './style.css?inline'
-
-/** Identifies the thread. Built from the route, so hash and path routing agree on it. */
-function threadPath(route: Route): string {
-  return 'slug' in route ? `/${route.type}/${route.slug}` : '/'
-}
 
 export const setup = definePlugin(({ options, onRendered, onColorScheme }) => {
   injectStyle('bbg-plugin-waline-vendor', walineCss)
@@ -19,6 +13,7 @@ export const setup = definePlugin(({ options, onRendered, onColorScheme }) => {
 
   const host = document.createElement('section')
   host.className = 'bbg-waline'
+  host.setAttribute('data-bbg-plugin', 'waline')
 
   let dark = false
   let path = ''

@@ -145,6 +145,39 @@ describe('what plugins are told', () => {
   })
 })
 
+describe('a deep link in hash mode', () => {
+  let teardown: (() => void) | undefined
+
+  beforeEach(() => {
+    stubFetchWithProbe()
+    // As 404.html carries it, to find the site from any depth.
+    document.head.append(Object.assign(document.createElement('base'), { href: '/' }))
+    document.body.innerHTML = '<bbg-outlet></bbg-outlet>'
+  })
+
+  afterEach(() => {
+    teardown?.()
+    teardown = undefined
+    vi.unstubAllGlobals()
+    document.querySelector('base')?.remove()
+    history.replaceState(null, '', '/')
+  })
+
+  it('shows its view, with the route moved where hash mode keeps it and the fragment kept', async () => {
+    const seen: string[] = []
+    history.replaceState(null, '', '/post/first/#c1')
+
+    teardown = await start(
+      async () => stubTheme,
+      async () => ({ setup: context => void context.onRendered(view => void seen.push(view.route.type)) }),
+    )
+
+    expect(seen).toEqual(['article'])
+    expect(location.pathname).toBe('/')
+    expect(location.hash).toBe('#/post/first#c1')
+  })
+})
+
 describe('the runtime’s own words', () => {
   let teardown: (() => void) | undefined
 

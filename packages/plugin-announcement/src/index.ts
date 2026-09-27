@@ -21,6 +21,7 @@ export const setup = definePlugin(context => {
 
   const box = document.createElement('aside')
   box.className = 'bbg-announcement'
+  box.setAttribute('data-bbg-plugin', 'announcement')
   box.append(title, body)
 
   onRendered(({ element, route }) => {

@@ -12,7 +12,11 @@ export function browserBundle(...plugins: PluginOption[]): UserConfig {
         // the runtime loads exactly one file per theme or plugin
         fileName: () => 'index.js',
       },
-      rollupOptions: { external: [] },
+      rolldownOptions: {
+        external: [],
+        // Vite keeps an ES library's line breaks and indentation for the bundler it expects to come next; a browser loads these as they are.
+        output: { minify: true },
+      },
       // register() injects the stylesheet, so there is no .css asset to place
       cssCodeSplit: false,
       target: 'es2023',

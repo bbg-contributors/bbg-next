@@ -122,9 +122,9 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
 
     let served = await readIfFile(target)
 
-    // SPA fallback. Extensionless only, so a missing asset still 404s instead of returning HTML.
+    // 404.html, the site itself, as hosts like GitHub Pages show for a path with no file. Extensionless only, so a missing asset still 404s instead of returning HTML.
     if (served === null && extname(url.pathname) === '') {
-      served = await readIfFile(join(root, 'index.html'))
+      served = await readIfFile(join(root, '404.html'))
     }
 
     if (served === null) {

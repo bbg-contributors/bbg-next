@@ -22,16 +22,7 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, char => escapes[char] ?? char)
 }
 
-// `path` needs one: the SPA fallback serves the document from /post/hello/, so relative fetches must still reach the site root. `hash` without one works under any subpath the author never configured.
-function baseHref(site: SiteSettings): string | null {
-  const base = normaliseBase(site.router.base)
-  if (site.router.mode === 'path') return base
-
-  return base === '/' ? null : base
-}
-
-function indexHtml(site: SiteSettings): string {
-  const base = baseHref(site)
+function shellHtml(site: SiteSettings, base: string | null): string {
   const title = escapeHtml(site.title)
 
   return `<!doctype html>
@@ -53,16 +44,13 @@ ${base === null ? '' : `<base href="${escapeHtml(base)}">\n`}<title>${title}</ti
 `
 }
 
-/** Writes the machine-managed files at the site root. 404.html is the SPA fallback `path` mode needs on GitHub Pages, and is deleted on the way back to `hash` so a stale copy cannot shadow a real 404. */
+/** Writes the machine-managed files at the site root. 404.html is the site itself, which a host such as GitHub Pages shows for any path it has no file for, so a link to /post/hello/ still reaches the runtime to be routed. */
 export async function writeShell(vfs: Vfs, site: SiteSettings): Promise<void> {
-  const html = indexHtml(site)
+  // Shown from any depth, so it needs a `<base>` to reach the site root, as does `path` mode's index.html behind a host's SPA fallback. `hash` mode's index.html goes without one at `/`, which lets it work under any subpath the author never configured.
+  const base = normaliseBase(site.router.base)
+  const notFound = shellHtml(site, base)
 
-  await vfs.writeFile(indexHtmlFile, html)
+  await vfs.writeFile(indexHtmlFile, site.router.mode === 'hash' && base === '/' ? shellHtml(site, null) : notFound)
+  await vfs.writeFile(notFoundHtmlFile, notFound)
   await vfs.writeFile(nojekyllFile, '')
-
-  if (site.router.mode === 'path') {
-    await vfs.writeFile(notFoundHtmlFile, html)
-  } else if (await vfs.exists(notFoundHtmlFile)) {
-    await vfs.remove(notFoundHtmlFile)
-  }
 }

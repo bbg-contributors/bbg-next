@@ -25,6 +25,7 @@ export {
 export {
   parseFragment,
   parse as parseRoute,
+  resolveDeepLink,
   type Route,
   type RouterConfig,
   serialize as serializeRoute,

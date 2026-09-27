@@ -37,6 +37,7 @@ export const setup = definePlugin(({ options, onRendered, onColorScheme }) => {
   const quote = (): HTMLElement => {
     const box = document.createElement('figure')
     box.className = 'bbg-hitokoto'
+    box.setAttribute('data-bbg-plugin', 'hitokoto')
 
     const controller = new AbortController()
     fetching = controller

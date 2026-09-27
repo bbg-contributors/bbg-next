@@ -1,6 +1,6 @@
 /* A dark stage whatever the scheme, as a picture wants. Margins set back, since a theme's reset may take a dialog's away. */
 
-:is(bbg-article-view, bbg-page-view) img:not(a img) {
+:is(bbg-article-view, bbg-page-view) img:not(a img, [data-bbg-plugin] img) {
   cursor: zoom-in;
 }
 

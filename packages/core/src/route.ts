@@ -9,7 +9,7 @@ export type Route =
 
 export interface RouterConfig {
   readonly mode: 'hash' | 'path'
-  /** Path prefix the site is served under. Only meaningful in `path` mode. */
+  /** Path prefix the site is served under. `hash` mode needs it only below that, where a host shows 404.html. */
   readonly base: string
 }
 
@@ -134,4 +134,15 @@ export function parse(url: Locationish, config: RouterConfig): Route | null {
 /** The id of the element the URL points at within the document, `''` for none. */
 export function parseFragment(url: Locationish, config: RouterConfig): string {
   return decodeSegment(split(url, config)[1]) ?? ''
+}
+
+/** `hash` mode below the site's root, as when a host shows 404.html for a path it has no file for: that path is the route, and the whole fragment the document's. Where it leads here, or `null` at the root itself. */
+export function resolveDeepLink(url: Locationish, config: RouterConfig): string | null {
+  const root = normaliseBase(config.base)
+  if (config.mode === 'path' || !url.pathname.startsWith(root)) return null
+
+  const below = url.pathname.slice(root.length)
+  if (below === '' || below === 'index.html') return null
+
+  return `${root}#/${below.endsWith('/') ? below.slice(0, -1) : below}${url.hash}`
 }

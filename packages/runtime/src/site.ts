@@ -55,7 +55,7 @@ export function createSite(manifest: Manifest, renderers: RendererRegistry): Sit
   // From the document, not the manifest, so the two cannot disagree about where the site is served.
   const router: RouterConfig = {
     mode: manifest.site.router.mode,
-    base: new URL(document.baseURI).pathname,
+    base: new URL('./', document.baseURI).pathname,
   }
 
   const bySlug = new Map<string, { entry: ArticleEntry; unlisted: boolean }>()

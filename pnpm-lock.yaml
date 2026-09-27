@@ -250,6 +250,9 @@ importers:
       '@bbg-next/plugin-image-viewer':
         specifier: workspace:*
         version: link:../plugin-image-viewer
+      '@bbg-next/plugin-twikoo':
+        specifier: workspace:*
+        version: link:../plugin-twikoo
       '@bbg-next/plugin-waline':
         specifier: workspace:*
         version: link:../plugin-waline
@@ -362,6 +365,15 @@ importers:
       '@bbg-next/plugin':
         specifier: workspace:*
         version: link:../plugin
+
+  packages/plugin-twikoo:
+    dependencies:
+      '@bbg-next/plugin':
+        specifier: workspace:*
+        version: link:../plugin
+      twikoo:
+        specifier: ^2.0.9
+        version: 2.0.9
 
   packages/plugin-waline:
     dependencies:
@@ -1497,6 +1509,9 @@ packages:
     resolution: {integrity: sha512-yYU8cogLeSh/ms2jh8Fj7jaba/EWa7Ja6GoUqYZaraEuCI5YS6ms6ObZgjjedm+jm6XZjdNRWBpPP6Z86oOxcw==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
+
+  '@twikoojs/shared@2.0.9':
+    resolution: {integrity: sha512-Ney0snK/bVcSSZANOI7ap6JLqgvp9ZmQ8/Ia0u7xEWmHKw8Ywa/J0/A46WhA4RopuNDhB0rH/QV0gRopdeNHdA==}
 
   '@tybys/wasm-util@0.10.4':
     resolution: {integrity: sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A==}
@@ -3053,6 +3068,9 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  twikoo@2.0.9:
+    resolution: {integrity: sha512-P0wsYSz/0VGeAyFffZw3bVti15hXH3CjNQUxCGE/mVInOlsHKrWDVpM3/IWfwVF1F3/ZLtaVYH0p4il35McNXQ==}
+
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
@@ -4011,6 +4029,8 @@ snapshots:
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
       vite: 8.3.1(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
+
+  '@twikoojs/shared@2.0.9': {}
 
   '@tybys/wasm-util@0.10.4':
     dependencies:
@@ -5521,6 +5541,10 @@ snapshots:
       esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
+
+  twikoo@2.0.9:
+    dependencies:
+      '@twikoojs/shared': 2.0.9
 
   type-check@0.4.0:
     dependencies:

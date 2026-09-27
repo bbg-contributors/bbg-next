@@ -1,7 +1,15 @@
 import type { PluginLoader } from './plugins.ts'
 import type { RenderContext, Route } from '@bbg-next/core'
 import type { ThemeModule } from '@bbg-next/view'
-import { outletElement, parseFragment, parseRoute, serializeRoute, themeConfigPath, themePath } from '@bbg-next/core'
+import {
+  outletElement,
+  parseFragment,
+  parseRoute,
+  resolveDeepLink,
+  serializeRoute,
+  themeConfigPath,
+  themePath,
+} from '@bbg-next/core'
 import { injectStyle, themeElements } from '@bbg-next/view'
 import { defineEncrypted } from './encrypted.ts'
 import { setupPlugins } from './plugins.ts'
@@ -55,6 +63,9 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
     route: parseRoute(url, site.router),
     fragment: parseFragment(url, site.router),
   })
+  // Opened below the root through 404.html, as a comment notification links to a comment: move the route where hash mode keeps it.
+  const deepLink = resolveDeepLink(location, site.router)
+  if (deepLink !== null) history.replaceState(null, '', deepLink)
   const landing = locate(new URL(location.href))
 
   // Mounted with a model, as the contract promises every element; show then hands the shell a new one whenever it changes.

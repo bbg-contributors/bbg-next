@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["es2023", "dom", "dom.iterable"],
+    // vite/client declares the `?inline` (and `?raw`, `?url`) module suffixes.
+    "types": ["vite/client"]
+  },
+  "include": ["src"]
+}

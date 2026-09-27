@@ -1,6 +1,6 @@
 import type { Route, RouterConfig } from '../src/route.ts'
 import { describe, expect, it } from 'vitest'
-import { normaliseBase, parse, parseFragment, serialize } from '../src/route.ts'
+import { normaliseBase, parse, parseFragment, resolveDeepLink, serialize } from '../src/route.ts'
 
 const hash: RouterConfig = { mode: 'hash', base: '/' }
 const pathRoot: RouterConfig = { mode: 'path', base: '/' }
@@ -103,6 +103,39 @@ describe('path mode', () => {
   it('splits before decoding, so an encoded slash stays inside one segment', () => {
     const url = new URL(`http://example.com/post/${encodeURIComponent('a/b')}/`)
     expect(parse(url, pathRoot)).toEqual({ type: 'article', slug: 'a/b' })
+  })
+})
+
+describe('deep links in hash mode', () => {
+  const blog: RouterConfig = { mode: 'hash', base: '/blog/' }
+
+  function follow(href: string): URL {
+    const url = new URL(href, 'http://example.com/')
+    const resolved = resolveDeepLink(url, blog)
+    if (resolved === null) throw new Error(`${href} is no deep link`)
+
+    return new URL(resolved, url)
+  }
+
+  // The first page of the list is the root itself.
+  for (const route of routes.filter(item => serialize(item, pathRoot) !== '/')) {
+    it(`lead from the path of ${JSON.stringify(route)} to its route, keeping the fragment`, () => {
+      const url = follow(`/blog${serialize(route, pathRoot)}#c1`)
+
+      expect(url.pathname).toBe('/blog/')
+      expect(parse(url, blog)).toEqual(route)
+      expect(parseFragment(url, blog)).toBe('c1')
+    })
+  }
+
+  it('leave the root, the document itself and anything outside the site alone', () => {
+    for (const href of ['/blog/', '/blog/index.html#/post/hello', '/other/post/hello/']) {
+      expect(resolveDeepLink(new URL(href, 'http://example.com/'), blog)).toBeNull()
+    }
+  })
+
+  it('have nothing to do in path mode, where the path is the route already', () => {
+    expect(resolveDeepLink(new URL('http://example.com/post/hello/'), pathRoot)).toBeNull()
   })
 })
 

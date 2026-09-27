@@ -34,6 +34,7 @@
     "@bbg-next/plugin-friends": "workspace:*",
     "@bbg-next/plugin-hitokoto": "workspace:*",
     "@bbg-next/plugin-image-viewer": "workspace:*",
+    "@bbg-next/plugin-twikoo": "workspace:*",
     "@bbg-next/plugin-waline": "workspace:*",
     "@bbg-next/runtime": "workspace:*",
     "clerc": "^1.3.1",

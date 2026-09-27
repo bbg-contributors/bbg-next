@@ -61,6 +61,12 @@ describe('the image viewer', () => {
     expect(viewer()?.open ?? false).toBe(false)
   })
 
+  it('leaves the pictures a plugin put into the view to that plugin', () => {
+    click(view('<section data-bbg-plugin="comments"><img src="emoji.png" alt=""></section>').querySelector('img'))
+
+    expect(viewer()?.open ?? false).toBe(false)
+  })
+
   it('stays out of the lists', () => {
     click(view('<img src="cover.png" alt="">', { type: 'home', page: 1 }).querySelector('img'))
 

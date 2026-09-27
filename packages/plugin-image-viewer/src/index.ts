@@ -39,7 +39,7 @@ export const setup = definePlugin(({ site, onRendered }) => {
   // Delegated, so a picture that turns up later, out of an encrypted block say, opens all the same.
   const onClick = (event: MouseEvent): void => {
     const image = event.target
-    if (image instanceof HTMLImageElement && image.closest('a') === null) show(image)
+    if (image instanceof HTMLImageElement && image.closest('a, [data-bbg-plugin]') === null) show(image)
   }
 
   let watched: HTMLElement | null = null

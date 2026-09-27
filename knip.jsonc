@@ -10,12 +10,13 @@
         "@bbg-next/plugin-friends",
         "@bbg-next/plugin-hitokoto",
         "@bbg-next/plugin-image-viewer",
+        "@bbg-next/plugin-twikoo",
         "@bbg-next/plugin-waline",
         "@bbg-next/runtime",
         // clerc's update-notifier plugin declares these as devDeps, so the consumer must supply them
         "update-notifier",
-        "@types/update-notifier"
-      ]
-    }
-  }
+        "@types/update-notifier",
+      ],
+    },
+  },
 }
