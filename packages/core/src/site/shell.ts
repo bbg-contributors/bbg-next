@@ -1,6 +1,6 @@
 import type { Vfs } from '../vfs.ts'
 import type { SiteSettings } from './schema.ts'
-import { runtimePath } from '../paths.ts'
+import { atomPath, runtimePath } from '../paths.ts'
 import { normaliseBase } from '../route.ts'
 
 /** The element the runtime renders into. */
@@ -14,7 +14,7 @@ const escapes: Readonly<Record<string, string>> = {
   "'": '&#39;',
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, char => escapes[char] ?? char)
 }
 
@@ -28,7 +28,7 @@ function shellHtml(site: SiteSettings, base: string | null): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 ${base === null ? '' : `<base href="${escapeHtml(base)}">\n`}<title>${title}</title>
 <meta name="description" content="${escapeHtml(site.description)}">
-<script type="module" src="${runtimePath}"></script>
+${site.atom ? `<link rel="alternate" type="application/atom+xml" title="${title}" href="${atomPath}">\n` : ''}<script type="module" src="${runtimePath}"></script>
 </head>
 <body>
 <${outletElement}></${outletElement}>

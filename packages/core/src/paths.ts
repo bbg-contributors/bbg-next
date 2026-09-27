@@ -5,6 +5,9 @@ export const pluginConfigDir = `${dataDir}/plugins`
 const themeConfigDir = `${dataDir}/themes`
 export const manifestPath = `${dataDir}/site.json`
 
+export const atomPath = 'atom.xml'
+export const sitemapPath = 'sitemap.txt'
+
 export const runtimePath = 'bbg/runtime.js'
 export const themesDir = 'bbg/themes'
 export const pluginsDir = 'bbg/plugins'

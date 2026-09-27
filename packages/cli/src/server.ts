@@ -18,6 +18,7 @@ const mimeTypes: Readonly<Record<string, string>> = {
   '.mjs': 'text/javascript; charset=utf-8',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
+  '.txt': 'text/plain; charset=utf-8',
   '.webp': 'image/webp',
   '.woff2': 'font/woff2',
   '.xml': 'application/xml; charset=utf-8',

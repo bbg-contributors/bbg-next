@@ -9,7 +9,7 @@ import { drafts } from './flags.ts'
 export const sync = defineCommand(
   {
     name: 'sync',
-    description: 'Regenerate the manifest, the HTML shell and the bundled assets',
+    description: 'Regenerate the manifest, the HTML shell, the feeds and the bundled assets',
     parameters: ['[dir]'],
     flags: {
       drafts,

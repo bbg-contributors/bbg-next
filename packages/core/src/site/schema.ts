@@ -2,29 +2,53 @@ import * as v from 'valibot'
 
 // data/site.json: authored settings, plus the index generated from front matter.
 
-export const SiteSettingsSchema = v.object({
-  title: v.pipe(v.string(), v.minLength(1)),
-  description: v.optional(v.string(), ''),
-  /** BCP-47. Lands verbatim in `<html lang>`. */
-  lang: v.optional(v.string(), 'zh-CN'),
-  footer: v.optional(v.string(), ''),
-  /** Options live in `data/themes/<name>.json`. */
-  theme: v.optional(v.string(), 'default-theme'),
-  postsPerPage: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1)), 10),
-  router: v.optional(
-    v.object({
-      mode: v.optional(v.picklist(['hash', 'path']), 'hash'),
-      base: v.optional(v.string(), '/'),
-    }),
-    { mode: 'hash', base: '/' },
+const siteUrl = /^(?:https?:\/\/[\da-z.-]+(?::\d+)?\/?)?$/i
+const trailingSlash = /\/$/
+
+export const SiteSettingsSchema = v.pipe(
+  v.object({
+    title: v.pipe(v.string(), v.minLength(1)),
+    description: v.optional(v.string(), ''),
+    /** BCP-47. Lands verbatim in `<html lang>`. */
+    lang: v.optional(v.string(), 'zh-CN'),
+    footer: v.optional(v.string(), ''),
+    /** Options live in `data/themes/<name>.json`. */
+    theme: v.optional(v.string(), 'default-theme'),
+    postsPerPage: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1)), 10),
+    router: v.optional(
+      v.object({
+        mode: v.optional(v.picklist(['hash', 'path']), 'hash'),
+        base: v.optional(v.string(), '/'),
+      }),
+      { mode: 'hash', base: '/' },
+    ),
+    /** Scheme and host, for the addresses in atom.xml and sitemap.txt. Their path is `router.base`, so a site below the root needs that set even in hash mode. */
+    url: v.optional(
+      v.pipe(
+        v.string(),
+        v.trim(),
+        v.regex(
+          siteUrl,
+          'The url must be a scheme and host only, like https://example.com; a path goes in router.base',
+        ),
+        v.transform(url => url.replace(trailingSlash, '')),
+      ),
+      '',
+    ),
+    atom: v.optional(v.boolean(), false),
+    sitemap: v.optional(v.boolean(), false),
+    /** Load order. Options live in `data/plugins/<name>.json`. */
+    plugins: v.optional(v.array(v.pipe(v.string(), v.minLength(1))), []),
+    /** The site's brand colour, and nothing more: each theme builds its own palette from it, or from a default of its own. */
+    seed: v.optional(
+      v.pipe(v.string(), v.regex(/^#[\da-f]{6}$/i, 'The seed must be a six-digit hex colour, like #0d6efd')),
+    ),
+  }),
+  v.check(
+    site => site.url !== '' || (!site.atom && !site.sitemap),
+    'atom and sitemap need url, the address the site is served at, like https://example.com',
   ),
-  /** Load order. Options live in `data/plugins/<name>.json`. */
-  plugins: v.optional(v.array(v.pipe(v.string(), v.minLength(1))), []),
-  /** The site's brand colour, and nothing more: each theme builds its own palette from it, or from a default of its own. */
-  seed: v.optional(
-    v.pipe(v.string(), v.regex(/^#[\da-f]{6}$/i, 'The seed must be a six-digit hex colour, like #0d6efd')),
-  ),
-})
+)
 
 export type SiteSettings = v.InferOutput<typeof SiteSettingsSchema>
 

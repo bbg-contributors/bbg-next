@@ -29,6 +29,7 @@ export {
   type RouterConfig,
   serialize as serializeRoute,
 } from './route.ts'
+export { writeFeeds } from './site/feeds.ts'
 export { buildManifest, type Diagnostic, serializeManifest } from './site/manifest.ts'
 export { builtinPlugins, defaultExtensions } from './site/plugins.ts'
 export {

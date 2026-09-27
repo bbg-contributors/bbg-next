@@ -172,6 +172,14 @@ describe('failures are reported, not swallowed', () => {
     expect(diagnostics[0]?.level).toBe('error')
   })
 
+  it('skips an article dated past the four-digit years a feed can write', async () => {
+    const { diagnostics, manifest } = await build({
+      'data/articles/a.md': article('title: A\ncreated: 1e16'),
+    })
+    expect(manifest.articles).toHaveLength(0)
+    expect(diagnostics[0]?.level).toBe('error')
+  })
+
   it('ignores non-markdown and dotfiles', async () => {
     const { manifest } = await build({
       'data/articles/.DS_Store': 'junk',
@@ -250,5 +258,25 @@ describe('seed', () => {
 
   it('refuses anything else, rather than handing a theme a colour it cannot read', () => {
     for (const seed of ['0d6efd', '#0d6', '#0d6efd80', 'blue']) expect(parse(seed).success).toBe(false)
+  })
+})
+
+describe('url', () => {
+  const parse = (settings: Readonly<Record<string, unknown>>) =>
+    v.safeParse(SiteSettingsSchema, { title: 'T', ...settings })
+
+  it('takes a scheme and host, without a trailing slash', () => {
+    expect(v.parse(SiteSettingsSchema, { title: 'T', url: 'https://example.com/' }).url).toBe('https://example.com')
+  })
+
+  it('refuses a path, which router.base holds', () => {
+    for (const url of ['https://example.com/blog', 'example.com']) expect(parse({ url }).success).toBe(false)
+  })
+
+  it('is needed once the feed or the sitemap is on, and not before', () => {
+    expect(parse({}).success).toBe(true)
+    expect(parse({ atom: true }).success).toBe(false)
+    expect(parse({ sitemap: true }).success).toBe(false)
+    expect(parse({ atom: true, sitemap: true, url: 'https://example.com' }).success).toBe(true)
   })
 })

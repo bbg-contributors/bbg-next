@@ -1,5 +1,5 @@
 import type { Diagnostic, SiteSettings, Vfs } from '@bbg-next/core'
-import { buildManifest, manifestPath, serializeManifest, writeShell } from '@bbg-next/core'
+import { buildManifest, manifestPath, serializeManifest, writeFeeds, writeShell } from '@bbg-next/core'
 import { syncAssets } from './assets.ts'
 
 interface SyncOptions {
@@ -29,6 +29,8 @@ export async function syncSite(options: SyncOptions): Promise<SyncResult> {
 
   await vfs.writeFile(manifestPath, serialized)
   await writeShell(vfs, site)
+  // A feed reader keeps whatever it once fetched, so a draft must never reach one.
+  if (!includeDrafts) await writeFeeds(vfs, manifest)
 
   return { diagnostics: [...assetDiagnostics, ...diagnostics], manifest: serialized, updated }
 }

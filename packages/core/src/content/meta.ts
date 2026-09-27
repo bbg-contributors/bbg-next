@@ -1,11 +1,15 @@
 import * as v from 'valibot'
 
+// Four-digit years, all a feed's date format can hold.
+const earliest = Date.parse('0000-01-01T00:00:00Z')
+const latest = Date.parse('9999-12-31T23:59:59.999Z')
+
 // ISO string or epoch ms. Legacy sites are already +08:00 shifted; never re-apply.
 const TimestampSchema = v.pipe(
   v.union([v.string(), v.number()]),
   v.rawTransform<string | number, number>(({ dataset, addIssue, NEVER }) => {
     const ms = typeof dataset.value === 'number' ? dataset.value : Date.parse(dataset.value)
-    if (!Number.isFinite(ms)) {
+    if (Number.isNaN(ms) || ms < earliest || ms > latest) {
       addIssue({ message: `Not a valid date: ${JSON.stringify(dataset.value)}` })
 
       return NEVER
