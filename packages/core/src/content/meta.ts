@@ -46,5 +46,7 @@ export const PageMetaSchema = v.object({
   draft: v.optional(v.boolean(), false),
   showInNav: v.optional(v.boolean(), true),
   navLabel: v.optional(v.pipe(v.string(), v.trim(), v.minLength(1))),
+  /** Lower first; pages without one follow in file-name order. */
+  navOrder: v.optional(v.number()),
   comments: v.optional(v.boolean(), true),
 })

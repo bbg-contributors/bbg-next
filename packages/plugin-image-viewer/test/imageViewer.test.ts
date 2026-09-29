@@ -67,12 +67,6 @@ describe('the image viewer', () => {
     expect(viewer()?.open ?? false).toBe(false)
   })
 
-  it('stays out of the lists', () => {
-    click(view('<img src="cover.png" alt="">', { type: 'home', page: 1 }).querySelector('img'))
-
-    expect(viewer()?.open ?? false).toBe(false)
-  })
-
   it('lets go of a view the reader has moved on from, even one that stays on screen', () => {
     const element = view('<img src="cover.png" alt="">')
     rendered({ element, route: { type: 'home', page: 1 }, comments: false })

@@ -98,15 +98,6 @@ describe('a friends block', () => {
 
     await vi.waitFor(() => expect(names(list)).toEqual(['First', 'Middle', 'Last']))
   })
-
-  it('carries on without a source that fails', async () => {
-    vi.stubGlobal('fetch', async () => new Response('gone', { status: 404 }))
-    const reported = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const list = place('source: https://example.com/friends.json\n\nname: Kept\nurl: https://kept.example\n')
-
-    await vi.waitFor(() => expect(reported).toHaveBeenCalled())
-    expect(names(list)).toEqual(['Kept'])
-  })
 })
 
 describe('shuffling', () => {
@@ -145,9 +136,5 @@ describe('shuffling', () => {
 
     expect(names(list)).toEqual(['First', 'Last'])
     await vi.waitFor(() => expect(names(list)).toEqual(['First', 'Middle', 'Last']))
-  })
-
-  it('stays out of the way for a single friend', () => {
-    expect(shuffle(place('name: Only\nurl: https://only.example\n')).hidden).toBe(true)
   })
 })

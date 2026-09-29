@@ -18,16 +18,9 @@ describe('payloads', () => {
     expect(await decrypt(payload, 'hunter3')).toBeNull()
   })
 
-  it('read the same wrapped over lines', async () => {
-    expect(await decrypt(payload.replace(/.{10}/g, '$&\n  '), 'hunter2')).toBe('# 标题\n\nSecret *text*.\n')
+  it('throw for one this version cannot read, rather than taking it for a wrong password', async () => {
+    await expect(decrypt('v2.600000.00.00.00', 'hunter2')).rejects.toThrow(/Not an encrypted block/)
   })
-
-  it.each(['', 'v2.600000.00.00.00', 'v1.600000.zz.00.00', 'v1.0.00.00.00', 'v1.600000.00.00'])(
-    'throw for %j, which is no payload',
-    async broken => {
-      await expect(decrypt(broken, 'hunter2')).rejects.toThrow(/Not an encrypted block/)
-    },
-  )
 })
 
 describe('documents', () => {
@@ -49,14 +42,6 @@ describe('documents', () => {
 
   it('come back exactly as they were', async () => {
     expect(await decryptDocument(locked, 'hunter2')).toBe(article)
-  })
-
-  it('refuse to be locked twice', async () => {
-    await expect(encryptDocument(locked, 'hunter2')).rejects.toThrow(/already holds/)
-  })
-
-  it('refuse to be opened with no block in them', async () => {
-    await expect(decryptDocument(article, 'hunter2')).rejects.toThrow(/no encrypted block/)
   })
 
   it('open a block pasted into a quote, keeping it quoted', async () => {

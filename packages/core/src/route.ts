@@ -1,4 +1,4 @@
-// One segment grammar for both modes: [] | ['list', n] | ['post', slug] | ['page', slug] | ['archive'] | ['tag', name]. `list` is separate from `page` because `#/page/2` collides with a page slugged `2`.
+// One segment grammar for both modes: [] | ['list', n] | ['article', slug] | ['page', slug] | ['archive'] | ['tag', name]. `list` is separate from `page` because `#/page/2` collides with a page slugged `2`.
 
 export type Route =
   | { readonly type: 'home'; readonly page: number }
@@ -27,7 +27,7 @@ function toSegments(route: Route): string[] {
     case 'home':
       return route.page <= 1 ? [] : ['list', String(route.page)]
     case 'article':
-      return ['post', route.slug]
+      return ['article', route.slug]
     case 'page':
       return ['page', route.slug]
     case 'archive':
@@ -46,7 +46,7 @@ function fromSegments(segments: readonly string[]): Route | null {
   switch (head) {
     case 'list':
       return pageNumber.test(tail) ? { type: 'home', page: Number(tail) } : null
-    case 'post':
+    case 'article':
       return { type: 'article', slug: tail }
     case 'page':
       return { type: 'page', slug: tail }

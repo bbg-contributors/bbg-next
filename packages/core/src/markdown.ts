@@ -1,33 +1,46 @@
+import type { Route, RouterConfig } from './route.ts'
 import type { Env, MarkdownIt, StateCore, Token } from 'markdown-it'
+import { tasklist } from '@mdit/plugin-tasklist'
 import createMarkdownIt from 'markdown-it'
 import { slugify } from './content/slug.ts'
+import { parse, parseFragment } from './route.ts'
 
-export interface RenderContext {
+export interface RenderContext extends Env {
   /** Directory the document lives in, with a trailing slash, e.g. `data/articles/`. Relative links resolve against it. */
   readonly baseUrl?: string
-  /** Where the document is shown, e.g. `#/post/hello`. Fragment links resolve against it, and only a document with one gets heading permalinks. */
+  /** Where the document is shown, e.g. `#/article/hello`. Fragment links resolve against it, and only a document with one gets heading permalinks. */
   readonly href?: string
 }
 
+/** Where another view is, on a site routed by hash. */
+type ViewHref = (route: Route, fragment: string) => string
+
 const absoluteHref = /^(?:[a-z][a-z\d+.-]*:|[/?])/i
+const hashRouting: RouterConfig = { mode: 'hash', base: '/' }
 
 /** Stays relative, which is what makes a non-root `base` work. A fragment goes after the document's href: on its own, `<base>` would take it to the site root and hash routing would read it as a route. */
-function resolveHref(target: string, { baseUrl = '', href }: RenderContext): string {
+function resolveHref(target: string, { baseUrl = '', href }: RenderContext, viewHref: ViewHref | undefined): string {
+  // No heading's id holds a slash, so this is another view rather than a place in this one.
+  if (viewHref !== undefined && target.startsWith('#/')) {
+    const named = { pathname: '/', hash: target }
+    const route = parse(named, hashRouting)
+
+    return route === null ? target : viewHref(route, parseFragment(named, hashRouting))
+  }
   if (target.startsWith('#')) return href === undefined ? target : `${href}${target}`
   if (target === '' || absoluteHref.test(target)) return target
 
   return `${baseUrl}${target}`
 }
 
-function resolveTokens(tokens: readonly Token[], context: RenderContext): void {
+function resolveTokens(tokens: readonly Token[], context: RenderContext, viewHref: ViewHref | undefined): void {
   for (const token of tokens) {
     const attr = token.type === 'image' ? 'src' : token.type === 'link_open' ? 'href' : undefined
     if (attr !== undefined) {
       const value = token.attrGet(attr)
-      if (typeof value === 'string') token.attrSet(attr, resolveHref(value, context))
+      if (typeof value === 'string') token.attrSet(attr, resolveHref(value, context, viewHref))
     }
-    // images and links sit in an inline token's children
-    if (token.children !== null) resolveTokens(token.children, context)
+    if (token.children !== null) resolveTokens(token.children, context, viewHref)
   }
 }
 
@@ -82,22 +95,23 @@ function fencesToElements(state: StateCore, baseUrl: string): void {
   }
 }
 
-/** One instance per site, not a module singleton, so plugins can `use()` it before the first render. */
-export function createMarkdown(): MarkdownIt {
+/** One instance per site, not a module singleton, so plugins can `use()` it before the first render. A hash-routed site names another view as its address bar shows it, `#/article/x`, and `viewHref` writes out where that is; without one, as on a site routed by path, `#/article/x` is a place in the document like any other fragment. */
+export function createMarkdown(viewHref?: ViewHref): MarkdownIt {
   // html: false is load-bearing — no raw HTML means no sanitiser to ship.
-  const md = createMarkdownIt({ html: false, linkify: true })
+  const md = createMarkdownIt({ html: false, linkify: true }).use(tasklist, {
+    label: false,
+    containerClass: 'bbg-task-list',
+    itemClass: 'bbg-task',
+    checkboxClass: 'bbg-task-checkbox',
+  })
 
   // A core rule, not a renderer rule: a plugin replacing `renderer.rules.image` would drop it. Permalinks go first, so their hrefs get resolved too.
   md.core.ruler.push('bbg', state => {
     const context = state.env as RenderContext
     if (context.href !== undefined) addPermalinks(state)
-    resolveTokens(state.tokens, context)
+    resolveTokens(state.tokens, context, viewHref)
     fencesToElements(state, context.baseUrl ?? '')
   })
 
   return md
-}
-
-export function renderMarkdown(md: MarkdownIt, source: string, context: RenderContext): string {
-  return md.render(source, context as Env)
 }

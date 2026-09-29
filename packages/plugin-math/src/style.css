@@ -1,0 +1,7 @@
+/* A formula of its own, set off from the text around it. */
+bbg-math[display] {
+  display: block;
+  margin: 0 0 1rem;
+  overflow-x: auto;
+  text-align: center;
+}

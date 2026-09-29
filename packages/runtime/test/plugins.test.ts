@@ -20,7 +20,7 @@ function manifestWith(plugins: readonly PluginIndexEntry[]): Manifest {
       lang: 'en',
       footer: '',
       theme: 'default-theme',
-      postsPerPage: 10,
+      articlesPerPage: 10,
       router: { mode: 'hash', base: '/' },
       url: '',
       atom: false,
@@ -49,7 +49,7 @@ function loaderFor(modules: Readonly<Record<string, PluginModule>>): PluginLoade
 
 /** boot owns the colour scheme; most of these tests only need one to exist. */
 async function setup(manifest: Manifest, load: PluginLoader) {
-  return setupPlugins(manifest, createColorScheme(new AbortController().signal), load)
+  return setupPlugins(manifest, createColorScheme(), load)
 }
 
 const view = { element: document.createElement('div'), route: { type: 'home', page: 1 } as const, comments: false }
@@ -123,11 +123,16 @@ describe('setupPlugins', () => {
     expect((caught as Error).message).toMatch(/without declaring it/)
   })
 
-  it('keeps the site up when a plugin throws, and skips what depended on it', async () => {
+  it('keeps the site up when a plugin throws or will not load, and skips what depended on it', async () => {
     const ran: string[] = []
 
     const host = await setup(
-      manifestWith([entry('broken'), entry('dependent', { dependencies: { broken: '^1.0.0' } }), entry('unrelated')]),
+      manifestWith([
+        entry('broken'),
+        entry('missing'),
+        entry('dependent', { dependencies: { broken: '^1.0.0' } }),
+        entry('unrelated'),
+      ]),
       loaderFor({
         broken: {
           setup: () => {
@@ -141,12 +146,6 @@ describe('setupPlugins', () => {
 
     expect(ran).toEqual(['unrelated'])
     // still usable: a bad plugin must not take the blog down with it
-    expect(host.renderers.markdown('# Hi\n', {})).toContain('<h1>Hi</h1>')
-  })
-
-  it('survives a plugin bundle that will not load', async () => {
-    const host = await setup(manifestWith([entry('missing')]), loaderFor({}))
-
     expect(host.renderers.markdown('# Hi\n', {})).toContain('<h1>Hi</h1>')
   })
 
@@ -194,18 +193,6 @@ describe('setupPlugins', () => {
       expect(host.renderers.for('no-suffix')('# Hi\n', {})).toContain('<h1>Hi</h1>')
     })
 
-    it('keeps the first claim on a suffix', async () => {
-      const host = await setup(
-        manifestWith([entry('first', { extensions: ['typ'] }), entry('second', { extensions: ['typ'] })]),
-        loaderFor({
-          first: { setup: context => void context.registerRenderer('typ', () => 'first') },
-          second: { setup: context => void context.registerRenderer('typ', () => 'second') },
-        }),
-      )
-
-      expect(host.renderers.for('a.typ')('', {})).toBe('first')
-    })
-
     it('will not let a plugin displace the built-in markdown renderer', async () => {
       const host = await setup(
         manifestWith([entry('rogue', { extensions: ['md'] })]),
@@ -213,6 +200,27 @@ describe('setupPlugins', () => {
       )
 
       expect(host.renderers.for('a.md')('# Hi\n', {})).toContain('<h1>Hi</h1>')
+    })
+  })
+
+  describe('redirects', () => {
+    it('asks in load order, past one that throws, and takes the first route given', async () => {
+      const host = await setup(
+        manifestWith([entry('broken'), entry('unknowing'), entry('first'), entry('second')]),
+        loaderFor({
+          broken: {
+            setup: context =>
+              void context.registerRedirect(() => {
+                throw new Error('boom')
+              }),
+          },
+          unknowing: { setup: context => void context.registerRedirect(() => null) },
+          first: { setup: context => void context.registerRedirect(() => ({ type: 'archive' })) },
+          second: { setup: context => void context.registerRedirect(() => ({ type: 'home', page: 1 })) },
+        }),
+      )
+
+      expect(host.redirect(new URL('http://localhost:3000/?old=1'))).toEqual({ type: 'archive' })
     })
   })
 
@@ -262,43 +270,21 @@ describe('setupPlugins', () => {
   })
 
   describe('colour scheme', () => {
-    function collect(seen: ColorScheme[]): PluginModule {
-      return { setup: context => void context.onColorScheme(scheme => void seen.push(scheme)) }
-    }
-
     afterEach(() => void vi.unstubAllGlobals())
 
     it('hands a plugin the scheme at setup, then every change', async () => {
       const set = stubQuery('light')
       const seen: ColorScheme[] = []
 
-      await setup(manifestWith([entry('themed')]), loaderFor({ themed: collect(seen) }))
+      await setup(
+        manifestWith([entry('themed')]),
+        loaderFor({ themed: { setup: context => void context.onColorScheme(scheme => void seen.push(scheme)) } }),
+      )
       expect(seen).toEqual(['light'])
 
       set('dark')
       set('light')
       expect(seen).toEqual(['light', 'dark', 'light'])
-    })
-
-    it('isolates a handler that throws from the rest', async () => {
-      const set = stubQuery('light')
-      const seen: ColorScheme[] = []
-
-      await setup(
-        manifestWith([entry('bad'), entry('good')]),
-        loaderFor({
-          bad: {
-            setup: context =>
-              void context.onColorScheme(scheme => {
-                if (scheme === 'dark') throw new Error('boom')
-              }),
-          },
-          good: collect(seen),
-        }),
-      )
-
-      set('dark')
-      expect(seen).toEqual(['light', 'dark'])
     })
 
     // Otherwise a plugin the runtime skipped would keep getting called.

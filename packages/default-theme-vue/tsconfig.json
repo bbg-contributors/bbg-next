@@ -4,5 +4,5 @@
     "lib": ["es2023", "dom", "dom.iterable"],
     "types": ["vite/client"]
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }

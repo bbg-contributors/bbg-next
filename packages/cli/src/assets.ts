@@ -7,8 +7,8 @@ import type {
   ThemeMeta,
   Vfs,
 } from '@bbg-next/core'
-import { access, readFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { access, readdir, readFile, stat } from 'node:fs/promises'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   isValidSlug,
@@ -49,13 +49,15 @@ async function bundleIn(dir: string): Promise<string> {
 interface Meta {
   readonly name: string
   readonly version: string
+  readonly assets: readonly string[]
 }
 
-/** Themes and plugins are installed the same way; only these five things differ. */
+/** Themes and plugins are installed the same way; only these six things differ. */
 interface AssetKind<M extends Meta> {
   /** Also names the metadata file, `<label>.json`. */
   readonly label: string
   readonly parse: (input: unknown) => M
+  readonly dir: (name: string) => string
   readonly bundlePath: (name: string) => string
   readonly metaPath: (name: string) => string
   /** Name -> the workspace package this CLI ships it in. */
@@ -65,6 +67,7 @@ interface AssetKind<M extends Meta> {
 const themeKind: AssetKind<ThemeMeta> = {
   label: 'theme',
   parse: parseThemeMeta,
+  dir: themeDir,
   bundlePath: themePath,
   metaPath: themeMetaPath,
   packages: new Map([
@@ -76,14 +79,17 @@ const themeKind: AssetKind<ThemeMeta> = {
 const pluginKind: AssetKind<PluginMeta> = {
   label: 'plugin',
   parse: parsePluginMeta,
+  dir: pluginDir,
   bundlePath: pluginPath,
   metaPath: pluginMetaPath,
   packages: new Map([
     ['announcement', '@bbg-next/plugin-announcement'],
     ['friends', '@bbg-next/plugin-friends'],
+    ['highlight', '@bbg-next/plugin-highlight'],
     ['hitokoto', '@bbg-next/plugin-hitokoto'],
     ['image-viewer', '@bbg-next/plugin-image-viewer'],
     ['legacy-routes', '@bbg-next/plugin-legacy-routes'],
+    ['math', '@bbg-next/plugin-math'],
     ['twikoo', '@bbg-next/plugin-twikoo'],
     ['waline', '@bbg-next/plugin-waline'],
   ]),
@@ -94,8 +100,33 @@ export const knownThemes = [...themeKind.packages.keys()]
 export const knownPlugins = [...pluginKind.packages.keys()]
 export const defaultTheme = 'default-theme'
 
-async function readBuilt<M extends Meta>(kind: AssetKind<M>, dir: string): Promise<{ bundle: string; meta: M }> {
-  const bundle = await bundleIn(dir)
+/** A build ready to copy in, with every file its assets hold, relative to its directory. */
+interface Built<M extends Meta> {
+  readonly dir: string
+  readonly meta: M
+  readonly files: readonly string[]
+}
+
+async function filesOf(dir: string, asset: string, label: string): Promise<string[]> {
+  const path = join(dir, asset)
+
+  let directory: boolean
+  try {
+    directory = (await stat(path)).isDirectory()
+  } catch {
+    throw new Error(`${label}.json in ${dir} lists ${asset}, which is not there — build it first?`)
+  }
+  if (!directory) return [asset]
+
+  const entries = await readdir(path, { recursive: true, withFileTypes: true })
+
+  return entries
+    .filter(entry => entry.isFile())
+    .map(entry => relative(dir, join(entry.parentPath, entry.name)).split(sep).join('/'))
+}
+
+async function readBuilt<M extends Meta>(kind: AssetKind<M>, dir: string): Promise<Built<M>> {
+  await bundleIn(dir)
 
   let raw: string
   try {
@@ -104,12 +135,20 @@ async function readBuilt<M extends Meta>(kind: AssetKind<M>, dir: string): Promi
     throw new Error(`No ${kind.label}.json in ${dir} — every ${kind.label} ships one beside its bundle.`)
   }
 
-  return { bundle, meta: kind.parse(JSON.parse(raw)) }
+  const meta = kind.parse(JSON.parse(raw))
+  // Gathered before anything is removed, so a build missing a file leaves the installed one working.
+  const files = (await Promise.all(meta.assets.map(async asset => filesOf(dir, asset, kind.label)))).flat()
+
+  return { dir, meta, files }
 }
 
-/** Copying is the whole install; a site has no package.json, so there is nothing to resolve. */
-async function write<M extends Meta>(kind: AssetKind<M>, vfs: Vfs, bundle: string, meta: M): Promise<void> {
-  await vfs.copyIn(bundle, kind.bundlePath(meta.name))
+/** Copying is the whole install; a site has no package.json, so there is nothing to resolve. It starts from an empty directory, so nothing an earlier version brought outlives it. */
+async function write<M extends Meta>(kind: AssetKind<M>, vfs: Vfs, { dir, meta, files }: Built<M>): Promise<void> {
+  const target = kind.dir(meta.name)
+
+  await vfs.remove(target)
+  await vfs.copyIn(join(dir, 'index.js'), kind.bundlePath(meta.name))
+  for (const file of files) await vfs.copyIn(join(dir, file), `${target}/${file}`)
   await vfs.writeFile(kind.metaPath(meta.name), `${JSON.stringify(meta, null, 2)}\n`)
 }
 
@@ -135,7 +174,8 @@ async function refresh<M extends Meta>(
   const packageName = kind.packages.get(name)
   if (packageName === undefined) return null
 
-  const { bundle, meta } = await readBuilt(kind, distOf(packageName))
+  const built = await readBuilt(kind, distOf(packageName))
+  const { meta } = built
   const current = force ? null : await installedVersion(kind, vfs, name)
 
   if (current !== null && semver.gte(current, meta.version)) {
@@ -150,7 +190,7 @@ async function refresh<M extends Meta>(
     return null
   }
 
-  await write(kind, vfs, bundle, meta)
+  await write(kind, vfs, built)
 
   return `${name}@${meta.version}`
 }
@@ -218,7 +258,7 @@ async function install<M extends Meta>(
     )
   }
 
-  await write(kind, vfs, built.bundle, meta)
+  await write(kind, vfs, { ...built, meta })
 
   return meta
 }

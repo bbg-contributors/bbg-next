@@ -44,27 +44,42 @@ export function onQuit(handler: () => void): void {
   process.once('exit', restore)
 }
 
-/** Unechoed in a terminal, or a line each from a pipe. Questions go to stderr, leaving stdout to the result. */
-export async function askPasswords(questions: readonly string[]): Promise<string[]> {
+/** `null` once the input has run out. */
+export type AskPassword = (question: string) => Promise<string | null>
+
+/** Unechoed in a terminal, or a line each from a pipe, for as long as `use` goes on asking. Questions go to stderr, leaving stdout to the result. */
+export async function withPasswordPrompt<T>(use: (ask: AskPassword) => Promise<T>): Promise<T> {
   const silent = new Writable({ write: (_chunk, _encoding, done) => void done() })
   const lines = createInterface({ input: process.stdin, output: silent, terminal: interactive })
   lines.on('SIGINT', () => process.exit(130))
 
   // The iterator, not `question`: a pipe hands over every line at once, and `question` drops those nobody is waiting for yet.
   const next = lines[Symbol.asyncIterator]()
-  const answers: string[] = []
-  try {
-    for (const question of questions) {
-      if (interactive) process.stderr.write(question)
-      const line = await next.next()
-      if (line.done === true) throw new Error('The input ran out before every password was given')
+  const ask: AskPassword = async question => {
+    if (interactive) process.stderr.write(question)
+    const line = await next.next()
+    if (interactive) process.stderr.write('\n')
 
-      answers.push(line.value)
-      if (interactive) process.stderr.write('\n')
-    }
+    return line.done === true ? null : line.value
+  }
+
+  try {
+    return await use(ask)
   } finally {
     lines.close()
   }
+}
 
-  return answers
+export async function askPasswords(questions: readonly string[]): Promise<string[]> {
+  return withPasswordPrompt(async ask => {
+    const answers: string[] = []
+    for (const question of questions) {
+      const answer = await ask(question)
+      if (answer === null) throw new Error('The input ran out before every password was given')
+
+      answers.push(answer)
+    }
+
+    return answers
+  })
 }

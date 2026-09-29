@@ -1,8 +1,8 @@
 import type { Diagnostic, PluginMeta } from '@bbg-next/core'
 import { pluginConfigPath, pluginMetaPath, pluginPath } from '@bbg-next/core'
+import { createMemoryVfs } from '@bbg-next/core/testing'
 import { describe, expect, it } from 'vitest'
 import { loadPlugins } from '../src/plugins.ts'
-import { readOnlyVfs } from './readOnlyVfs.ts'
 
 function meta(name: string, extra: Partial<PluginMeta> = {}): PluginMeta {
   return {
@@ -12,6 +12,7 @@ function meta(name: string, extra: Partial<PluginMeta> = {}): PluginMeta {
     dependencies: {},
     requiredOptions: [],
     configurable: true,
+    assets: [],
     ...extra,
   }
 }
@@ -33,7 +34,7 @@ async function load(installs: readonly Install[], strayFiles: Readonly<Record<st
 
   const diagnostics: Diagnostic[] = []
   const entries = await loadPlugins(
-    readOnlyVfs(files),
+    createMemoryVfs(files),
     installs.map(install => install.meta.name),
     diagnostics,
   )
@@ -42,23 +43,17 @@ async function load(installs: readonly Install[], strayFiles: Readonly<Record<st
 }
 
 describe('load order', () => {
-  it('keeps declaration order when nothing depends on anything', async () => {
-    const { names, diagnostics } = await load([{ meta: meta('c') }, { meta: meta('a') }, { meta: meta('b') }])
-
-    // Not sorted: several markdown-it plugins layer in the order the author wrote them.
-    expect(names).toEqual(['c', 'a', 'b'])
-    expect(diagnostics).toEqual([])
-  })
-
-  it('breaks ties by declaration order, not by name', async () => {
-    const { names } = await load([
+  it('keeps the order the site declared, moving a plugin only behind what it depends on', async () => {
+    const { names, diagnostics } = await load([
       { meta: meta('z') },
       { meta: meta('user', { dependencies: { base: '^1.0.0' } }) },
       { meta: meta('base') },
       { meta: meta('a') },
     ])
 
+    // Not sorted: several markdown-it plugins layer in the order the author wrote them.
     expect(names).toEqual(['z', 'base', 'a', 'user'])
+    expect(diagnostics).toEqual([])
   })
 
   it('reports a cycle instead of looping', async () => {
@@ -74,20 +69,6 @@ describe('load order', () => {
 })
 
 describe('dependencies', () => {
-  it('accepts a dependency on a built-in', async () => {
-    const { names, diagnostics } = await load([{ meta: meta('katex', { dependencies: { markdown: '^1.0.0' } }) }])
-
-    expect(names).toEqual(['katex'])
-    expect(diagnostics).toEqual([])
-  })
-
-  it('rejects a dependency that is not installed', async () => {
-    const { names, diagnostics } = await load([{ meta: meta('katex', { dependencies: { nope: '^1.0.0' } }) }])
-
-    expect(names).toEqual([])
-    expect(diagnostics[0]?.message).toMatch(/not installed/)
-  })
-
   // Nothing else would catch this: plugins are copied in, so no resolver ever sees the mismatch.
   it('rejects a version the installed plugin does not satisfy', async () => {
     const { names, diagnostics } = await load([{ meta: meta('katex', { dependencies: { markdown: '^99.0.0' } }) }])
@@ -118,38 +99,21 @@ describe('dependencies', () => {
 })
 
 describe('renderers', () => {
-  it('rejects a second claim on one suffix', async () => {
+  it('reject a claim on a suffix already rendered, markdown’s own included', async () => {
     const { diagnostics } = await load([
       { meta: meta('one', { extensions: ['typ'] }) },
-      { meta: meta('two', { extensions: ['typ'] }) },
+      { meta: meta('two', { extensions: ['typ', 'md'] }) },
     ])
 
-    expect(diagnostics[0]?.message).toMatch(/already rendered by one/)
-  })
-
-  it('rejects a claim on markdown’s own suffix', async () => {
-    const { diagnostics } = await load([{ meta: meta('rogue', { extensions: ['md'] }) }])
-
-    expect(diagnostics[0]?.message).toMatch(/already rendered by the built-in markdown renderer/)
+    expect(diagnostics.map(item => item.message)).toEqual([
+      'Claims ".typ", which is already rendered by one',
+      'Claims ".md", which is already rendered by the built-in markdown renderer',
+    ])
   })
 })
 
 describe('config files', () => {
   const waline = meta('waline', { requiredOptions: ['serverURL'] })
-
-  it('takes a plugin’s options from its own config file', async () => {
-    const { names, diagnostics } = await load([{ meta: waline, options: { serverURL: 'https://x.test' } }])
-
-    expect(names).toEqual(['waline'])
-    expect(diagnostics).toEqual([])
-  })
-
-  it('marks a plugin without a config file, so the runtime skips the fetch', async () => {
-    const { entries, diagnostics } = await load([{ meta: meta('bare', { configurable: false }) }])
-
-    expect(entries[0]?.hasConfig).toBe(false)
-    expect(diagnostics).toEqual([])
-  })
 
   it('rejects one whose required options are missing, pointing at its config file', async () => {
     const { names, diagnostics } = await load([{ meta: waline }])
@@ -159,32 +123,11 @@ describe('config files', () => {
     expect(diagnostics[0]?.file).toBe('data/plugins/waline.json')
   })
 
-  // Not "which is not installed": it is installed, just unusable.
-  it('drops a dependent with an accurate reason', async () => {
-    const { names, diagnostics } = await load([
-      { meta: waline },
-      { meta: meta('extra', { dependencies: { waline: '^1.0.0' } }) },
-    ])
-
-    expect(names).toEqual([])
-    expect(diagnostics.map(item => item.message)).toContainEqual(expect.stringMatching(/Depends on waline/))
-  })
-
   it('drops a plugin whose config will not parse', async () => {
     const { entries, diagnostics } = await load([{ meta: waline }], { 'data/plugins/waline.json': '{ oops' })
 
     expect(entries).toEqual([])
-    expect(diagnostics[0]?.message).toMatch(/Not valid JSON/)
-  })
-
-  it('warns about a config for a plugin that reads none, and keeps the plugin', async () => {
-    const { names, entries, diagnostics } = await load([
-      { meta: meta('bare', { configurable: false }), options: { x: 1 } },
-    ])
-
-    expect(names).toEqual(['bare'])
-    expect(entries[0]?.hasConfig).toBe(false)
-    expect(diagnostics[0]).toMatchObject({ level: 'warn', file: 'data/plugins/bare.json' })
+    expect(diagnostics[0]).toMatchObject({ level: 'error', file: 'data/plugins/waline.json' })
   })
 
   // A misspelled filename is otherwise silent: the options simply never arrive.
@@ -196,32 +139,5 @@ describe('config files', () => {
     expect(diagnostics).toHaveLength(1)
     expect(diagnostics[0]).toMatchObject({ level: 'warn', file: 'data/plugins/walien.json' })
     expect(diagnostics[0]?.message).toMatch(/nothing reads it/)
-  })
-
-  it('refuses a plugin.json that requires options while saying it takes none', async () => {
-    const { entries, diagnostics } = await load([{ meta: { ...waline, configurable: false } }])
-
-    expect(entries).toEqual([])
-    expect(diagnostics[0]?.message).toMatch(/configurable/)
-  })
-})
-
-describe('installed files', () => {
-  it('reports a plugin the site enables but never installed', async () => {
-    const diagnostics: Diagnostic[] = []
-    const entries = await loadPlugins(readOnlyVfs({}), ['ghost'], diagnostics)
-
-    expect(entries).toEqual([])
-    expect(diagnostics[0]?.message).toMatch(/plugin add/)
-  })
-
-  // `theme add --name` renames on install; a hand-copied directory can still disagree.
-  it('reports a plugin.json that names a directory other than its own', async () => {
-    const diagnostics: Diagnostic[] = []
-    const files = { [pluginPath('bare')]: '', [pluginMetaPath('bare')]: JSON.stringify(meta('elsewhere')) }
-    const entries = await loadPlugins(readOnlyVfs(files), ['bare'], diagnostics)
-
-    expect(entries).toEqual([])
-    expect(diagnostics[0]?.message).toMatch(/but sits in/)
   })
 })

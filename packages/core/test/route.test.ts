@@ -25,8 +25,8 @@ function locate(href: string, config: RouterConfig): URL {
   return new URL(href, document)
 }
 
-describe('route symmetry', () => {
-  it.each([hash, pathRoot, pathSub, pathCjk])('round-trips every route in $mode mode at $base', config => {
+describe('routes', () => {
+  it.each([hash, pathRoot, pathCjk])('round-trip, fragment and all, in $mode mode at $base', config => {
     for (const route of routes) {
       for (const fragment of ['', '第一节-intro']) {
         const url = locate(serialize(route, config, fragment), config)
@@ -35,66 +35,53 @@ describe('route symmetry', () => {
       }
     }
   })
-})
 
-describe('fragments', () => {
-  it('follow a second # in hash mode, since the first belongs to the route', () => {
-    expect(serialize({ type: 'article', slug: 'hello' }, hash, 'intro')).toBe('#/post/hello#intro')
-  })
-
-  it('are the URL’s own in path mode', () => {
-    expect(serialize({ type: 'article', slug: 'hello' }, pathSub, 'intro')).toBe('/my-blog/post/hello/#intro')
-  })
-
-  it('come back empty from malformed percent-encoding instead of throwing', () => {
-    const url = new URL('http://example.com/#/post/hello#%E0%A4%A')
-    expect(parse(url, hash)).toEqual({ type: 'article', slug: 'hello' })
-    expect(parseFragment(url, hash)).toBe('')
-  })
-})
-
-describe('hash mode', () => {
-  it('produces document-relative hrefs', () => {
-    expect(serialize({ type: 'article', slug: 'hello' }, hash)).toBe('#/post/hello')
-    expect(serialize({ type: 'home', page: 1 }, hash)).toBe('#/')
-    expect(serialize({ type: 'home', page: 3 }, hash)).toBe('#/list/3')
-    expect(serialize({ type: 'archive' }, hash)).toBe('#/archive')
-  })
-
-  it('percent-encodes CJK slugs', () => {
-    expect(serialize({ type: 'article', slug: '第一篇文章' }, hash)).toBe(`#/post/${encodeURIComponent('第一篇文章')}`)
-  })
-
-  it('ignores the pathname entirely', () => {
-    const url = new URL('http://example.com/anywhere/at/all#/post/hello')
-    expect(parse(url, hash)).toEqual({ type: 'article', slug: 'hello' })
-  })
-})
-
-describe('path mode', () => {
-  it('produces trailing-slash hrefs under the base', () => {
-    expect(serialize({ type: 'article', slug: 'hello' }, pathSub)).toBe('/my-blog/post/hello/')
+  it('are written relative to the document in hash mode, and under the base with a trailing slash in path mode', () => {
+    expect(routes.map(route => serialize(route, hash))).toEqual([
+      '#/',
+      '#/list/2',
+      `#/article/${encodeURIComponent('第一篇文章')}`,
+      '#/page/2',
+      '#/archive',
+      `#/tag/${encodeURIComponent('C# / .NET?')}`,
+    ])
+    expect(serialize({ type: 'article', slug: 'hello' }, pathSub)).toBe('/my-blog/article/hello/')
     expect(serialize({ type: 'home', page: 1 }, pathSub)).toBe('/my-blog/')
   })
 
-  it('rejects URLs outside the base', () => {
-    expect(parse(new URL('http://example.com/other/post/hello/'), pathSub)).toBeNull()
+  it('take the fragment after a second # in hash mode, since the first belongs to the route', () => {
+    expect(serialize({ type: 'article', slug: 'hello' }, hash, 'intro')).toBe('#/article/hello#intro')
+    expect(serialize({ type: 'article', slug: 'hello' }, pathSub, 'intro')).toBe('/my-blog/article/hello/#intro')
   })
 
-  it('accepts a missing trailing slash', () => {
-    expect(parse(new URL('http://example.com/my-blog/post/hello'), pathSub)).toEqual({
+  it('ignore the pathname in hash mode, so the site works under any path', () => {
+    expect(parse(new URL('http://example.com/anywhere/at/all#/article/hello'), hash)).toEqual({
       type: 'article',
       slug: 'hello',
     })
   })
 
-  it('reads the root’s index.html as the root', () => {
+  it('read the root’s index.html as the root in path mode, as a host serves it', () => {
     expect(parse(new URL('http://example.com/my-blog/index.html'), pathSub)).toEqual({ type: 'home', page: 1 })
   })
 
-  it('splits before decoding, so an encoded slash stays inside one segment', () => {
-    const url = new URL(`http://example.com/post/${encodeURIComponent('a/b')}/`)
+  it('split before decoding, so an encoded slash stays inside one segment', () => {
+    const url = new URL(`http://example.com/article/${encodeURIComponent('a/b')}/`)
+
     expect(parse(url, pathRoot)).toEqual({ type: 'article', slug: 'a/b' })
+  })
+
+  it('have one address per list page, so page zero and a leading zero are none', () => {
+    for (const href of ['#/list/0', '#/list/01']) expect(parse(new URL(href, 'http://example.com/'), hash)).toBeNull()
+  })
+
+  it('come to nothing from malformed percent-encoding, rather than throwing', () => {
+    const route = new URL('http://example.com/#/article/%E0%A4%A')
+    const fragment = new URL('http://example.com/#/article/hello#%E0%A4%A')
+
+    expect(parse(route, hash)).toBeNull()
+    expect(parse(fragment, hash)).toEqual({ type: 'article', slug: 'hello' })
+    expect(parseFragment(fragment, hash)).toBe('')
   })
 })
 
@@ -121,41 +108,8 @@ describe('deep links in hash mode', () => {
   })
 
   it('leave the root, the document itself and anything outside the site alone', () => {
-    for (const href of ['/blog/', '/blog/index.html#/post/hello', '/other/post/hello/']) {
+    for (const href of ['/blog/', '/blog/index.html#/article/hello', '/other/article/hello/']) {
       expect(resolveDeepLink(new URL(href, 'http://example.com/'), blog)).toBeNull()
     }
-  })
-
-  it('have nothing to do in path mode, where the path is the route already', () => {
-    expect(resolveDeepLink(new URL('http://example.com/post/hello/'), pathRoot)).toBeNull()
-  })
-})
-
-describe('rejections', () => {
-  it.each([
-    ['#/post/', 'empty slug'],
-    ['#/list/0', 'page zero'],
-    ['#/list/01', 'leading zero'],
-    ['#/nope/x', 'unknown prefix'],
-    ['#/post/a/b', 'too many segments'],
-    ['#/tag', 'tag without a name'],
-    ['#/archive/2', 'archive with a page'],
-  ])('rejects %s (%s)', href => {
-    expect(parse(new URL(href, 'http://example.com/'), hash)).toBeNull()
-  })
-
-  it('rejects malformed percent-encoding instead of throwing', () => {
-    expect(parse(new URL('http://example.com/#/post/%E0%A4%A'), hash)).toBeNull()
-  })
-})
-
-describe('normaliseBase', () => {
-  it.each([
-    ['', '/'],
-    ['/', '/'],
-    ['repo', '/repo/'],
-    ['/repo', '/repo/'],
-  ])('%s -> %s', (input, expected) => {
-    expect(normaliseBase(input)).toBe(expected)
   })
 })

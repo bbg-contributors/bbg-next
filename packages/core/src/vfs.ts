@@ -1,4 +1,4 @@
-/** Every side effect core has. Paths are POSIX and site-relative. */
+/** A site's files. Paths are POSIX and site-relative. */
 export interface Vfs {
   readFile: (path: string) => Promise<string>
   writeFile: (path: string, content: string) => Promise<void>

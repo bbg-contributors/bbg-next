@@ -1,5 +1,5 @@
 import type { Diagnostic, SiteSettings, Vfs } from '@bbg-next/core'
-import { buildManifest, manifestPath, serializeManifest, writeFeeds, writeShell } from '@bbg-next/core'
+import { writeSite } from '@bbg-next/core'
 import { syncAssets } from './assets.ts'
 
 interface SyncOptions {
@@ -7,30 +7,22 @@ interface SyncOptions {
   readonly site: SiteSettings
   readonly includeDrafts: boolean
   /** Rewrite the built-in themes and plugins whatever version is installed. */
-  readonly force: boolean
+  readonly force?: boolean
 }
 
 interface SyncResult {
   readonly diagnostics: readonly Diagnostic[]
-  /** What was written, so a watcher can tell this write from a hand edit. */
+  /** What was written to the manifest, so a watcher can tell this write from a hand edit. */
   readonly manifest: string
   /** Built-in themes and plugins written from what this CLI ships, as `name@version`. */
   readonly updated: readonly string[]
 }
 
-/** The one writer of generated files. Assets first: an unusable theme fails before anything is written. */
+/** The one writer of generated files. Bundles first, so an unusable theme fails before the rest is written. */
 export async function syncSite(options: SyncOptions): Promise<SyncResult> {
-  const { force, includeDrafts, site, vfs } = options
+  const { force = false, includeDrafts, site, vfs } = options
+  const { diagnostics, theme, plugins, updated } = await syncAssets(vfs, site, force)
+  const written = await writeSite(vfs, { site, includeDrafts, theme, plugins })
 
-  const { diagnostics: assetDiagnostics, theme, plugins, updated } = await syncAssets(vfs, site, force)
-
-  const { diagnostics, manifest } = await buildManifest({ vfs, site, includeDrafts, theme, plugins })
-  const serialized = serializeManifest(manifest)
-
-  await vfs.writeFile(manifestPath, serialized)
-  await writeShell(vfs, site)
-  // A feed reader keeps whatever it once fetched, so a draft must never reach one.
-  if (!includeDrafts) await writeFeeds(vfs, manifest)
-
-  return { diagnostics: [...assetDiagnostics, ...diagnostics], manifest: serialized, updated }
+  return { diagnostics: [...diagnostics, ...written.diagnostics], manifest: written.manifest, updated }
 }

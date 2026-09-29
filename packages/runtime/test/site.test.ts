@@ -1,11 +1,25 @@
 // @vitest-environment happy-dom
 import type { RendererRegistry } from '../src/plugins.ts'
-import type { Manifest, Route } from '@bbg-next/core'
+import type { ArticleEntry, Manifest } from '@bbg-next/core'
 import { describe, expect, it } from 'vitest'
 import { createSite } from '../src/site.ts'
 
 const plain = (source: string): string => source
 const renderers: RendererRegistry = { markdown: plain, for: () => plain }
+
+function entry(slug: string, created: number, pinned = false): ArticleEntry {
+  return {
+    slug,
+    file: `${slug}.md`,
+    title: slug,
+    tags: [],
+    created,
+    updated: created,
+    pinned,
+    excerpt: '',
+    comments: true,
+  }
+}
 
 const manifest: Manifest = {
   schemaVersion: 1,
@@ -15,7 +29,7 @@ const manifest: Manifest = {
     lang: 'en',
     footer: '',
     theme: 'default-theme',
-    postsPerPage: 10,
+    articlesPerPage: 10,
     router: { mode: 'hash', base: '/' },
     url: '',
     atom: false,
@@ -24,39 +38,19 @@ const manifest: Manifest = {
   },
   theme: { name: 'default-theme', version: '1.0.0', hasConfig: false },
   plugins: [],
-  articles: [],
+  articles: [entry('old', 1, true), entry('new', 3), entry('mid', 2)],
   hidden: [],
-  pages: [
-    { slug: 'about', file: 'about.md', title: 'About', updated: 1, showInNav: true, navLabel: 'About', comments: true },
-    { slug: 'links', file: 'links.md', title: 'Links', updated: 1, showInNav: true, navLabel: 'Links', comments: true },
-    {
-      slug: 'secret',
-      file: 'secret.md',
-      title: 'Secret',
-      updated: 1,
-      showInNav: false,
-      navLabel: 'Secret',
-      comments: true,
-    },
-  ],
+  pages: [],
 }
 
-describe('the shell for a route', () => {
+describe('the site', () => {
   const site = createSite(manifest, renderers)
 
-  function marks(route: Route | null): { home: boolean; archive: boolean; links: boolean[] } {
-    const shell = site.shell(route)
-
-    return { home: shell.home.current, archive: shell.archive.current, links: shell.links.map(link => link.current) }
-  }
-
-  it('marks the list on any of its pages, not only the first', () => {
-    expect(marks({ type: 'home', page: 2 })).toEqual({ home: true, archive: false, links: [false, false] })
+  it('marks the list in the shell on any of its pages, not only the first', () => {
+    expect(site.shell({ type: 'home', page: 2 }).home.current).toBe(true)
   })
 
-  it('marks nothing for an article, a page kept out of the nav, or a route that led nowhere', () => {
-    const routes: (Route | null)[] = [{ type: 'article', slug: 'about' }, { type: 'page', slug: 'secret' }, null]
-
-    for (const route of routes) expect(marks(route)).toEqual({ home: false, archive: false, links: [false, false] })
+  it('keeps a timeline newest first, pinning aside', () => {
+    expect(site.timeline.map(item => item.slug)).toEqual(['new', 'mid', 'old'])
   })
 })

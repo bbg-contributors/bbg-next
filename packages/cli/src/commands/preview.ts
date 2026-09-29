@@ -54,7 +54,7 @@ export const preview = defineCommand(
       const site = await loadSiteSettings(vfs)
       if (!autoSync) return
 
-      const { diagnostics, manifest } = await syncSite({ vfs, site, includeDrafts, force: false })
+      const { diagnostics, manifest } = await syncSite({ vfs, site, includeDrafts })
       lastWritten = manifest
 
       reportDiagnostics(diagnostics)

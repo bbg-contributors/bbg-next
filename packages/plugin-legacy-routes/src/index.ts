@@ -1,5 +1,5 @@
 import type { ArticleEntry, PageEntry, PluginContext, Route } from '@bbg-next/plugin'
-import { definePlugin, readString, serializeRoute } from '@bbg-next/plugin'
+import { definePlugin, readString } from '@bbg-next/plugin'
 
 // The original theme, bbg-contributors/default_theme_src, kept its route in the query of index.html.
 
@@ -53,12 +53,5 @@ function routeFor(query: URLSearchParams, context: PluginContext): Route | null 
 
 export const setup = definePlugin(context => {
   // `+` stays a plus: the original split its query by hand.
-  const route = routeFor(new URLSearchParams(location.search.replaceAll('+', '%2B')), context)
-  if (route === null) return
-
-  const target = new URL(serializeRoute(route, context.site.router), document.baseURI)
-  // The old editor's feeds wrote `//index.html` when the site's address ended in a slash.
-  target.pathname = target.pathname.replaceAll(/\/{2,}/g, '/')
-  target.search = ''
-  history.replaceState(null, '', target)
+  context.registerRedirect(url => routeFor(new URLSearchParams(url.search.replaceAll('+', '%2B')), context))
 })

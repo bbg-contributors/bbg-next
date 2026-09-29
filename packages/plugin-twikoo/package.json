@@ -19,10 +19,10 @@
   },
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@bbg-next/plugin": "workspace:*",
-    "twikoo": "^2.0.9"
+    "twikoo": "^2.0.11"
   }
 }

@@ -45,10 +45,6 @@ interface PreviewServerOptions {
   readonly port: number
 }
 
-function contentType(path: string): string {
-  return mimeTypes[extname(path).toLowerCase()] ?? 'application/octet-stream'
-}
-
 /** `null` if the path tries to escape the root. */
 function safeResolve(root: string, pathname: string): string | null {
   let decoded: string
@@ -134,7 +130,7 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
       return
     }
 
-    const type = contentType(served.path)
+    const type = mimeTypes[extname(served.path).toLowerCase()] ?? 'application/octet-stream'
     const body = type.startsWith('text/html') ? injectReload(served.body) : served.body
 
     response.writeHead(200, {

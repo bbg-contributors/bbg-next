@@ -5,9 +5,11 @@ import { deriveExcerpt } from '../content/excerpt.ts'
 import { parseFrontMatter } from '../content/frontmatter.ts'
 import { ArticleMetaSchema, PageMetaSchema } from '../content/meta.ts'
 import { isValidSlug } from '../content/slug.ts'
-import { articlesDir, pagesDir } from '../paths.ts'
+import { articlesDir, manifestPath, pagesDir } from '../paths.ts'
+import { writeFeeds } from './feeds.ts'
 import { defaultExtensions } from './plugins.ts'
 import { schemaVersion } from './schema.ts'
+import { writeShell } from './shell.ts'
 
 export interface Diagnostic {
   readonly level: 'error' | 'warn'
@@ -15,8 +17,7 @@ export interface Diagnostic {
   readonly message: string
 }
 
-interface BuildManifestOptions {
-  readonly vfs: Vfs
+interface WriteSiteOptions {
   readonly site: SiteSettings
   readonly includeDrafts: boolean
   readonly theme: ThemeIndexEntry
@@ -24,8 +25,9 @@ interface BuildManifestOptions {
   readonly plugins: readonly PluginIndexEntry[]
 }
 
-interface BuildManifestResult {
-  readonly manifest: Manifest
+interface WriteSiteResult {
+  /** What was written, so a watcher can tell this write from a hand edit. */
+  readonly manifest: string
   readonly diagnostics: readonly Diagnostic[]
 }
 
@@ -36,10 +38,6 @@ interface Document<Meta> {
   readonly body: string
 }
 
-export function serializeManifest(manifest: Manifest): string {
-  return `${JSON.stringify(manifest, null, 2)}\n`
-}
-
 /** Pinned, then newest, then slug for a stable tie-break. */
 function compareArticles(a: ArticleEntry, b: ArticleEntry): number {
   if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
@@ -48,20 +46,18 @@ function compareArticles(a: ArticleEntry, b: ArticleEntry): number {
   return a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0
 }
 
-function issuesToMessage(issues: readonly v.BaseIssue<unknown>[]): string {
-  return issues
-    .map(issue => {
-      const path = v.getDotPath(issue)
+/** Those without one last. Pages arrive in file-name order, which the stable sort keeps for ties. */
+function compareNavOrder(a: number | undefined, b: number | undefined): number {
+  if (a === b) return 0
+  if (a === undefined) return 1
+  if (b === undefined) return -1
 
-      return path === null ? issue.message : `${path}: ${issue.message}`
-    })
-    .join('; ')
+  return a - b
 }
 
-export async function buildManifest(options: BuildManifestOptions): Promise<BuildManifestResult> {
-  const { vfs, site, includeDrafts, theme, plugins } = options
+async function buildManifest(vfs: Vfs, options: WriteSiteOptions, diagnostics: Diagnostic[]): Promise<Manifest> {
+  const { site, includeDrafts, theme, plugins } = options
   const extensions = [...defaultExtensions, ...plugins.flatMap(plugin => plugin.extensions)]
-  const diagnostics: Diagnostic[] = []
 
   async function load<
     Schema extends v.GenericSchema<unknown, { readonly slug?: string | undefined; readonly draft: boolean }>,
@@ -75,7 +71,7 @@ export async function buildManifest(options: BuildManifestOptions): Promise<Buil
     )
 
     const documents: Document<v.InferOutput<Schema>>[] = []
-    // One namespace across listed and hidden: a listed post must not shadow a hidden one's direct link.
+    // One namespace across listed and hidden: a listed article must not shadow a hidden one's direct link.
     const taken = new Map<string, string>()
     for (const [index, file] of files.entries()) {
       const fail = (message: string): void => void diagnostics.push({ level: 'error', file: `${dir}/${file}`, message })
@@ -88,7 +84,7 @@ export async function buildManifest(options: BuildManifestOptions): Promise<Buil
 
       const result = v.safeParse(schema, document.value.data)
       if (!result.success) {
-        fail(issuesToMessage(result.issues))
+        fail(v.summarize(result.issues))
         continue
       }
 
@@ -141,32 +137,45 @@ export async function buildManifest(options: BuildManifestOptions): Promise<Buil
     return { entry, hidden: meta.hidden }
   })
 
-  const pages = (await load(pagesDir, PageMetaSchema)).map(({ file, slug, meta }): PageEntry => ({
-    file,
-    slug,
-    title: meta.title,
-    updated: meta.updated ?? 0,
-    showInNav: meta.showInNav,
-    navLabel: meta.navLabel ?? meta.title,
-    comments: meta.comments,
-  }))
+  const pages = (await load(pagesDir, PageMetaSchema))
+    .toSorted((a, b) => compareNavOrder(a.meta.navOrder, b.meta.navOrder))
+    .map(({ file, slug, meta }): PageEntry => ({
+      file,
+      slug,
+      title: meta.title,
+      updated: meta.updated ?? 0,
+      showInNav: meta.showInNav,
+      navLabel: meta.navLabel ?? meta.title,
+      comments: meta.comments,
+    }))
 
   return {
-    diagnostics,
-    manifest: {
-      schemaVersion,
-      site,
-      theme,
-      plugins,
-      articles: articles
-        .filter(item => !item.hidden)
-        .map(item => item.entry)
-        .sort(compareArticles),
-      hidden: articles
-        .filter(item => item.hidden)
-        .map(item => item.entry)
-        .sort(compareArticles),
-      pages,
-    },
+    schemaVersion,
+    site,
+    theme,
+    plugins,
+    articles: articles
+      .filter(item => !item.hidden)
+      .map(item => item.entry)
+      .sort(compareArticles),
+    hidden: articles
+      .filter(item => item.hidden)
+      .map(item => item.entry)
+      .sort(compareArticles),
+    pages,
   }
+}
+
+/** Every generated file: the manifest rebuilt from front matter, the shell and the feeds. */
+export async function writeSite(vfs: Vfs, options: WriteSiteOptions): Promise<WriteSiteResult> {
+  const diagnostics: Diagnostic[] = []
+  const manifest = await buildManifest(vfs, options, diagnostics)
+  const written = `${JSON.stringify(manifest, null, 2)}\n`
+
+  await vfs.writeFile(manifestPath, written)
+  await writeShell(vfs, options.site)
+  // A feed reader keeps whatever it once fetched, so a draft must never reach one.
+  if (!options.includeDrafts) await writeFeeds(vfs, manifest)
+
+  return { manifest: written, diagnostics }
 }

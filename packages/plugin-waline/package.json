@@ -23,6 +23,6 @@
   },
   "dependencies": {
     "@bbg-next/plugin": "workspace:*",
-    "@waline/client": "^3.15.2"
+    "@waline/client": "^3.16.0"
   }
 }

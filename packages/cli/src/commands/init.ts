@@ -8,9 +8,7 @@ import { reportDiagnostics, style } from '../terminal/report.ts'
 
 const sampleArticle = `Welcome to bbg-next.
 
-This file is the source of truth: its front matter carries the metadata, and
-\`data/site.json\` is regenerated from it. Edit or delete this file — \`bbg-next preview\`
-picks up the change and reloads the browser.
+This file is the source of truth: its front matter carries the metadata, and \`data/site.json\` is regenerated from it. Edit or delete this file — \`bbg-next preview\` picks up the change and reloads the browser.
 
 There is no build step. What sits in this directory is exactly what you deploy.
 `

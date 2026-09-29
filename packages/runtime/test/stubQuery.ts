@@ -6,16 +6,13 @@ export function stubQuery(initial: ColorScheme): (next: ColorScheme) => void {
   const listeners = new Set<() => void>()
   const query = {
     matches: initial === 'dark',
-    addEventListener: (_type: string, listener: () => void, options?: AddEventListenerOptions) => {
-      listeners.add(listener)
-      options?.signal?.addEventListener('abort', () => void listeners.delete(listener))
-    },
+    addEventListener: (_type: string, listener: () => void) => void listeners.add(listener),
   }
 
   vi.stubGlobal('matchMedia', () => query)
 
   return next => {
     query.matches = next === 'dark'
-    for (const listener of [...listeners]) listener()
+    for (const listener of listeners) listener()
   }
 }

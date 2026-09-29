@@ -68,14 +68,17 @@ async function deriveKey(
   )
 }
 
-/** `v1.<iterations>.<salt>.<iv>.<ciphertext>`, the last three in hex. */
-async function encrypt(plaintext: string, password: string): Promise<string> {
+const wrapPoint = /.{64}(?=.)/g
+
+/** A fenced block holding `text` behind `password`, ready to go into a document. Its payload is `v1.<iterations>.<salt>.<iv>.<ciphertext>`, the last three in hex. */
+export async function encryptBlock(text: string, password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const iv = crypto.getRandomValues(new Uint8Array(12))
   const key = await deriveKey(password, salt, iterations, 'encrypt')
-  const sealed = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext))
+  const sealed = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text))
+  const payload = [version, String(iterations), toHex(salt), toHex(iv), toHex(new Uint8Array(sealed))].join('.')
 
-  return [version, String(iterations), toHex(salt), toHex(iv), toHex(new Uint8Array(sealed))].join('.')
+  return `\`\`\`${encryptedElement}\n${payload.replace(wrapPoint, '$&\n')}\n\`\`\`\n`
 }
 
 /** `null` for a wrong password, which AES-GCM's tag gives away; a payload that is none at all throws. Whitespace is ignored, so a block may wrap it. */
@@ -99,13 +102,8 @@ export async function decrypt(payload: string, password: string): Promise<string
   return new TextDecoder().decode(opened)
 }
 
-const wrapPoint = /.{64}(?=.)/g
 const linePrefix = /^[\s>]*/
 const trailingNewline = /\n$/
-
-function fence(payload: string): string {
-  return `\`\`\`${encryptedElement}\n${payload.replace(wrapPoint, '$&\n')}\n\`\`\`\n`
-}
 
 /** The front matter exactly as written, then the body. */
 function split(source: string): readonly [head: string, body: string] {
@@ -130,7 +128,7 @@ export async function encryptDocument(source: string, password: string): Promise
   const [head, body] = split(source)
   if (blocks(body).length > 0) throw new Error('This already holds an encrypted block; decrypt it first')
 
-  return `${head}${fence(await encrypt(body, password))}`
+  return `${head}${await encryptBlock(body, password)}`
 }
 
 /** Opens every block in place, each indented or quoted the way its fence was. `null` if any refuses `password`. */

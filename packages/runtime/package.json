@@ -19,7 +19,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit && vue-tsc --noEmit -p tsconfig.test.json"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@bbg-next/core": "workspace:*",
@@ -27,6 +27,7 @@
     "@bbg-next/view": "workspace:*"
   },
   "inlinedDependencies": {
+    "@mdit/plugin-tasklist": "1.1.3",
     "entities": "8.1.0",
     "linkify-it": "6.1.0",
     "markdown-it": "15.0.2",

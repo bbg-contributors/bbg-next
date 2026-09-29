@@ -1,0 +1,31 @@
+{
+  "name": "@bbg-next/plugin-highlight",
+  "version": "0.0.0",
+  "description": "Colours code blocks, fetching highlight.js only for pages that show code",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bbg-next/plugin": "workspace:*",
+    "highlight.js": "^11.12.0"
+  },
+  "devDependencies": {
+    "@bbg-next/core": "workspace:*"
+  }
+}

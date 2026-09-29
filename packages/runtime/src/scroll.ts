@@ -40,11 +40,8 @@ function entryOf(state: unknown): string | null {
     : null
 }
 
-/** Gives the browser its scroll restoration back once `signal` aborts. */
-export function createVisits(signal: AbortSignal): Visits {
-  const restoration = history.scrollRestoration
+export function createVisits(): Visits {
   history.scrollRestoration = 'manual'
-  signal.addEventListener('abort', () => void (history.scrollRestoration = restoration))
 
   const positions = new Map<string, number>()
   // Random per load: an entry's state outlives a reload, the positions do not.

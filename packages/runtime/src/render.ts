@@ -3,6 +3,7 @@ import type { ArticleEntry, RenderContext, Route } from '@bbg-next/core'
 import type {
   ArchiveModel,
   ArticleCard,
+  ArticleLink,
   ArticleListModel,
   ArticleModel,
   PageLink,
@@ -76,6 +77,10 @@ function tagLinks(site: Site, tags: readonly string[]): TagLink[] {
   return tags.map(name => ({ name, href: serializeRoute({ type: 'tag', tag: name }, site.router) }))
 }
 
+function articleHref(site: Site, entry: ArticleEntry): string {
+  return serializeRoute({ type: 'article', slug: entry.slug }, site.router)
+}
+
 function toCard(site: Site, entry: ArticleEntry): ArticleCard {
   return {
     slug: entry.slug,
@@ -85,13 +90,25 @@ function toCard(site: Site, entry: ArticleEntry): ArticleCard {
     created: entry.created,
     updated: entry.updated,
     pinned: entry.pinned,
-    href: serializeRoute({ type: 'article', slug: entry.slug }, site.router),
+    href: articleHref(site, entry),
   }
+}
+
+/** Newest first in the timeline, so the one written before sits after it. An unlisted article has no place there and so no neighbours. */
+function neighbours(site: Site, entry: ArticleEntry): Pick<ArticleModel, 'previous' | 'next'> {
+  const at = site.timeline.indexOf(entry)
+  const link = (index: number): ArticleLink | null => {
+    const neighbour = at === -1 ? undefined : site.timeline[index]
+
+    return neighbour === undefined ? null : { title: neighbour.title, href: articleHref(site, neighbour) }
+  }
+
+  return { previous: link(at + 1), next: link(at - 1) }
 }
 
 function buildList(site: Site, page: number): ArticleListModel | null {
   const { articles, site: settings } = site.manifest
-  const perPage = settings.postsPerPage
+  const perPage = settings.articlesPerPage
   const totalPages = Math.max(1, Math.ceil(articles.length / perPage))
   if (page > totalPages) return null
 
@@ -114,15 +131,11 @@ function buildList(site: Site, page: number): ArticleListModel | null {
   }
 }
 
-/** `toSorted` is stable, so the manifest's own order settles a tie. */
 function buildArchive(site: Site, tag: string | null): ArchiveModel {
-  const listed = site.manifest.articles
-  const articles = tag === null ? listed : listed.filter(entry => entry.tags.includes(tag))
+  const { timeline } = site
+  const articles = tag === null ? timeline : timeline.filter(entry => entry.tags.includes(tag))
 
-  return {
-    tag,
-    articles: articles.toSorted((a, b) => b.created - a.created).map(entry => toCard(site, entry)),
-  }
+  return { tag, articles: articles.map(entry => toCard(site, entry)) }
 }
 
 async function renderDocument(site: Site, dir: string, file: string, route: Route): Promise<[string, RenderContext]> {
@@ -178,6 +191,7 @@ export async function renderRoute(site: Site, route: Route | null): Promise<Rend
         updated: entry.updated,
         unlisted,
         html,
+        ...neighbours(site, entry),
       }
 
       return { tag: themeElements.article, model, title: titled(site, entry.title), comments: entry.comments, context }

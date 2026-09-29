@@ -18,6 +18,10 @@ export interface Labels {
   readonly tags: string
   readonly empty: string
   readonly unlisted: string
+  readonly previous: string
+  readonly next: string
+  /** In place of a neighbour an article does not have. */
+  readonly nothing: string
   readonly pageOf: (page: number, total: number) => string
   /** The original spelt dates out for Chinese only, and kept them numeric otherwise. */
   readonly month: 'long' | 'numeric'
@@ -45,6 +49,9 @@ const zh: Labels = {
   tags: '标签',
   empty: '还没有文章。',
   unlisted: '隐藏文章',
+  previous: '上一篇文章',
+  next: '下一篇文章',
+  nothing: '没有了',
   pageOf: (page, total) => `你当前正在浏览文章列表的第${page}页（共${total}页）。`,
   month: 'long',
   settings: '主题设置',
@@ -71,6 +78,9 @@ const ja: Labels = {
   tags: 'タグ',
   empty: 'まだ記事がありません。',
   unlisted: '限定公開',
+  previous: '前の記事へ',
+  next: '次の記事へ',
+  nothing: '記事が存在しない',
   pageOf: (page, total) => `記事一覧の ${page} / ${total} ページを表示しています。`,
   month: 'numeric',
   settings: 'テーマ設定',
@@ -97,6 +107,9 @@ const en: Labels = {
   tags: 'Tags:',
   empty: 'No articles yet.',
   unlisted: 'Unlisted',
+  previous: 'Previous article',
+  next: 'Next article',
+  nothing: 'nothing',
   pageOf: (page, total) => `You are browsing page ${page} of ${total} of the article list.`,
   month: 'numeric',
   settings: 'Theme settings',

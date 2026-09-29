@@ -10,6 +10,7 @@ import {
 import pkg from '../package.json' with { type: 'json' }
 import { decrypt, encrypt } from './commands/encryption.ts'
 import { init } from './commands/init.ts'
+import { migrate } from './commands/migrate.ts'
 import { plugin, pluginAdd, pluginRemove } from './commands/plugin.ts'
 import { preview } from './commands/preview.ts'
 import { sync } from './commands/sync.ts'
@@ -25,5 +26,5 @@ void Cli()
   .use(strictFlagsPlugin())
   .use(completionsPlugin())
   .use(updateNotifierPlugin({ pkg }))
-  .command([init, sync, preview, theme, themeUse, themeAdd, plugin, pluginAdd, pluginRemove, encrypt, decrypt])
+  .command([init, migrate, sync, preview, theme, themeUse, themeAdd, plugin, pluginAdd, pluginRemove, encrypt, decrypt])
   .parse()

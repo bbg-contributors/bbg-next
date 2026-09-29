@@ -5,5 +5,5 @@
     // vite/client declares the `?inline` (and `?raw`, `?url`) module suffixes.
     "types": ["vite/client"]
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }

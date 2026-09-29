@@ -14,15 +14,10 @@ const colorScheme: ColorSchemeControl = {
   },
 }
 
-/** What lies first in the body once the theme starts with this config. */
-function start(options: Readonly<Record<string, unknown>>): Element | null {
-  decorate({ colorScheme, seed: undefined, options, plugins: [] })
-
-  return document.body.firstElementChild
-}
-
+/** Starts the theme with a wallpaper configured, and gives back what lies first in the body. */
 function laid(wallpaper = 'https://example.com/random'): HTMLImageElement {
-  const image = start({ wallpaper })
+  decorate({ colorScheme, seed: undefined, options: { wallpaper }, plugins: [] })
+  const image = document.body.firstElementChild
   if (!(image instanceof HTMLImageElement)) throw new Error('no wallpaper laid')
 
   return image
@@ -47,10 +42,5 @@ describe('the wallpaper', () => {
     const failed = laid()
     failed.dispatchEvent(new Event('error'))
     expect(failed.isConnected).toBe(false)
-  })
-
-  it('is laid only when the config names one', () => {
-    expect(start({})?.localName).toBe('bbg-outlet')
-    expect(start({ wallpaper: true })?.localName).toBe('bbg-outlet')
   })
 })

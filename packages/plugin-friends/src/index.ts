@@ -199,5 +199,5 @@ class BbgFriends extends HTMLElement {
 
 export const setup = definePlugin(() => {
   injectStyle('bbg-plugin-friends', css)
-  if (customElements.get('bbg-friends') === undefined) customElements.define('bbg-friends', BbgFriends)
+  customElements.define('bbg-friends', BbgFriends)
 })

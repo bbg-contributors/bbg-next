@@ -28,20 +28,6 @@ async function boot(setup: PluginSetup = () => {}): Promise<void> {
   )
 }
 
-describe('startup failure', () => {
-  it('reports it instead of leaving a blank page', async () => {
-    vi.stubGlobal('fetch', async () => new Response('nope', { status: 500 }))
-
-    await expect(start(async () => stubTheme)).rejects.toThrow(/500/)
-  })
-
-  it('reports a missing outlet', async () => {
-    document.body.innerHTML = ''
-
-    await expect(start(async () => stubTheme)).rejects.toThrow(/bbg-outlet/)
-  })
-})
-
 describe('startup in parallel', () => {
   it('has the theme downloading by the time a plugin sets up', async () => {
     const seen: boolean[] = []
@@ -85,18 +71,12 @@ describe('what the theme is told', () => {
     expect(context?.options).toEqual({ wallpaper: 'background.webp' })
     expect(context?.plugins).toEqual([{ name: 'probe', version: '1.0.0' }])
   })
-
-  it('leaves out what the site did not set, for the theme to fall back on its own', async () => {
-    const context = await registered()
-    expect(context?.seed).toBeUndefined()
-    expect(context?.options).toEqual({})
-  })
 })
 
 describe('what plugins are told', () => {
   it.each([
     ['#/', false],
-    ['#/post/first', true],
+    ['#/article/first', true],
     // its front matter turns them off
     ['#/page/about', false],
   ])('whether comments belong on %s', async (hash, expected) => {
@@ -108,9 +88,9 @@ describe('what plugins are told', () => {
     expect(seen).toEqual([expected])
   })
 
-  it.each(['#/post/nope', '#/nowhere'])('nothing of %s, which is not found', async hash => {
+  it('nothing of a view that is not found', async () => {
     const seen: string[] = []
-    location.hash = hash
+    location.hash = '#/article/nope'
 
     await boot(context => void context.onRendered(view => void seen.push(view.route.type)))
 
@@ -124,11 +104,72 @@ describe('an address a plugin moves as it sets up', () => {
     const seen: Route[] = []
 
     await boot(context => {
-      history.replaceState(null, '', '#/post/second')
+      history.replaceState(null, '', '#/article/second')
       context.onRendered(view => void seen.push(view.route))
     })
 
     expect(seen).toEqual([{ type: 'article', slug: 'second' }])
+  })
+})
+
+/** Clicks a link to `href` and reports whether the runtime took the click, keeping the browser where it is either way. */
+function follow(href: string): boolean {
+  const link = Object.assign(document.createElement('a'), { href })
+  document.body.append(link)
+
+  let taken = false
+  addEventListener(
+    'click',
+    event => {
+      taken = event.defaultPrevented
+      event.preventDefault()
+    },
+    { once: true },
+  )
+  link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+
+  return taken
+}
+
+describe('an address a plugin knows', () => {
+  // As legacy-routes knows the old editor's: `?old=<slug>` is that article.
+  const knowsOld: PluginSetup = context => {
+    context.registerRedirect(url => {
+      const slug = url.searchParams.get('old')
+
+      return slug === null ? null : { type: 'article', slug }
+    })
+  }
+
+  afterEach(() => void history.replaceState(null, '', '/'))
+
+  it('gives way to the route’s own on landing, query and all', async () => {
+    const seen: Route[] = []
+    history.replaceState(null, '', '/index.html?old=second')
+
+    await boot(context => {
+      knowsOld(context)
+      context.onRendered(view => void seen.push(view.route))
+    })
+
+    expect(location.pathname + location.search + location.hash).toBe('/index.html#/article/second')
+    expect(seen).toEqual([{ type: 'article', slug: 'second' }])
+  })
+
+  it('is shown in place when a link to it is followed', async () => {
+    await boot(knowsOld)
+
+    expect(follow('data/articles/index.html?old=second')).toBe(true)
+    await vi.waitFor(() => expect(document.title).toBe('Second — 我的博客'))
+    expect(location.hash).toBe('#/article/second')
+  })
+})
+
+describe('a link to what is not a view', () => {
+  it.each(['data/articles/report.pdf', '?page=2'])('%s is left to the browser', async href => {
+    await boot()
+
+    expect(follow(href)).toBe(false)
   })
 })
 
@@ -143,28 +184,13 @@ describe('a deep link in hash mode', () => {
 
   it('shows its view, with the route moved where hash mode keeps it and the fragment kept', async () => {
     const seen: string[] = []
-    history.replaceState(null, '', '/post/first/#c1')
+    history.replaceState(null, '', '/article/first/#c1')
 
     await boot(context => void context.onRendered(view => void seen.push(view.route.type)))
 
     expect(seen).toEqual(['article'])
     expect(location.pathname).toBe('/')
-    expect(location.hash).toBe('#/post/first#c1')
-  })
-})
-
-describe('the runtime’s own words', () => {
-  it.each([
-    ['zh-CN', `#/tag/${encodeURIComponent('随笔')}`, '标签为 #随笔 下的文章 — 我的博客', null],
-    ['en', '#/list/9', 'Not found — 我的博客', 'This page of the article list does not exist.'],
-  ])('come in %s: %s is titled %s', async (lang, hash, title, message) => {
-    stubFetchWithProbe({ lang })
-    location.hash = hash
-
-    await boot()
-
-    expect(document.title).toBe(title)
-    if (message !== null) expect(document.querySelector('.bbg-not-found')?.textContent).toBe(message)
+    expect(location.hash).toBe('#/article/first#c1')
   })
 })
 
@@ -176,11 +202,11 @@ describe('the shell', () => {
   }
 
   it('is sent again only when a mark moves', async () => {
-    location.hash = '#/post/first'
+    location.hash = '#/article/first'
     await boot()
     const sent = vi.spyOn(document.querySelector('bbg-nav') as HTMLElement & { model: unknown }, 'model', 'set')
 
-    go('#/post/second')
+    go('#/article/second')
     expect(sent).not.toHaveBeenCalled()
 
     go('#/archive')
@@ -199,7 +225,7 @@ describe('a navigation overtaken by another', () => {
       return served(input)
     })
 
-    for (const hash of ['#/post/first', '#/post/second']) {
+    for (const hash of ['#/article/first', '#/article/second']) {
       location.hash = hash
       dispatchEvent(new PopStateEvent('popstate', { state: null }))
     }

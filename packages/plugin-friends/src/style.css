@@ -1,5 +1,4 @@
-/* A round avatar on the left, the name and a two-line description on the right, in a grid that fills the row.
-   A theme may set --bbg-friends-avatar, --bbg-friends-min and --bbg-friends-card, or restyle anything by repeating a selector here under an element of its own. */
+/* A theme may set --bbg-friends-avatar, --bbg-friends-min and --bbg-friends-card, or restyle anything by repeating a selector here under an element of its own. */
 
 bbg-friends {
   display: grid;

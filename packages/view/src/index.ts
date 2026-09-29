@@ -64,15 +64,25 @@ export interface ArchiveModel {
   readonly articles: readonly ArticleCard[]
 }
 
+/** A neighbouring article, for a way from one to the next. */
+export interface ArticleLink {
+  readonly title: string
+  readonly href: string
+}
+
 export interface ArticleModel {
   readonly title: string
   readonly tags: readonly TagLink[]
   readonly created: number
   readonly updated: number
-  /** Safe to insert: rendered with raw HTML disabled. A markdown heading opens with an empty `a.bbg-anchor` permalink, left for the theme to draw, and a fence named after a `bbg-` element comes out as that element. */
+  /** Safe to insert: rendered with raw HTML disabled. A markdown heading opens with an empty `a.bbg-anchor` permalink, left for the theme to draw, a task list is a `ul.bbg-task-list` whose `li.bbg-task` items open with a disabled `input.bbg-task-checkbox`, and a fence named after a `bbg-` element comes out as that element. */
   readonly html: string
   /** So a theme can mark it unlisted. */
   readonly unlisted: boolean
+  /** The listed article written just before this one, `null` for the first. Pinning plays no part, and an unlisted article has neither neighbour. */
+  readonly previous: ArticleLink | null
+  /** The one written just after, `null` for the latest. */
+  readonly next: ArticleLink | null
 }
 
 export interface PageModel {
@@ -113,7 +123,7 @@ export interface ThemeContext {
   readonly plugins: readonly PluginInfo[]
 }
 
-/** The runtime calls `register()` exactly once. Set whichever shared tokens you can on `:root` so plugins, and the runtime's own password box, blend in: `--bbg-fg`, `--bbg-muted`, `--bbg-accent`, `--bbg-on-accent`, `--bbg-bg`, `--bbg-surface`, `--bbg-border`, `--bbg-radius` and `--bbg-shadow`. To fit a plugin closer, set the `--bbg-<plugin>-*` properties it documents, or repeat one of its selectors under an element of your own, unlayered, like `bbg-outlet .bbg-friend`: the extra element outranks the plugin's rule whichever stylesheet loads first. Buttons the runtime and plugins draw carry `bbg-button`, for you to restyle the same way or add effects to. */
+/** The runtime calls `register()` exactly once. Set whichever shared tokens you can on `:root` so plugins, and the runtime's own password box, blend in: `--bbg-fg`, `--bbg-muted`, `--bbg-accent`, `--bbg-on-accent`, `--bbg-bg`, `--bbg-surface`, `--bbg-border`, `--bbg-radius` and `--bbg-shadow`. To fit a plugin closer, set the `--bbg-<plugin>-*` properties it documents, or repeat one of its selectors under an element of your own, unlayered, like `bbg-outlet .bbg-friend`: the extra element outranks the plugin's rule whichever stylesheet loads first. Buttons the runtime and plugins draw carry `bbg-button`, for you to restyle the same way or add effects to. Files a theme brings beside its bundle, fonts say, are listed under `assets` in theme.json to be installed with it, and found with `new URL(path, import.meta.url)`. */
 export interface ThemeModule {
   readonly register: (context: ThemeContext) => void
 }

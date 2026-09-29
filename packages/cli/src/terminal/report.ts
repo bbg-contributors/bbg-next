@@ -18,6 +18,8 @@ export const style = {
 export function reportDiagnostics(diagnostics: readonly Diagnostic[]): void {
   for (const diagnostic of diagnostics) {
     const label = diagnostic.level === 'error' ? style.red('error') : style.yellow('warn')
-    process.stderr.write(`  ${label} ${style.dim(diagnostic.file)}\n        ${diagnostic.message}\n`)
+    process.stderr.write(
+      `  ${label} ${style.dim(diagnostic.file)}\n        ${diagnostic.message.replaceAll('\n', '\n        ')}\n`,
+    )
   }
 }

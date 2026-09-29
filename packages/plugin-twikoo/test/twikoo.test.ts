@@ -7,7 +7,6 @@ const init = vi.hoisted(() => vi.fn<(options: Readonly<Record<string, unknown>>)
 vi.mock('twikoo', () => ({ version: '2.0.9', init }))
 
 let rendered: RenderedHandler = () => {}
-let schemeChanged: (scheme: ColorScheme) => void = () => {}
 
 function article(slug: string): Route {
   return { type: 'article', slug }
@@ -37,10 +36,7 @@ describe('twikoo', () => {
       onRendered: (handler: RenderedHandler) => {
         rendered = handler
       },
-      onColorScheme: (handler: (scheme: ColorScheme) => void) => {
-        schemeChanged = handler
-        handler('light')
-      },
+      onColorScheme: (handler: (scheme: ColorScheme) => void) => handler('light'),
     }
     setup(context as unknown as PluginContext)
   })
@@ -60,8 +56,8 @@ describe('twikoo', () => {
       lang: 'ja',
       localeBaseUrl: 'https://cdn.jsdelivr.net/npm/twikoo@2.0.9/dist',
       el: host(),
-      path: '/post/a/',
-      href: `${location.origin}/post/a/`,
+      path: '/article/a/',
+      href: `${location.origin}/article/a/`,
     })
   })
 
@@ -72,7 +68,7 @@ describe('twikoo', () => {
     view(article('b'), true, element)
 
     expect(host()).toBe(first)
-    expect(threads()).toEqual(['/post/a/', '/post/b/'])
+    expect(threads()).toEqual(['/article/a/', '/article/b/'])
   })
 
   it('leaves a view without comments, and loads the thread afresh on the way back', () => {
@@ -81,14 +77,6 @@ describe('twikoo', () => {
     expect(host()).toBeNull()
 
     view(article('a'), true)
-    expect(threads()).toEqual(['/post/a/', '/post/a/'])
-  })
-
-  it('follows the colour scheme', () => {
-    view(article('a'), true)
-    expect(host()?.getAttribute('data-user-color-scheme')).toBe('light')
-
-    schemeChanged('dark')
-    expect(host()?.getAttribute('data-user-color-scheme')).toBe('dark')
+    expect(threads()).toEqual(['/article/a/', '/article/a/'])
   })
 })

@@ -6,7 +6,7 @@ import { PluginMetaSchema, SiteSettingsSchema, ThemeMetaSchema } from './schema.
 
 function parse<Schema extends v.GenericSchema>(schema: Schema, input: unknown, what: string): v.InferOutput<Schema> {
   const result = v.safeParse(schema, input)
-  if (!result.success) throw new Error(`Invalid ${what}: ${result.issues[0].message}`)
+  if (!result.success) throw new Error(`Invalid ${what}:\n${v.summarize(result.issues)}`)
 
   return result.output
 }
@@ -26,13 +26,7 @@ export function parseThemeMeta(input: unknown): ThemeMeta {
 
 /** A theme's or a plugin's config: any JSON object, left for its reader to validate. */
 export function parseOptions(text: string): Readonly<Record<string, unknown>> {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(text)
-  } catch (cause) {
-    throw new Error(`Not valid JSON: ${(cause as Error).message}`)
-  }
-
+  const parsed: unknown = JSON.parse(text)
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
     throw new Error('Must hold a JSON object of options.')
   }
@@ -46,15 +40,10 @@ export async function loadSiteSettings(vfs: Vfs): Promise<SiteSettings> {
     throw new Error(`No ${manifestPath} here — is this a bbg-next site? Run \`bbg-next init\` first.`)
   }
 
-  let parsed: unknown
   try {
-    parsed = JSON.parse(await vfs.readFile(manifestPath))
-  } catch (cause) {
-    throw new Error(`${manifestPath} is not valid JSON: ${(cause as Error).message}`)
-  }
+    const manifest = JSON.parse(await vfs.readFile(manifestPath)) as { site?: unknown } | null
 
-  try {
-    return parseSiteSettings((parsed as { site?: unknown } | null)?.site)
+    return parseSiteSettings(manifest?.site)
   } catch (cause) {
     throw new Error(`In ${manifestPath}: ${(cause as Error).message}`)
   }

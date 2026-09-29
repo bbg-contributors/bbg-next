@@ -11,6 +11,8 @@ export interface Site {
   /** For what is on screen: the `current` flags follow the route. */
   readonly shell: (route: Route | null) => ShellModel
   readonly renderers: RendererRegistry
+  /** The listed articles newest first, pinning aside: the archive's order, which an article's neighbours follow too. */
+  readonly timeline: readonly ArticleEntry[]
   readonly bySlug: ReadonlyMap<string, { entry: ArticleEntry; unlisted: boolean }>
   readonly pageBySlug: ReadonlyMap<string, PageEntry>
   readonly words: Wording
@@ -72,6 +74,8 @@ export function createSite(manifest: Manifest, renderers: RendererRegistry): Sit
   return {
     manifest,
     router,
+    // `toSorted` is stable, so the manifest's own order settles a tie.
+    timeline: manifest.articles.toSorted((a, b) => b.created - a.created),
     bySlug,
     renderers,
     pageBySlug: new Map(manifest.pages.map(page => [page.slug, page])),

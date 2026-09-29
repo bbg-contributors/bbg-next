@@ -23,7 +23,7 @@ function write(preference: ColorSchemePreference): void {
   }
 }
 
-export function createColorScheme(signal: AbortSignal): ColorSchemeControl {
+export function createColorScheme(): ColorSchemeControl {
   const query = matchMedia('(prefers-color-scheme: dark)')
   const handlers = new Set<(scheme: ColorScheme) => void>()
 
@@ -41,7 +41,7 @@ export function createColorScheme(signal: AbortSignal): ColorSchemeControl {
     for (const handler of [...handlers]) handler(next)
   }
 
-  query.addEventListener('change', publish, { signal })
+  query.addEventListener('change', publish)
 
   return {
     current,

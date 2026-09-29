@@ -5,7 +5,7 @@ import type { ArticleEntry, Manifest, SiteSettings } from './schema.ts'
 import type { MarkdownIt } from 'markdown-it'
 import { encryptedElement } from '../content/encryption.ts'
 import { stripFrontMatter } from '../content/frontmatterSplit.ts'
-import { createMarkdown, renderMarkdown } from '../markdown.ts'
+import { createMarkdown } from '../markdown.ts'
 import { articlesDir, atomPath, sitemapPath } from '../paths.ts'
 import { normaliseBase, serialize } from '../route.ts'
 import { defaultExtensions } from './plugins.ts'
@@ -35,14 +35,23 @@ interface Linked {
 async function contentOf(vfs: Vfs, md: MarkdownIt, file: string, context: RenderContext): Promise<string> {
   if (!defaultExtensions.includes(file.slice(file.lastIndexOf('.') + 1))) return ''
 
-  const html = renderMarkdown(md, stripFrontMatter(await vfs.readFile(`${articlesDir}/${file}`)), context)
+  const html = md.render(stripFrontMatter(await vfs.readFile(`${articlesDir}/${file}`)), context)
 
   // With raw HTML off, nothing else renders as this element.
   return html.includes(`<${encryptedElement} `) ? '' : html
 }
 
-async function atom(vfs: Vfs, site: SiteSettings, home: string, articles: readonly Linked[]): Promise<string> {
-  const md = createMarkdown()
+type Address = (route: Route, fragment?: string) => string
+
+async function atom(
+  vfs: Vfs,
+  site: SiteSettings,
+  home: string,
+  articles: readonly Linked[],
+  address: Address,
+): Promise<string> {
+  // Read away from the site, so a hash-routed one's links to another view go by their full address.
+  const md = createMarkdown(site.router.mode === 'hash' ? address : undefined)
   const baseUrl = `${home}${articlesDir}/`
   const entries = await Promise.all(
     articles.map(async ({ entry, link }) => {
@@ -78,8 +87,8 @@ export async function writeFeeds(vfs: Vfs, manifest: Manifest): Promise<void> {
   const { pages, site } = manifest
   const home = `${site.url}${normaliseBase(site.router.base)}`
   // The site's own routing, so a hash-routed site's addresses land on index.html rather than 404.html, which hosts answer as not found.
-  const address = (route: Route): string => {
-    const href = serialize(route, site.router)
+  const address: Address = (route, fragment) => {
+    const href = serialize(route, site.router, fragment)
 
     return `${href.startsWith('#') ? home : site.url}${href}`
   }
@@ -96,5 +105,5 @@ export async function writeFeeds(vfs: Vfs, manifest: Manifest): Promise<void> {
     await vfs.writeFile(sitemapPath, links.map(link => `${link}\n`).join(''))
   }
 
-  if (site.atom) await vfs.writeFile(atomPath, await atom(vfs, site, home, articles))
+  if (site.atom) await vfs.writeFile(atomPath, await atom(vfs, site, home, articles, address))
 }

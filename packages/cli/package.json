@@ -23,7 +23,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@bbg-next/adapter": "workspace:*",
@@ -32,9 +32,11 @@
     "@bbg-next/default-theme-vue": "workspace:*",
     "@bbg-next/plugin-announcement": "workspace:*",
     "@bbg-next/plugin-friends": "workspace:*",
+    "@bbg-next/plugin-highlight": "workspace:*",
     "@bbg-next/plugin-hitokoto": "workspace:*",
     "@bbg-next/plugin-image-viewer": "workspace:*",
     "@bbg-next/plugin-legacy-routes": "workspace:*",
+    "@bbg-next/plugin-math": "workspace:*",
     "@bbg-next/plugin-twikoo": "workspace:*",
     "@bbg-next/plugin-waline": "workspace:*",
     "@bbg-next/runtime": "workspace:*",

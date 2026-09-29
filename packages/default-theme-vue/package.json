@@ -19,7 +19,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "typecheck": "vue-tsc --noEmit && vue-tsc --noEmit -p tsconfig.test.json"
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@bbg-next/default-theme-shared": "workspace:*",

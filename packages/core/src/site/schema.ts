@@ -14,7 +14,7 @@ export const SiteSettingsSchema = v.pipe(
     footer: v.optional(v.string(), ''),
     /** Options live in `data/themes/<name>.json`. */
     theme: v.optional(v.string(), 'default-theme'),
-    postsPerPage: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1)), 10),
+    articlesPerPage: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1)), 10),
     router: v.optional(
       v.object({
         mode: v.optional(v.picklist(['hash', 'path']), 'hash'),
@@ -52,6 +52,28 @@ export const SiteSettingsSchema = v.pipe(
 
 export type SiteSettings = v.InferOutput<typeof SiteSettingsSchema>
 
+const ownFiles = new Set(['index.js', 'plugin.json', 'theme.json'])
+// A backslash or a drive letter would reach outside the directory on Windows.
+const unportable = /[\\:]/
+
+/** Files or directories beside the bundle, which install copies in with it: chunks it imports, fonts, pictures. Paths are relative to its directory. */
+const AssetsSchema = v.optional(
+  v.array(
+    v.pipe(
+      v.string(),
+      v.transform(path => path.replace(trailingSlash, '')),
+      v.check(
+        path =>
+          !ownFiles.has(path) &&
+          !unportable.test(path) &&
+          path.split('/').every(segment => segment !== '' && segment !== '.' && segment !== '..'),
+        "An asset must be a path inside the bundle's own directory, other than its script and its metadata",
+      ),
+    ),
+  ),
+  [],
+)
+
 /** `bbg/plugins/<name>/plugin.json`. */
 export const PluginMetaSchema = v.pipe(
   v.object({
@@ -65,6 +87,7 @@ export const PluginMetaSchema = v.pipe(
     requiredOptions: v.optional(v.array(v.string()), []),
     /** False when the plugin reads no options: no config file, no fetch. */
     configurable: v.optional(v.boolean(), true),
+    assets: AssetsSchema,
   }),
   v.check(
     meta => meta.configurable || meta.requiredOptions.length === 0,
@@ -74,10 +97,11 @@ export const PluginMetaSchema = v.pipe(
 
 export type PluginMeta = v.InferOutput<typeof PluginMetaSchema>
 
-/** `bbg/themes/<name>/theme.json`. A theme only draws, so it declares nothing but itself. */
+/** `bbg/themes/<name>/theme.json`. A theme only draws, so it declares nothing but itself and the files it brings. */
 export const ThemeMetaSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1)),
   version: v.pipe(v.string(), v.minLength(1)),
+  assets: AssetsSchema,
 })
 
 export type ThemeMeta = v.InferOutput<typeof ThemeMetaSchema>

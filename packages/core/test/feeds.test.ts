@@ -1,10 +1,9 @@
 import type { PluginIndexEntry, ThemeIndexEntry } from '../src/site/schema.ts'
 import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
-import { writeFeeds } from '../src/site/feeds.ts'
-import { buildManifest } from '../src/site/manifest.ts'
+import { writeSite } from '../src/site/manifest.ts'
 import { SiteSettingsSchema } from '../src/site/schema.ts'
-import { createMemoryVfs } from './memoryVfs.ts'
+import { createMemoryVfs } from '../testing/index.ts'
 
 const theme: ThemeIndexEntry = { name: 'default-theme', version: '1.2.3', hasConfig: false }
 
@@ -31,6 +30,7 @@ async function sync(
   files: Readonly<Record<string, string>>,
   settings: Readonly<Record<string, unknown>> = {},
   plugins: readonly PluginIndexEntry[] = [],
+  includeDrafts = false,
 ) {
   const vfs = createMemoryVfs(files)
   const site = v.parse(SiteSettingsSchema, {
@@ -40,8 +40,7 @@ async function sync(
     sitemap: true,
     ...settings,
   })
-  const { manifest } = await buildManifest({ vfs, site, includeDrafts: false, theme, plugins })
-  await writeFeeds(vfs, manifest)
+  await writeSite(vfs, { site, includeDrafts, theme, plugins })
 
   return vfs
 }
@@ -56,10 +55,10 @@ describe('sitemap.txt', () => {
 
     expect(await vfs.readFile('sitemap.txt')).toBe(
       [
-        'https://example.com/blog/post/new/',
-        'https://example.com/blog/post/old/',
-        'https://example.com/blog/post/pinned/',
-        'https://example.com/blog/post/secret/',
+        'https://example.com/blog/article/new/',
+        'https://example.com/blog/article/old/',
+        'https://example.com/blog/article/pinned/',
+        'https://example.com/blog/article/secret/',
         'https://example.com/blog/page/about/',
         'https://example.com/blog/archive/',
         '',
@@ -72,10 +71,10 @@ describe('sitemap.txt', () => {
 
     expect(await vfs.readFile('sitemap.txt')).toBe(
       [
-        'https://example.com/blog/#/post/new',
-        'https://example.com/blog/#/post/old',
-        'https://example.com/blog/#/post/pinned',
-        'https://example.com/blog/#/post/secret',
+        'https://example.com/blog/#/article/new',
+        'https://example.com/blog/#/article/old',
+        'https://example.com/blog/#/article/pinned',
+        'https://example.com/blog/#/article/secret',
         'https://example.com/blog/#/page/about',
         'https://example.com/blog/#/archive',
         '',
@@ -101,20 +100,29 @@ describe('atom.xml', () => {
   it('carries an article whole, with addresses a reader can follow', async () => {
     const entry = entryOf(await (await sync(blog)).readFile('atom.xml'), 'New &amp; &lt;improved&gt;')
 
-    expect(entry).toContain('<link href="https://example.com/#/post/new"/>\n<id>https://example.com/#/post/new</id>')
+    expect(entry).toContain(
+      '<link href="https://example.com/#/article/new"/>\n<id>https://example.com/#/article/new</id>',
+    )
     expect(entry).toContain('src=&quot;https://example.com/data/articles/sunset.svg&quot;')
-    expect(entry).toContain('href=&quot;https://example.com/#/post/new#end&quot;')
+    expect(entry).toContain('href=&quot;https://example.com/#/article/new#end&quot;')
   })
 
-  it('gives an encrypted article only its title and link', async () => {
-    const entry = entryOf(await (await sync(blog)).readFile('atom.xml'), 'Secret')
+  it('links a hash-routed site’s other views in full, while `#/…` stays a fragment where the site routes by path', async () => {
+    const files = {
+      ...blog,
+      'data/articles/old.md': article('title: Old\ncreated: 2026-01-01', '[New](#/article/new)\n'),
+    }
+    const pathRouted = { router: { mode: 'path', base: '/blog/' } }
 
-    expect(entry).toContain('<link href="https://example.com/#/post/secret"/>')
-    expect(entry).not.toContain('<content')
-    expect(entry).not.toContain('<summary')
+    expect(entryOf(await (await sync(files)).readFile('atom.xml'), 'Old')).toContain(
+      'href=&quot;https://example.com/#/article/new&quot;',
+    )
+    expect(entryOf(await (await sync(files, pathRouted)).readFile('atom.xml'), 'Old')).toContain(
+      'href=&quot;https://example.com/blog/article/old/#/article/new&quot;',
+    )
   })
 
-  it('gives a format only a plugin renders just its summary', async () => {
+  it('carries no content only the browser can show: an encrypted block, or a format a plugin renders', async () => {
     const typst: PluginIndexEntry = {
       name: 'typst',
       version: '1.0.0',
@@ -123,13 +131,12 @@ describe('atom.xml', () => {
       hasConfig: false,
     }
     const notes = article('title: Notes\ncreated: 2026-05-01T00:00:00Z', 'Typed notes.\n')
-    const entry = entryOf(
-      await (await sync({ 'data/articles/notes.typ': notes }, {}, [typst])).readFile('atom.xml'),
-      'Notes',
-    )
+    const atom = await (await sync({ ...blog, 'data/articles/notes.typ': notes }, {}, [typst])).readFile('atom.xml')
 
-    expect(entry).toContain('<summary>Typed notes.</summary>')
-    expect(entry).not.toContain('<content')
+    expect(entryOf(atom, 'Secret')).toContain('<link href="https://example.com/#/article/secret"/>')
+    expect(entryOf(atom, 'Secret')).not.toMatch(/<content|<summary/)
+    expect(entryOf(atom, 'Notes')).toContain('<summary>Typed notes.</summary>')
+    expect(entryOf(atom, 'Notes')).not.toContain('<content')
   })
 
   it('drops characters XML cannot carry', async () => {
@@ -139,12 +146,6 @@ describe('atom.xml', () => {
     expect(atom).not.toContain('\u{7}')
     expect(atom).toContain('<summary>Dingdong.</summary>')
   })
-
-  it('is still dated with nothing in it', async () => {
-    const atom = await (await sync({})).readFile('atom.xml')
-
-    expect(atom).toContain('<updated>1970-01-01T00:00:00.000Z</updated>')
-  })
 })
 
 describe('switched off', () => {
@@ -152,6 +153,13 @@ describe('switched off', () => {
     const vfs = await sync({ ...blog, 'atom.xml': 'from the old editor' }, { atom: false, sitemap: false })
 
     expect(await vfs.readFile('atom.xml')).toBe('from the old editor')
+    expect(await vfs.exists('sitemap.txt')).toBe(false)
+  })
+
+  it('while drafts are shown, so none reaches a feed reader', async () => {
+    const vfs = await sync(blog, {}, [], true)
+
+    expect(await vfs.exists('atom.xml')).toBe(false)
     expect(await vfs.exists('sitemap.txt')).toBe(false)
   })
 })

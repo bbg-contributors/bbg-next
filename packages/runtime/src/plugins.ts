@@ -1,7 +1,15 @@
-import type { Manifest, PluginIndexEntry } from '@bbg-next/core'
-import type { ColorScheme, PluginApi, PluginContext, PluginModule, RenderedView, Renderer } from '@bbg-next/plugin'
+import type { Manifest, PluginIndexEntry, Route } from '@bbg-next/core'
+import type {
+  ColorScheme,
+  PluginApi,
+  PluginContext,
+  PluginModule,
+  Redirect,
+  RenderedView,
+  Renderer,
+} from '@bbg-next/plugin'
 import type { ColorSchemeControl, PluginInfo } from '@bbg-next/view'
-import { createMarkdown, defaultExtensions, pluginConfigPath, pluginPath, renderMarkdown } from '@bbg-next/core'
+import { createMarkdown, defaultExtensions, pluginConfigPath, pluginPath, serializeRoute } from '@bbg-next/core'
 import { loadOptions, resolve } from './site.ts'
 
 type Options = PluginContext['options']
@@ -20,6 +28,8 @@ export interface RendererRegistry {
 interface PluginHost {
   readonly renderers: RendererRegistry
   readonly rendered: (view: RenderedView) => void
+  /** The route the first plugin to know `url` gives it, `null` when none does. */
+  readonly redirect: (url: URL) => Route | null
   /** The plugins whose setup went through, in load order: what the theme is told is running. */
   readonly started: readonly PluginInfo[]
 }
@@ -61,6 +71,7 @@ export async function setupPlugins(
   load: PluginLoader = importPlugin,
 ): Promise<PluginHost> {
   const renderers = new Map<string, Renderer>()
+  const redirects: Redirect[] = []
   const apis = new Map<string, PluginApi>()
   const ready = new Set([markdownPlugin])
 
@@ -68,8 +79,11 @@ export async function setupPlugins(
   const schemes = handlers<ColorScheme>('a colour scheme change')
   colorScheme.subscribe(schemes.fire)
 
-  const md = createMarkdown()
-  const markdown: Renderer = (source, context) => renderMarkdown(md, source, context)
+  const { router } = manifest.site
+  const md = createMarkdown(
+    router.mode === 'hash' ? (route, fragment) => serializeRoute(route, router, fragment) : undefined,
+  )
+  const markdown: Renderer = (source, context) => md.render(source, context)
   apis.set(markdownPlugin, md)
   // Claimed rather than dispatched — `for` already falls back to markdown — so no plugin can take these over.
   for (const extension of defaultExtensions) renderers.set(extension, markdown)
@@ -105,6 +119,7 @@ export async function setupPlugins(
       registerRenderer: (extension, render) => {
         if (!renderers.has(extension)) renderers.set(extension, render)
       },
+      registerRedirect: redirect => void redirects.push(redirect),
       require: <T extends PluginApi>(name: string): T => {
         if (!Object.hasOwn(entry.dependencies, name)) {
           throw new Error(`Plugin ${entry.name} requires ${JSON.stringify(name)} without declaring it in plugin.json`)
@@ -140,6 +155,19 @@ export async function setupPlugins(
   return {
     started,
     rendered: rendered.fire,
+
+    redirect: url => {
+      for (const redirect of redirects) {
+        try {
+          const route = redirect(url)
+          if (route !== null) return route
+        } catch (cause) {
+          report('a plugin failed while handling an address', cause)
+        }
+      }
+
+      return null
+    },
 
     renderers: {
       markdown,

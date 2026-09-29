@@ -19,7 +19,7 @@ interface Painted {
   readonly bar: string
 }
 
-function painted(seed: string | undefined): Record<ColorScheme, Painted> {
+function painted(seed: string): Record<ColorScheme, Painted> {
   document.head.replaceChildren()
   let show = (_scheme: ColorScheme): void => {}
   const colorScheme: ColorSchemeControl = {
@@ -65,13 +65,6 @@ describe('the palette', () => {
     expect(filled(dark.css).sort()).toEqual([...openSlots].sort())
   })
 
-  it('tells the browser which scheme each one is for', () => {
-    const { light, dark } = painted(undefined)
-
-    expect(light.css).toContain('color-scheme:light')
-    expect(dark.css).toContain('color-scheme:dark')
-  })
-
   it('puts the seed itself on the bar, and on the browser’s, in both schemes, as the original did', () => {
     const { light, dark } = painted('#0d6efd')
 
@@ -84,9 +77,5 @@ describe('the palette', () => {
 
     expect(slot(light.css, 'on-bar')).toBe('#ffffff')
     expect(Hct.fromInt(argbFromHex(slot(light.css, 'accent'))).tone).toBeCloseTo(40, 0)
-  })
-
-  it('falls back to the original blue when the site sets no seed', () => {
-    expect(painted(undefined)).toEqual(painted('#0d6efd'))
   })
 })

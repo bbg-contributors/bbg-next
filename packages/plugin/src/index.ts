@@ -1,8 +1,4 @@
 // The runtime/plugin contract. A plugin extends what gets rendered, or reacts to what was.
-// It may also define a `bbg-<its name>` element, which authors place with a fence of that name: the fence's content arrives in `data-source`, and in `data-base` the directory the document resolves its own relative links against.
-// Style what you draw unlayered, so a theme's resets cannot flatten it, and document any `--bbg-<your name>-*` property a theme may set to fit you in.
-// Give your buttons the `bbg-button` class: the runtime draws a plain one from the shared tokens, a theme may draw it its own way or add effects such as a ripple, and any rule of yours outranks the runtime's.
-// Mark what you put into a view with `data-bbg-plugin` set to your name, and leave what others marked alone when you act on a view's content.
 
 import type { ArticleEntry, PageEntry, RenderContext, Route, SiteSettings } from '@bbg-next/core'
 import type { ColorScheme } from '@bbg-next/view'
@@ -10,18 +6,14 @@ import type { MarkdownIt } from 'markdown-it'
 import { serializeRoute } from '@bbg-next/core'
 
 /** Re-exported so a plugin only ever depends on this package. */
-export {
-  type ArticleEntry,
-  type PageEntry,
-  type RenderContext,
-  type Route,
-  serializeRoute,
-  type SiteSettings,
-} from '@bbg-next/core'
+export type { ArticleEntry, PageEntry, RenderContext, Route, SiteSettings } from '@bbg-next/core'
 export { type ColorScheme, injectStyle, wordFor } from '@bbg-next/view'
 
 /** Front matter is already stripped. */
 export type Renderer = (source: string, context: RenderContext) => string
+
+/** The route an address the router does not know stands for, such as one from another generator; `null` for one this plugin does not know either. */
+export type Redirect = (url: URL) => Route | null
 
 /** Called after every navigation with the view on screen. Its element stays from one view of a kind to the next, and what you put in it stays with it: keep what still holds, change only what differs, and take out what no longer belongs. */
 export type RenderedHandler = (view: RenderedView) => void
@@ -60,6 +52,8 @@ export interface PluginContext {
   readonly onColorScheme: (handler: (scheme: ColorScheme) => void) => void
   /** Claim a suffix, no dot. Must match `extensions` in plugin.json, which is what sync reads. */
   readonly registerRenderer: (extension: string, render: Renderer) => void
+  /** Asked about the address the site opens at and every same-origin link followed within it; the first route any plugin gives wins. */
+  readonly registerRedirect: (redirect: Redirect) => void
   /** The API of a plugin declared as a dependency in plugin.json; throws otherwise. */
   readonly require: <T extends PluginApi>(name: string) => T
 }
@@ -67,7 +61,7 @@ export interface PluginContext {
 /** Runs before the runtime reads the address, so it may still move it with `history.replaceState`. */
 export type PluginSetup = (context: PluginContext) => PluginApi | void
 
-/** A plugin's module namespace is this shape, the way a theme's is `ThemeModule`. */
+/** A plugin's module namespace is this shape, the way a theme's is `ThemeModule`. It may also define a `bbg-<its name>` element, which authors place with a fence of that name: the fence's content arrives in `data-source`, and in `data-base` the directory the document resolves its own relative links against. Style what you draw unlayered, so a theme's resets cannot flatten it, and document any `--bbg-<your name>-*` property a theme may set to fit you in. Give your buttons the `bbg-button` class: the runtime draws a plain one from the shared tokens, a theme may draw it its own way or add effects such as a ripple, and any rule of yours outranks the runtime's. Mark what you put into a view with `data-bbg-plugin` set to your name, and leave what others marked alone when you act on a view's content. */
 export interface PluginModule {
   readonly setup: PluginSetup
 }

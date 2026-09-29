@@ -183,6 +183,15 @@
       @apply mb-0;
     }
 
+    /* The box takes the bullet's place, as on GitHub. */
+    & .bbg-task {
+      @apply list-none;
+    }
+
+    & .bbg-task-checkbox {
+      @apply mr-[0.2em] mb-[0.25em] -ml-[1.4em] align-middle accent-accent;
+    }
+
     & :is(h1, h2, h3, h4, h5, h6) {
       @apply mt-0 mb-2 border-b border-line pb-1 leading-[1.2] font-medium;
     }
