@@ -119,8 +119,8 @@ export async function startPreviewServer(options: PreviewServerOptions): Promise
 
     let served = await readIfFile(target)
 
-    // 404.html, the site itself, as hosts like GitHub Pages show for a path with no file. Extensionless only, so a missing asset still 404s instead of returning HTML.
-    if (served === null && extname(url.pathname) === '') {
+    // 404.html, the site itself, as hosts like GitHub Pages show for a path with no file. Only to a request whose Accept names text/html, as a page load's does, so a missing asset still 404s instead of returning HTML.
+    if (served === null && request.headers.accept?.includes('text/html') === true) {
       served = await readIfFile(join(root, '404.html'))
     }
 

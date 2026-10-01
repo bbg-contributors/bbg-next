@@ -118,12 +118,12 @@
     @apply block;
   }
 
-  /* A view is the column, so whatever a plugin puts into it lines up with the cards. */
+  /* A view is the column, so whatever a plugin puts into it lines up with the cards. Only a word too long for a line of its own breaks, not every line's last word as with the original's break-all. */
   bbg-article-list,
   bbg-archive-view,
   bbg-article-view,
   bbg-page-view {
-    @apply column block;
+    @apply column block wrap-anywhere;
   }
 }
 
@@ -239,8 +239,9 @@
       @apply rounded bg-code px-3 py-1 font-mono text-[0.875em] text-accent;
     }
 
+    /* Long lines scroll rather than wrap as the original's did. Top-aligned, since a scrolling box sits on the baseline and would leave a gap under it. */
     & pre {
-      @apply inline-block max-w-full rounded bg-code px-6 py-2 font-mono text-[0.875em] whitespace-pre-wrap text-fg;
+      @apply inline-block max-w-full overflow-x-auto rounded bg-code px-6 py-2 align-top font-mono text-[0.875em] text-fg;
     }
 
     & pre code {

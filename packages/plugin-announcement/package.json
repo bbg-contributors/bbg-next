@@ -23,6 +23,6 @@
   },
   "dependencies": {
     "@bbg-next/plugin": "workspace:*",
-    "lucide": "^1.48.0"
+    "lucide": "^1.49.0"
   }
 }
