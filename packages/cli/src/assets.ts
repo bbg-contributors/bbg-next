@@ -90,6 +90,7 @@ const pluginKind: AssetKind<PluginMeta> = {
     ['image-viewer', '@bbg-next/plugin-image-viewer'],
     ['legacy-routes', '@bbg-next/plugin-legacy-routes'],
     ['math', '@bbg-next/plugin-math'],
+    ['rustaline', '@bbg-next/plugin-rustaline'],
     ['twikoo', '@bbg-next/plugin-twikoo'],
     ['waline', '@bbg-next/plugin-waline'],
   ]),

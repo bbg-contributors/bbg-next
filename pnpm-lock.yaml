@@ -259,6 +259,9 @@ importers:
       '@bbg-next/plugin-math':
         specifier: workspace:*
         version: link:../plugin-math
+      '@bbg-next/plugin-rustaline':
+        specifier: workspace:*
+        version: link:../plugin-rustaline
       '@bbg-next/plugin-twikoo':
         specifier: workspace:*
         version: link:../plugin-twikoo
@@ -443,6 +446,12 @@ importers:
       markdown-it:
         specifier: ^15.0.2
         version: 15.0.2
+
+  packages/plugin-rustaline:
+    dependencies:
+      '@bbg-next/plugin':
+        specifier: workspace:*
+        version: link:../plugin
 
   packages/plugin-twikoo:
     dependencies:

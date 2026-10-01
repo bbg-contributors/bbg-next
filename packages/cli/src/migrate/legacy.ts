@@ -69,8 +69,13 @@ export interface LegacySite {
     readonly wallpaper: string
     readonly live2d: boolean
   }
-  /** `waline` is its server, `''` when off. */
-  readonly comments: { readonly valine: boolean; readonly disqus: boolean; readonly waline: string }
+  /** `waline` and `rustaline` are their servers, `''` when off. */
+  readonly comments: {
+    readonly valine: boolean
+    readonly disqus: boolean
+    readonly waline: string
+    readonly rustaline: string
+  }
   /** Custom CSS or JS. */
   readonly customCode: boolean
   readonly customText: boolean
@@ -116,6 +121,11 @@ function strings(from: Json, key: string): readonly string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
     : []
+}
+
+/** A comment service's server, `''` while the service is off. */
+function server(comments: Json, enabledKey: string, settingsKey: string): string {
+  return flag(comments, enabledKey, false) ? text(group(comments, settingsKey), 'serverurl').trim() : ''
 }
 
 // Epoch ms since 20240518. Before that the editor kept a date, which its own upgrade turned into 8:00 that morning by adding eight hours, as this does.
@@ -237,7 +247,8 @@ export async function readLegacySite(vfs: Vfs): Promise<LegacySite> {
     comments: {
       valine: flag(comments, '启用valine评论', false),
       disqus: flag(comments, '启用disqus评论', false),
-      waline: flag(comments, '启用waline评论', false) ? text(group(comments, 'waline设置'), 'serverurl').trim() : '',
+      waline: server(comments, '启用waline评论', 'waline设置'),
+      rustaline: server(comments, '启用rustaline评论', 'rustaline设置'),
     },
     customCode:
       (flag(blog, '启用自定义CSS', false) && text(blog, '自定义CSS').trim() !== '') ||

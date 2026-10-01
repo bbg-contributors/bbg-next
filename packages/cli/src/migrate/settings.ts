@@ -69,20 +69,27 @@ export function migrateSettings(
   if (documents.seen.code) plugins.push('highlight')
   if (documents.seen.formulas) plugins.push('math')
 
-  if (comments.waline !== '') {
-    plugins.push('waline')
-    writes.set(pluginConfigPath('waline'), json({ serverURL: comments.waline }))
-    if (documents.threads.length > 0) {
-      warn(
-        [
-          'Waline files comments under the address of the article or page they are on, and each has a new address now. Change the url of the comments in the Waline database from each old address to its new one, or they no longer show:',
-          ...documents.threads.map(([from, to]) => `  ${from} → ${to}`),
-        ].join('\n'),
-      )
-    }
+  /** `stored` is a thread's new address as the service keeps it. */
+  const commentsBy = (plugin: string, service: string, options: object, stored: (path: string) => string): void => {
+    plugins.push(plugin)
+    writes.set(pluginConfigPath(plugin), json(options))
+    if (documents.threads.length === 0) return
+
+    warn(
+      [
+        `${service} files comments under the address of the article or page they are on, and each has a new address now. Change the url of the comments in the ${service} database from each old address to its new one, or they no longer show:`,
+        ...documents.threads.map(([from, to]) => `  ${from} → ${stored(to)}`),
+      ].join('\n'),
+    )
   }
-  if (comments.valine) warn('Valine comments are not carried over: bbg-next comes with waline and twikoo')
-  if (comments.disqus) warn('Disqus comments are not carried over: bbg-next comes with waline and twikoo')
+
+  if (comments.waline !== '') commentsBy('waline', 'Waline', { serverURL: comments.waline }, path => path)
+  // Rustaline's server drops the trailing slash.
+  if (comments.rustaline !== '') {
+    commentsBy('rustaline', 'Rustaline', { server: comments.rustaline }, path => path.slice(0, -1))
+  }
+  if (comments.valine) warn('Valine comments are not carried over: bbg-next comes with rustaline, twikoo and waline')
+  if (comments.disqus) warn('Disqus comments are not carried over: bbg-next comes with rustaline, twikoo and waline')
 
   if (theme.wallpaper !== '') writes.set(themeConfigPath(defaultTheme), json({ wallpaper: theme.wallpaper }))
   if (theme.solidBackground !== '') {

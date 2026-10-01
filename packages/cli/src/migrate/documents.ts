@@ -30,7 +30,7 @@ export interface MigratedDocuments {
   readonly writes: ReadonlyMap<string, string>
   /** The friends page's slug, `null` without one. */
   readonly friends: string | null
-  /** Each old Waline thread, as Waline stored its key, and the new key, for every view that took comments. */
+  /** Each old comment thread's key, as the old theme gave it to Waline or Rustaline, and the new key, for every view that took comments. */
   readonly threads: readonly (readonly [string, string])[]
   /** Whether any document shows code, and any article a formula: what the old theme coloured and typeset. */
   readonly seen: { readonly code: boolean; readonly formulas: boolean }

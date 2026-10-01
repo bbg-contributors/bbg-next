@@ -37,6 +37,7 @@
     "@bbg-next/plugin-image-viewer": "workspace:*",
     "@bbg-next/plugin-legacy-routes": "workspace:*",
     "@bbg-next/plugin-math": "workspace:*",
+    "@bbg-next/plugin-rustaline": "workspace:*",
     "@bbg-next/plugin-twikoo": "workspace:*",
     "@bbg-next/plugin-waline": "workspace:*",
     "@bbg-next/runtime": "workspace:*",

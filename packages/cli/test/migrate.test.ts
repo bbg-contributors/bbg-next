@@ -398,3 +398,28 @@ describe('waline comments', () => {
     )
   })
 })
+
+describe('rustaline comments', () => {
+  it('keep their server, and are told each new address as Rustaline stores it, without the trailing slash', async () => {
+    const vfs = oldSite(
+      {
+        文章列表: [article('my article.md')],
+        全局评论设置: { 启用rustaline评论: true, rustaline设置: { serverurl: 'https://rustaline.example' } },
+      },
+      { 'data/articles/my article.md': 'A\n' },
+    )
+
+    const { site, messages } = await migrate(vfs)
+
+    expect(site.plugins).toContain('rustaline')
+    expect(JSON.parse(await vfs.readFile('data/plugins/rustaline.json'))).toEqual({
+      server: 'https://rustaline.example',
+    })
+    expect(messages).toContain(
+      [
+        'data/index.json: Rustaline files comments under the address of the article or page they are on, and each has a new address now. Change the url of the comments in the Rustaline database from each old address to its new one, or they no longer show:',
+        '  article=my article.md → /article/my-article',
+      ].join('\n'),
+    )
+  })
+})

@@ -1,0 +1,12 @@
+/* Rustaline draws its own card, which takes the theme's look where it shares its tokens and stays stock elsewhere. */
+.bbg-rustaline > .rs-root {
+  max-width: none;
+  margin: 1.875rem 0;
+  /* Drawn in the surface's colour, so only the stock card shows its outline. */
+  border-color: var(--bbg-surface, var(--rs-outline-variant));
+  border-radius: var(--bbg-radius, var(--rs-radius));
+  background: var(--bbg-surface, var(--rs-surface-container-low));
+  box-shadow: var(--bbg-shadow, var(--rs-elevation-1));
+  /* The page's, as waline and twikoo take it, rather than rustaline's monospace. */
+  font-family: inherit;
+}
