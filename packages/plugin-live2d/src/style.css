@@ -1,0 +1,48 @@
+/* The widget's own look, in the theme's colours where it shares its tokens: its sheet's selectors, injected after it, so each rule wins over the one it recolours. */
+
+#waifu-toggle {
+  background-color: var(--bbg-accent, #fa0);
+}
+
+#waifu-toggle svg {
+  fill: var(--bbg-on-accent, #fff);
+}
+
+/* The text colour goes with the background: the stock bubble takes the page's, which a dark scheme makes unreadable on it. */
+#waifu-tips {
+  border-color: var(--bbg-border, rgb(224 186 140 / 62%));
+  background-color: var(--bbg-surface, rgb(236 217 188 / 50%));
+  box-shadow: var(--bbg-shadow, 0 3px 15px 2px rgb(191 158 118 / 20%));
+  color: var(--bbg-fg, inherit);
+}
+
+#waifu-tips span {
+  color: var(--bbg-accent, #0099cc);
+}
+
+#waifu-tool svg {
+  fill: var(--bbg-muted, #7b8c9d);
+}
+
+#waifu-tool svg:hover {
+  fill: var(--bbg-accent, #0684bd);
+}
+
+/* Room past the page's end while the mascot shows, as the old bbg left, so what ends the page can be scrolled clear of it. */
+body:has(> #waifu.waifu-active)::after {
+  content: '';
+  display: block;
+  height: 300px;
+}
+
+/* The fades stay; the shake and the slides go. */
+@media (prefers-reduced-motion: reduce) {
+  #waifu-tips {
+    animation: none;
+  }
+
+  #waifu,
+  #waifu-toggle {
+    transition: none;
+  }
+}

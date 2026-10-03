@@ -5,7 +5,7 @@ import { dataDir } from '@bbg-next/core'
 
 export const legacyIndexPath = `${dataDir}/index.json`
 
-type Json = Readonly<Record<string, unknown>>
+export type Json = Readonly<Record<string, unknown>>
 
 export interface LegacyArticle {
   readonly file: string
@@ -67,7 +67,13 @@ export interface LegacySite {
     readonly link: string
     readonly solidBackground: string
     readonly wallpaper: string
-    readonly live2d: boolean
+    /** `null` while it was off. `widget` and `tips` are `''` for the stock ones, `models` for none set. */
+    readonly live2d: {
+      readonly widget: string
+      readonly tips: string
+      readonly models: string
+      readonly tools: readonly string[]
+    } | null
   }
   /** `waline` and `rustaline` are their servers, `''` when off. */
   readonly comments: {
@@ -87,7 +93,7 @@ export interface LegacySite {
 
 const languages: Readonly<Record<string, LegacySite['lang']>> = { 简体中文: 'zh-CN', English: 'en', 日本語: 'ja' }
 
-function isObject(value: unknown): value is Json {
+export function isObject(value: unknown): value is Json {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
@@ -103,13 +109,13 @@ function flag(from: Json, key: string, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback
 }
 
-function group(from: Json, key: string): Json {
+export function group(from: Json, key: string): Json {
   const value = from[key]
 
   return isObject(value) ? value : {}
 }
 
-function list(from: Json, key: string): readonly Json[] {
+export function list(from: Json, key: string): readonly Json[] {
   const value = from[key]
 
   return Array.isArray(value) ? value.filter(isObject) : []
@@ -174,6 +180,24 @@ function friend(entry: Json): LegacyFriend {
   }
 }
 
+const stockWidget = 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/'
+
+function live2d(settings: Json): LegacySite['theme']['live2d'] {
+  if (!flag(settings, '是否启用live2d-widget', false)) return null
+
+  const widgetSettings = group(settings, 'live2d-widget设置')
+  const address = text(widgetSettings, 'widget路径').trim()
+  const tips = text(widgetSettings, 'tips路径').trim()
+  const switches = group(widgetSettings, '功能设置')
+
+  return {
+    widget: address === stockWidget ? '' : address,
+    tips: tips === `${stockWidget}waifu-tips.json` ? '' : tips,
+    models: text(widgetSettings, 'api路径').trim(),
+    tools: Object.keys(switches).filter(tool => switches[tool] === true),
+  }
+}
+
 function theme(blog: Json): LegacySite['theme'] {
   const settings = group(blog, '全局主题设置')
   const background = group(settings, '若使用背景图像，设置为')
@@ -196,7 +220,7 @@ function theme(blog: Json): LegacySite['theme'] {
     solidBackground: solid,
     // The solid colour goes over any image.
     wallpaper: solid === '' ? image : '',
-    live2d: flag(settings, '是否启用live2d-widget', false),
+    live2d: live2d(settings),
   }
 }
 

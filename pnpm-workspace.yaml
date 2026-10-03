@@ -7,6 +7,8 @@ allowBuilds:
 overrides:
   typescript: npm:typescript-native-bridge@6.0.3-bridge.15.tsgo.7.0.2
 
-# 0.4.0 ships relative imports without `.js`, which Node and `nodenext` cannot resolve. Drop once upstream fixes it.
 patchedDependencies:
+  # 0.4.0 ships relative imports without `.js`, which Node and `nodenext` cannot resolve. Drop once upstream fixes it.
   '@material/material-color-utilities@0.4.0': patches/@material__material-color-utilities@0.4.0.patch
+  # 1.0.1 tells hovered elements apart by selector alone, so moving between two links of one kind keeps the first one's line. Drop once upstream fixes it.
+  live2d-widgets@1.0.1: patches/live2d-widgets@1.0.1.patch

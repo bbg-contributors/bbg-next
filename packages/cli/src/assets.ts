@@ -89,6 +89,7 @@ const pluginKind: AssetKind<PluginMeta> = {
     ['hitokoto', '@bbg-next/plugin-hitokoto'],
     ['image-viewer', '@bbg-next/plugin-image-viewer'],
     ['legacy-routes', '@bbg-next/plugin-legacy-routes'],
+    ['live2d', '@bbg-next/plugin-live2d'],
     ['math', '@bbg-next/plugin-math'],
     ['rustaline', '@bbg-next/plugin-rustaline'],
     ['twikoo', '@bbg-next/plugin-twikoo'],

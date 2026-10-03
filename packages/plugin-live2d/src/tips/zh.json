@@ -1,0 +1,248 @@
+{
+  "mouseover": [
+    {
+      "selector": "#live2d",
+      "text": ["干嘛呢你，快把手拿开～", "鼠……鼠标放错地方了！", "喵喵喵？", "你要干嘛呀？"]
+    },
+    {
+      "selector": "#waifu-tool-hitokoto",
+      "text": ["猜猜我要说些什么？", "想听我念一句一言吗？"]
+    },
+    {
+      "selector": "#waifu-tool-asteroids",
+      "text": ["要不要来玩飞机大战？", "这个按钮上写着「不要点击」……", "要和我玩个游戏吗？"]
+    },
+    {
+      "selector": "#waifu-tool-switch-model",
+      "text": ["要换个看板娘吗？", "想见见我的朋友们吗？"]
+    },
+    {
+      "selector": "#waifu-tool-switch-texture",
+      "text": ["想看我换身衣服吗？", "这次换哪一套好呢？"]
+    },
+    {
+      "selector": "#waifu-tool-photo",
+      "text": ["要给我拍照吗？一、二、三～茄子～", "保持微笑就好啦～"]
+    },
+    {
+      "selector": "#waifu-tool-info",
+      "text": ["想知道更多关于我的事吗？", "这里写着我的来历哦～"]
+    },
+    {
+      "selector": "#waifu-tool-quit",
+      "text": ["要说再见了吗？", "我们还会再见面的吧……"]
+    },
+    {
+      "selector": "a.bbg-anchor",
+      "text": ["这是这一节的链接，可以直接分享给别人哦～"]
+    },
+    {
+      "selector": "bbg-nav a",
+      "text": ["要去「{text}」看看吗？", "点这里就能去「{text}」啦～"]
+    },
+    {
+      "selector": ":is(bbg-article-list, bbg-archive-view, bbg-article-view) a[href*=\"tag/\"]",
+      "text": ["想看看「{text}」下面还有哪些文章吗？", "按标签找文章也很方便哦～"]
+    },
+    {
+      "selector": ":is(bbg-article-list, bbg-archive-view) a[href*=\"article/\"]",
+      "text": ["要读读「{text}」吗？", "「{text}」，听起来很有意思呢～"]
+    },
+    {
+      "selector": "bbg-article-view a[href*=\"article/\"]",
+      "text": ["接着去读「{text}」吧～"]
+    },
+    {
+      "selector": "bbg-article-list a[href*=\"list/\"]",
+      "text": ["去别的页看看吧～", "以前的文章都在后面哦～"]
+    },
+    {
+      "selector": ":is(bbg-article-view, bbg-page-view) pre",
+      "text": ["这段代码看起来好复杂……", "要我帮你看看代码吗？其实我也看不懂～"]
+    },
+    {
+      "selector": ":is(bbg-article-view, bbg-page-view) img",
+      "text": ["这张图片真好看～", "图里有什么呀？让我也看看～"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"hitokoto\"]",
+      "text": ["这句话说得真好～"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"announcement\"]",
+      "text": ["这里有一条公告，记得看看哦～"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"friends\"]",
+      "text": ["这些都是主人的朋友，去串串门吧～"]
+    },
+    {
+      "selector": ":is([data-bbg-plugin=\"twikoo\"], [data-bbg-plugin=\"waline\"], [data-bbg-plugin=\"rustaline\"])",
+      "text": ["有什么想说的，就在这里留言吧～"]
+    },
+    {
+      "selector": "bbg-footer",
+      "text": ["已经到底啦～", "看完了吗？要不要回到上面看看？"]
+    }
+  ],
+  "click": [
+    {
+      "selector": "#live2d",
+      "text": ["是……是不小心碰到了吧？", "再戳我就要生气了哦！", "别戳啦，我在认真工作呢～", "哎呀，好痒～"]
+    },
+    {
+      "selector": ":is([data-bbg-plugin=\"twikoo\"], [data-bbg-plugin=\"waline\"], [data-bbg-plugin=\"rustaline\"]) textarea",
+      "text": ["要写评论吗？友善发言哦～", "写好了记得检查一下再发送～"]
+    },
+    {
+      "selector": "a.bbg-anchor",
+      "text": ["这一节的地址已经在地址栏里啦，复制一下就能分享～"]
+    }
+  ],
+  "seasons": [
+    {
+      "date": "01/01",
+      "text": "<span>元旦</span>快乐！新的一年开始啦，今年是 {year} 年～"
+    },
+    {
+      "date": "02/14",
+      "text": "今天是<span>情人节</span>，有什么安排吗？"
+    },
+    {
+      "date": "03/08",
+      "text": "今天是<span>国际妇女节</span>！"
+    },
+    {
+      "date": "03/12",
+      "text": "今天是<span>植树节</span>，一起爱护环境吧！"
+    },
+    {
+      "date": "04/01",
+      "text": "悄悄告诉你：<span>今天是愚人节</span>，可别被骗了哦～"
+    },
+    {
+      "date": "05/01",
+      "text": "<span>劳动节</span>快乐！假期打算去哪里玩呢？"
+    },
+    {
+      "date": "06/01",
+      "text": "<span>儿童节</span>快乐！要是永远长不大该多好呀……"
+    },
+    {
+      "date": "09/10",
+      "text": "今天是<span>教师节</span>，记得跟老师问声好呀～"
+    },
+    {
+      "date": "10/01",
+      "text": "<span>国庆节</span>到啦，假期愉快～"
+    },
+    {
+      "date": "10/31",
+      "text": "<span>万圣节</span>快乐！不给糖就捣蛋～"
+    },
+    {
+      "date": "12/24-12/25",
+      "text": "<span>圣诞节</span>快乐！愿你收到想要的礼物～"
+    },
+    {
+      "date": "12/31",
+      "text": "今天是 {year} 年的最后一天，这一年辛苦啦！"
+    }
+  ],
+  "time": [
+    {
+      "hour": "0-5",
+      "text": "你是夜猫子吗？这么晚还不睡，明天起得来吗？"
+    },
+    {
+      "hour": "6-7",
+      "text": "早上好！新的一天开始啦～"
+    },
+    {
+      "hour": "8-11",
+      "text": "上午好！别坐太久，记得起来活动活动哦～"
+    },
+    {
+      "hour": "12-13",
+      "text": "中午啦，该吃午饭了！"
+    },
+    {
+      "hour": "14-17",
+      "text": "下午容易犯困，要不要休息一下？"
+    },
+    {
+      "hour": "18-19",
+      "text": "傍晚了，窗外的夕阳很美呢～"
+    },
+    {
+      "hour": "20-21",
+      "text": "晚上好，今天过得怎么样？"
+    },
+    {
+      "hour": "22-23",
+      "text": ["已经这么晚了，早点休息吧，晚安～", "夜深了，要爱护眼睛哦！"]
+    }
+  ],
+  "message": {
+    "default": [
+      "好久不见，日子过得好快呀……",
+      "嗨～有什么想看的吗？",
+      "要不要喝杯水，休息一下眼睛？",
+      "看到喜欢的文章，记得收藏哦～",
+      "我会一直在这里陪着你的～"
+    ],
+    "console": "你打开了控制台，是想看看我的小秘密吗？",
+    "copy": "复制了什么呀？转载要记得注明出处哦～",
+    "visibilitychange": "欢迎回来～",
+    "changeSuccess": "我的新衣服好看吗？",
+    "changeFail": "我还没有别的衣服呢……",
+    "photo": "照好了吗？是不是很可爱？",
+    "goodbye": "下次再见啦～",
+    "hitokoto": "这句一言来自<span>「$1」</span>，是 <span>$2</span> 在 hitokoto.cn 投稿的。",
+    "welcome": "欢迎阅读<span>「$1」</span>",
+    "referrer": "你好呀！来自 <span>$1</span> 的朋友"
+  },
+  "models": [
+    {
+      "name": "Potion-Maker/Pio",
+      "paths": ["https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/Potion-Maker/Pio/index.json"],
+      "message": "来自 Potion Maker 的 Pio 酱～"
+    },
+    {
+      "name": "Potion-Maker/Tia",
+      "paths": ["https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/Potion-Maker/Tia/index.json"],
+      "message": "来自 Potion Maker 的 Tia 酱～"
+    },
+    {
+      "name": "HyperdimensionNeptunia",
+      "paths": [
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/neptune_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepnep/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/neptune_santa/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepmaid/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir_santa/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noireswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_normal/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_swimwear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_normal/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_swimwear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgear_extra/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgearswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/histoire/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/histoirenohover/index.json"
+      ],
+      "message": "Nep! Nep! 超次元游戏：海王星系列"
+    },
+    {
+      "name": "Hiyori",
+      "paths": ["https://fastly.jsdelivr.net/gh/Live2D/CubismWebSamples/Samples/Resources/Hiyori/Hiyori.model3.json"],
+      "message": "是 Hiyori 哦～"
+    }
+  ]
+}

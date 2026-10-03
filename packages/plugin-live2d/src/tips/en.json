@@ -1,0 +1,237 @@
+{
+  "mouseover": [
+    {
+      "selector": "#live2d",
+      "text": ["Hey, hands off~", "Your mouse is in the wrong place!", "Meow?", "What are you doing?"]
+    },
+    {
+      "selector": "#waifu-tool-hitokoto",
+      "text": ["Guess what I'm about to say?", "Want to hear a line from hitokoto?"]
+    },
+    {
+      "selector": "#waifu-tool-asteroids",
+      "text": ["Fancy a round of Asteroids?", "This button says “do not press”…", "Want to play a game with me?"]
+    },
+    {
+      "selector": "#waifu-tool-switch-model",
+      "text": ["Want to meet someone else?", "Shall I call one of my friends?"]
+    },
+    {
+      "selector": "#waifu-tool-switch-texture",
+      "text": ["Want to see me in something new?", "Which outfit should I try this time?"]
+    },
+    {
+      "selector": "#waifu-tool-photo",
+      "text": ["Taking a picture of me? Say cheese!", "Just keep smiling~"]
+    },
+    {
+      "selector": "#waifu-tool-info",
+      "text": ["Want to know more about me?", "My story's written down here~"]
+    },
+    {
+      "selector": "#waifu-tool-quit",
+      "text": ["Time to say goodbye?", "We'll meet again, right…?"]
+    },
+    {
+      "selector": "a.bbg-anchor",
+      "text": ["That's a link to this section. You can share it as it is~"]
+    },
+    {
+      "selector": "bbg-nav a",
+      "text": ["Off to “{text}”?", "This way to “{text}”~"]
+    },
+    {
+      "selector": ":is(bbg-article-list, bbg-archive-view, bbg-article-view) a[href*=\"tag/\"]",
+      "text": ["Want to see more under “{text}”?", "Browsing by tag is handy too~"]
+    },
+    {
+      "selector": ":is(bbg-article-list, bbg-archive-view) a[href*=\"article/\"]",
+      "text": ["Going to read “{text}”?", "“{text}” sounds interesting~"]
+    },
+    {
+      "selector": "bbg-article-view a[href*=\"article/\"]",
+      "text": ["On to “{text}” next~"]
+    },
+    {
+      "selector": "bbg-article-list a[href*=\"list/\"]",
+      "text": ["There's more on the other pages~", "Older posts are further on~"]
+    },
+    {
+      "selector": ":is(bbg-article-view, bbg-page-view) pre",
+      "text": ["That code looks tricky…", "Want me to read that code for you? …I can't either~"]
+    },
+    {
+      "selector": ":is(bbg-article-view, bbg-page-view) img",
+      "text": ["What a lovely picture~", "What's in it? Let me see too~"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"hitokoto\"]",
+      "text": ["Well said~"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"announcement\"]",
+      "text": ["There's an announcement here, do give it a read~"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"friends\"]",
+      "text": ["These are all friends of the owner. Go pay them a visit~"]
+    },
+    {
+      "selector": ":is([data-bbg-plugin=\"twikoo\"], [data-bbg-plugin=\"waline\"], [data-bbg-plugin=\"rustaline\"])",
+      "text": ["Got something to say? Leave a comment here~"]
+    },
+    {
+      "selector": "bbg-footer",
+      "text": ["That's the bottom~", "All done? Want to head back up?"]
+    }
+  ],
+  "click": [
+    {
+      "selector": "#live2d",
+      "text": [
+        "That was an accident… right?",
+        "Poke me again and I'll get cross!",
+        "Stop poking, I'm working here~",
+        "Hey, that tickles~"
+      ]
+    },
+    {
+      "selector": ":is([data-bbg-plugin=\"twikoo\"], [data-bbg-plugin=\"waline\"], [data-bbg-plugin=\"rustaline\"]) textarea",
+      "text": ["Writing a comment? Be kind~", "Give it a read-through before you send it~"]
+    },
+    {
+      "selector": "a.bbg-anchor",
+      "text": ["This section's address is in the address bar now. Copy it to share~"]
+    }
+  ],
+  "seasons": [
+    {
+      "date": "01/01",
+      "text": "<span>Happy New Year!</span> Welcome to {year}~"
+    },
+    {
+      "date": "02/14",
+      "text": "It's <span>Valentine's Day</span>. Any plans?"
+    },
+    {
+      "date": "03/08",
+      "text": "Happy <span>International Women's Day</span>!"
+    },
+    {
+      "date": "04/01",
+      "text": "Psst… <span>it's April Fools' Day</span>, don't get fooled~"
+    },
+    {
+      "date": "04/22",
+      "text": "It's <span>Earth Day</span>. Let's look after our planet!"
+    },
+    {
+      "date": "10/31",
+      "text": "<span>Happy Halloween!</span> Trick or treat?"
+    },
+    {
+      "date": "12/24-12/25",
+      "text": "<span>Merry Christmas!</span> I hope you get the present you wanted~"
+    },
+    {
+      "date": "12/31",
+      "text": "It's the last day of {year}. Thanks for this year!"
+    }
+  ],
+  "time": [
+    {
+      "hour": "0-5",
+      "text": "Still up? Get some sleep, or you'll never get up tomorrow."
+    },
+    {
+      "hour": "6-7",
+      "text": "Good morning! A new day is starting~"
+    },
+    {
+      "hour": "8-11",
+      "text": "Morning! Don't sit still too long, get up and stretch now and then~"
+    },
+    {
+      "hour": "12-13",
+      "text": "It's lunchtime! Have you eaten yet?"
+    },
+    {
+      "hour": "14-17",
+      "text": "Afternoons make everyone sleepy. Time for a short break?"
+    },
+    {
+      "hour": "18-19",
+      "text": "Evening already! The sunset's lovely out there~"
+    },
+    {
+      "hour": "20-21",
+      "text": "Good evening. How was your day?"
+    },
+    {
+      "hour": "22-23",
+      "text": ["It's getting late. Get some rest, good night~", "Look after your eyes at this hour!"]
+    }
+  ],
+  "message": {
+    "default": [
+      "Long time no see! Time flies…",
+      "Hi there! Anything you'd like to read?",
+      "How about a sip of water and a break for your eyes?",
+      "Found a post you like? Bookmark it~",
+      "I'll be right here with you~"
+    ],
+    "console": "You opened the console. Curious about my secrets?",
+    "copy": "What did you copy? Remember to credit the source if you share it~",
+    "visibilitychange": "Welcome back~",
+    "changeSuccess": "Do you like my new outfit?",
+    "changeFail": "I don't have any other clothes yet…",
+    "photo": "Got it? Do I look cute?",
+    "goodbye": "See you next time~",
+    "hitokoto": "This line comes from <span>“$1”</span>, shared on hitokoto.cn by <span>$2</span>.",
+    "welcome": "Welcome to <span>“$1”</span>",
+    "referrer": "Hello, friend from <span>$1</span>!"
+  },
+  "models": [
+    {
+      "name": "Potion-Maker/Pio",
+      "paths": ["https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/Potion-Maker/Pio/index.json"],
+      "message": "Pio from Potion Maker~"
+    },
+    {
+      "name": "Potion-Maker/Tia",
+      "paths": ["https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/Potion-Maker/Tia/index.json"],
+      "message": "Tia from Potion Maker~"
+    },
+    {
+      "name": "HyperdimensionNeptunia",
+      "paths": [
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/neptune_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepnep/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/neptune_santa/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepmaid/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir_santa/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noireswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_normal/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_swimwear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_normal/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_swimwear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgear_extra/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgearswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/histoire/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/histoirenohover/index.json"
+      ],
+      "message": "Nep! Nep! From the Hyperdimension Neptunia series"
+    },
+    {
+      "name": "Hiyori",
+      "paths": ["https://fastly.jsdelivr.net/gh/Live2D/CubismWebSamples/Samples/Resources/Hiyori/Hiyori.model3.json"],
+      "message": "It's Hiyori~"
+    }
+  ]
+}

@@ -1,0 +1,249 @@
+{
+  "mouseover": [
+    {
+      "selector": "#live2d",
+      "text": ["ちょっと、手をどけてよ～", "マ、マウスの置き場所が違うよ！", "にゃにゃ？", "なにするの？"]
+    },
+    {
+      "selector": "#waifu-tool-hitokoto",
+      "text": ["何を言うか当ててみて？", "ひとことを聞いてみる？"]
+    },
+    {
+      "selector": "#waifu-tool-asteroids",
+      "text": ["シューティングゲームで遊ばない？", "このボタンには「押すな」って書いてあるよ……"]
+    },
+    {
+      "selector": "#waifu-tool-switch-model",
+      "text": ["ほかの子に代わってみる？", "わたしの友だちにも会ってみる？"]
+    },
+    {
+      "selector": "#waifu-tool-switch-texture",
+      "text": ["着替えたところ、見てみたい？", "今日はどの服にしようかな？"]
+    },
+    {
+      "selector": "#waifu-tool-photo",
+      "text": ["写真を撮ってくれるの？はい、チーズ！", "笑顔でいればいいよね～"]
+    },
+    {
+      "selector": "#waifu-tool-info",
+      "text": ["わたしのこと、もっと知りたい？", "ここにわたしの生い立ちが書いてあるよ～"]
+    },
+    {
+      "selector": "#waifu-tool-quit",
+      "text": ["もうお別れ？", "また会えるよね……？"]
+    },
+    {
+      "selector": "a.bbg-anchor",
+      "text": ["この見出しへのリンクだよ。そのまま共有できるよ～"]
+    },
+    {
+      "selector": "bbg-nav a",
+      "text": ["「{text}」を見に行く？", "ここから「{text}」に行けるよ～"]
+    },
+    {
+      "selector": ":is(bbg-article-list, bbg-archive-view, bbg-article-view) a[href*=\"tag/\"]",
+      "text": ["「{text}」のほかの記事も見てみる？", "タグで記事を探すのも便利だよ～"]
+    },
+    {
+      "selector": ":is(bbg-article-list, bbg-archive-view) a[href*=\"article/\"]",
+      "text": ["「{text}」を読んでみる？", "「{text}」、おもしろそうだね～"]
+    },
+    {
+      "selector": "bbg-article-view a[href*=\"article/\"]",
+      "text": ["続けて「{text}」も読もうよ～"]
+    },
+    {
+      "selector": "bbg-article-list a[href*=\"list/\"]",
+      "text": ["ほかのページも見てみよう～", "前の記事はこの先にあるよ～"]
+    },
+    {
+      "selector": ":is(bbg-article-view, bbg-page-view) pre",
+      "text": ["このコード、むずかしそう……", "コードを読んであげようか？……実はわたしも分からないけど～"]
+    },
+    {
+      "selector": ":is(bbg-article-view, bbg-page-view) img",
+      "text": ["すてきな画像だね～", "何が写ってるの？わたしにも見せて～"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"hitokoto\"]",
+      "text": ["いい言葉だね～"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"announcement\"]",
+      "text": ["お知らせがあるよ。読んでおいてね～"]
+    },
+    {
+      "selector": "[data-bbg-plugin=\"friends\"]",
+      "text": ["みんなご主人さまの友だちだよ。遊びに行ってみよう～"]
+    },
+    {
+      "selector": ":is([data-bbg-plugin=\"twikoo\"], [data-bbg-plugin=\"waline\"], [data-bbg-plugin=\"rustaline\"])",
+      "text": ["言いたいことがあったら、ここにコメントしてね～"]
+    },
+    {
+      "selector": "bbg-footer",
+      "text": ["いちばん下まで来たよ～", "読み終わった？上に戻ってみる？"]
+    }
+  ],
+  "click": [
+    {
+      "selector": "#live2d",
+      "text": [
+        "い、今のはわざとじゃないよね？",
+        "これ以上つついたら怒るよ！",
+        "つつかないで、お仕事中なんだから～",
+        "くすぐったいよ～"
+      ]
+    },
+    {
+      "selector": ":is([data-bbg-plugin=\"twikoo\"], [data-bbg-plugin=\"waline\"], [data-bbg-plugin=\"rustaline\"]) textarea",
+      "text": ["コメントを書くの？やさしい言葉でね～", "送る前に見直してね～"]
+    },
+    {
+      "selector": "a.bbg-anchor",
+      "text": ["この見出しのアドレスがアドレスバーに入ったよ。コピーすれば共有できるよ～"]
+    }
+  ],
+  "seasons": [
+    {
+      "date": "01/01",
+      "text": "<span>あけましておめでとう</span>！{year} 年もよろしくね～"
+    },
+    {
+      "date": "02/03",
+      "text": "今日は<span>節分</span>。鬼は外、福は内！"
+    },
+    {
+      "date": "02/14",
+      "text": "今日は<span>バレンタインデー</span>。チョコはもらえた？"
+    },
+    {
+      "date": "03/03",
+      "text": "今日は<span>ひな祭り</span>だよ～"
+    },
+    {
+      "date": "03/14",
+      "text": "今日は<span>ホワイトデー</span>。お返しは準備できた？"
+    },
+    {
+      "date": "04/01",
+      "text": "ないしょだよ。<span>今日はエイプリルフール</span>だから、だまされないでね～"
+    },
+    {
+      "date": "05/05",
+      "text": "今日は<span>こどもの日</span>。ずっと子どものままでいられたらいいのにね……"
+    },
+    {
+      "date": "07/07",
+      "text": "今日は<span>七夕</span>。短冊に何をお願いする？"
+    },
+    {
+      "date": "10/31",
+      "text": "<span>ハッピーハロウィン</span>！お菓子をくれないといたずらしちゃうよ～"
+    },
+    {
+      "date": "12/24-12/25",
+      "text": "<span>メリークリスマス</span>！ほしいプレゼントが届くといいね～"
+    },
+    {
+      "date": "12/31",
+      "text": "今日は<span>大晦日</span>。{year} 年もおつかれさま！"
+    }
+  ],
+  "time": [
+    {
+      "hour": "0-5",
+      "text": "夜ふかしさんだね。そろそろ寝ないと、明日起きられないよ？"
+    },
+    {
+      "hour": "6-7",
+      "text": "おはよう！今日もいい一日になるといいね～"
+    },
+    {
+      "hour": "8-11",
+      "text": "こんにちは！座りっぱなしはよくないから、たまには体を動かしてね～"
+    },
+    {
+      "hour": "12-13",
+      "text": "お昼の時間だね。ごはんはもう食べた？"
+    },
+    {
+      "hour": "14-17",
+      "text": "午後は眠くなりやすいよね。ちょっと休憩しよう？"
+    },
+    {
+      "hour": "18-19",
+      "text": "夕方だね。窓の外の夕焼けがきれいだよ～"
+    },
+    {
+      "hour": "20-21",
+      "text": "こんばんは。今日はどんな一日だった？"
+    },
+    {
+      "hour": "22-23",
+      "text": ["もうこんな時間。早めに休んでね、おやすみ～", "夜は目を大事にしてね！"]
+    }
+  ],
+  "message": {
+    "default": [
+      "久しぶり！時間がたつのは早いね……",
+      "やっほー！何か読みたいものはある？",
+      "お水を飲んで、目を休めよう？",
+      "気に入った記事があったら、ブックマークしてね～",
+      "わたしはずっとここにいるよ～"
+    ],
+    "console": "コンソールを開いたね。わたしの秘密が知りたいの？",
+    "copy": "何をコピーしたの？転載するときは出典を忘れずにね～",
+    "visibilitychange": "おかえり～",
+    "changeSuccess": "新しい服、似合ってる？",
+    "changeFail": "ほかの服はまだないんだ……",
+    "photo": "撮れた？かわいく写ってる？",
+    "goodbye": "またね～",
+    "hitokoto": "この言葉は<span>「$1」</span>より、<span>$2</span> さんが hitokoto.cn に投稿したものだよ。",
+    "welcome": "<span>「$1」</span>へようこそ",
+    "referrer": "こんにちは！<span>$1</span> から来てくれたんだね"
+  },
+  "models": [
+    {
+      "name": "Potion-Maker/Pio",
+      "paths": ["https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/Potion-Maker/Pio/index.json"],
+      "message": "Potion Maker の Pio だよ～"
+    },
+    {
+      "name": "Potion-Maker/Tia",
+      "paths": ["https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/Potion-Maker/Tia/index.json"],
+      "message": "Potion Maker の Tia だよ～"
+    },
+    {
+      "name": "HyperdimensionNeptunia",
+      "paths": [
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/neptune_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepnep/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/neptune_santa/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepmaid/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noir_santa/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/noireswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_normal/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/blanc_swimwear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_classic/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_normal/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/vert_swimwear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgear/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgear_extra/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/nepgearswim/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/histoire/index.json",
+        "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/model/HyperdimensionNeptunia/histoirenohover/index.json"
+      ],
+      "message": "ねぷねぷ！『超次元ゲイム ネプテューヌ』シリーズ"
+    },
+    {
+      "name": "Hiyori",
+      "paths": ["https://fastly.jsdelivr.net/gh/Live2D/CubismWebSamples/Samples/Resources/Hiyori/Hiyori.model3.json"],
+      "message": "Hiyori だよ～"
+    }
+  ]
+}

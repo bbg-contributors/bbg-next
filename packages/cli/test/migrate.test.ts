@@ -2,6 +2,7 @@ import type { AskPassword } from '../src/terminal/tty.ts'
 import type { Diagnostic, Manifest, SiteSettings, Vfs } from '@bbg-next/core'
 import { decryptDocument, writeSite } from '@bbg-next/core'
 import { createMemoryVfs } from '@bbg-next/core/testing'
+import zh from '@bbg-next/plugin-live2d/tips/zh.json' with { type: 'json' }
 import { describe, expect, it } from 'vitest'
 import { migrateSite } from '../src/migrate/index.ts'
 
@@ -247,18 +248,76 @@ describe('settings', () => {
       全局主题设置: {
         是否使用背景图像: true,
         '若使用背景图像，设置为': { '将网站根目录下的background.webp作为背景图像': true },
+        '是否启用live2d-widget': true,
+        'live2d-widget设置': {
+          widget路径: 'https://fastly.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/',
+          tips路径: '',
+          api路径: 'https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/',
+          功能设置: { hitokoto: true, asteroids: false, 'switch-model': true, info: false, quit: true },
+        },
       },
     })
 
     const { site } = await migrate(vfs)
 
-    expect(site.plugins).toEqual(['legacy-routes', 'announcement', 'image-viewer', 'waline'])
+    expect(site.plugins).toEqual(['legacy-routes', 'announcement', 'image-viewer', 'waline', 'live2d'])
     expect(JSON.parse(await vfs.readFile('data/plugins/announcement.json'))).toEqual({
       text: 'Hi **all**',
       routes: ['home', 'article', 'page'],
     })
     expect(JSON.parse(await vfs.readFile('data/plugins/waline.json'))).toEqual({ serverURL: 'https://waline.example' })
+    expect(JSON.parse(await vfs.readFile('data/plugins/live2d.json'))).toEqual({
+      cdnPath: 'https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/',
+      tools: ['hitokoto', 'switch-model', 'quit'],
+    })
     expect(JSON.parse(await vfs.readFile('data/themes/default-theme.json'))).toEqual({ wallpaper: 'background.webp' })
+  })
+})
+
+describe('live2d tips', () => {
+  function withTips(tips: string, files: Readonly<Record<string, string>> = {}): Vfs {
+    const widget = { tips路径: tips, 功能设置: { quit: true } }
+
+    return oldSite({ 全局主题设置: { '是否启用live2d-widget': true, 'live2d-widget设置': widget } }, files)
+  }
+
+  it('in the site are rewritten in place: their own words stay, selectors for the old theme go, bbg-next’s fill in the rest', async () => {
+    // As the old widget read them: no models, few messages, and the lines for a hand on the model under #live2d.
+    const old = {
+      mouseover: [
+        { selector: '#live2d', text: ['别摸我'] },
+        { selector: '.navbar a', text: '要去哪里？' },
+      ],
+      click: [{ selector: '#live2d', text: '哎呀' }],
+      seasons: [{ date: '01/01', text: '新年好' }],
+      time: [{ hour: '0-23', text: '你好' }],
+      message: { default: ['在吗？'], console: '别看啦' },
+    }
+    const vfs = withTips('/live2d/tips.json', { 'live2d/tips.json': JSON.stringify(old) })
+
+    const { messages } = await migrate(vfs)
+
+    const tips = JSON.parse(await vfs.readFile('live2d/tips.json')) as typeof zh
+    expect(tips.mouseover).toEqual([{ selector: '#live2d', text: ['别摸我'] }, ...zh.mouseover.slice(1)])
+    expect(tips.click).toEqual([{ selector: '#live2d', text: '哎呀' }, ...zh.click.slice(1)])
+    expect(tips.seasons).toEqual(old.seasons)
+    expect(tips.time).toEqual(old.time)
+    expect(tips.message).toMatchObject({ default: ['在吗？'], console: '别看啦', hitokoto: zh.message.hitokoto })
+    expect(tips.models).toEqual(zh.models)
+    expect(JSON.parse(await vfs.readFile('data/plugins/live2d.json'))).toEqual({
+      waifuPath: 'live2d/tips.json',
+      tools: ['quit'],
+    })
+    expect(messages).toContainEqual(expect.stringContaining('The live2d tips in live2d/tips.json were rewritten'))
+  })
+
+  it('on another site are left there, and bbg-next’s own shown', async () => {
+    const vfs = withTips('https://elsewhere.example/tips.json')
+
+    const { messages } = await migrate(vfs)
+
+    expect(JSON.parse(await vfs.readFile('data/plugins/live2d.json'))).toEqual({ tools: ['quit'] })
+    expect(messages).toContainEqual(expect.stringContaining('https://elsewhere.example/tips.json are not carried over'))
   })
 })
 

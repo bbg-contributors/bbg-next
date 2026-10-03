@@ -2,6 +2,7 @@ import type { AskPassword } from '../terminal/tty.ts'
 import type { Diagnostic, SiteSettings, Vfs } from '@bbg-next/core'
 import { migrateDocuments } from './documents.ts'
 import { legacyIndexPath, readLegacySite } from './legacy.ts'
+import { migrateLive2d } from './live2d.ts'
 import { migrateSettings } from './settings.ts'
 
 interface MigrateResult {
@@ -14,9 +15,10 @@ export async function migrateSite(vfs: Vfs, ask: AskPassword): Promise<MigrateRe
   const legacy = await readLegacySite(vfs)
   const diagnostics: Diagnostic[] = []
   const documents = await migrateDocuments(vfs, legacy, ask, diagnostics)
+  const live2d = await migrateLive2d(vfs, legacy, diagnostics)
   const { site, writes } = migrateSettings(legacy, documents, diagnostics)
 
-  for (const [path, content] of [...documents.writes, ...writes]) await vfs.writeFile(path, content)
+  for (const [path, content] of [...documents.writes, ...live2d, ...writes]) await vfs.writeFile(path, content)
   await vfs.remove(legacyIndexPath)
 
   return { site, diagnostics }

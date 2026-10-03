@@ -1,0 +1,32 @@
+{
+  "name": "@bbg-next/plugin-live2d",
+  "version": "0.0.0",
+  "description": "A live2d mascot in the corner of the page",
+  "license": "GPL-3.0-or-later",
+  "files": [
+    "dist",
+    "src/tips"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./tips/*": "./src/tips/*",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./tips/*": "./src/tips/*",
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bbg-next/plugin": "workspace:*",
+    "live2d-widgets": "^1.0.1"
+  }
+}

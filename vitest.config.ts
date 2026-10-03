@@ -7,5 +7,6 @@ export default defineConfig({
   test: {
     // Each theme's contract test needs a document of its own: a custom element can be defined only once per page.
     isolate: true,
+    fsModuleCache: true,
   },
 })

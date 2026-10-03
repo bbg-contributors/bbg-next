@@ -16,12 +16,12 @@ interface MigratedSettings {
   readonly writes: ReadonlyMap<string, string>
 }
 
-function json(value: unknown): string {
+export function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`
 }
 
 /** Scheme and host, and the path the site sits below; `null` for an address that is none. */
-function address(domain: string): { readonly url: string; readonly base: string } | null {
+export function address(domain: string): { readonly url: string; readonly base: string } | null {
   let parsed: URL
   try {
     parsed = new URL(domain)
@@ -106,7 +106,8 @@ export function migrateSettings(
       `The site used a third-party theme and now uses ${defaultTheme}. What that theme brought is left here to delete: ${theme.thirdParty.join(', ')}`,
     )
   }
-  if (theme.live2d) warn('The live2d widget is not carried over')
+  // Its config and tips come from migrateLive2d.
+  if (theme.live2d !== null) plugins.push('live2d')
 
   if (legacy.menuLinks.length > 0) {
     warn(
