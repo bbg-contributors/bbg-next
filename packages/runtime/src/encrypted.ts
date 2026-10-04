@@ -71,6 +71,8 @@ class BbgEncrypted extends HTMLElement {
       }
 
       this.innerHTML = host.render(markdown)
+      // Opened, it holds the document's own words rather than something drawn from its source.
+      this.removeAttribute('data-source')
     }
 
     form.addEventListener('submit', event => {

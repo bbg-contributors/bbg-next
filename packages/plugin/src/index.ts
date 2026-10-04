@@ -1,13 +1,13 @@
 // The runtime/plugin contract. A plugin extends what gets rendered, or reacts to what was.
 
 import type { ArticleEntry, PageEntry, RenderContext, Route, SiteSettings } from '@bbg-next/core'
-import type { ColorScheme } from '@bbg-next/view'
+import type { ColorScheme, ShellAction } from '@bbg-next/view'
 import type { MarkdownIt } from 'markdown-it'
 import { serializeRoute } from '@bbg-next/core'
 
 /** Re-exported so a plugin only ever depends on this package. */
 export type { ArticleEntry, PageEntry, RenderContext, Route, SiteSettings } from '@bbg-next/core'
-export { type ColorScheme, injectStyle, wordFor } from '@bbg-next/view'
+export { type ColorScheme, injectStyle, type ShellAction, wordFor } from '@bbg-next/view'
 
 /** Front matter is already stripped. */
 export type Renderer = (source: string, context: RenderContext) => string
@@ -19,7 +19,7 @@ export type Redirect = (url: URL) => Route | null
 export type RenderedHandler = (view: RenderedView) => void
 
 export interface RenderedView {
-  /** Already connected, and light DOM, so it is queryable. A different element than last time means the last one, and all you put in it, is gone. */
+  /** Already connected, and light DOM, so it is queryable. A different element than last time means the last one, and all you put in it, is gone. On an article or a page, the document itself is its `.bbg-content`. */
   readonly element: HTMLElement
   readonly route: Route
   /** Whether a comment thread belongs here: only on an article or a page, and only if its front matter leaves `comments` on. */
@@ -46,6 +46,8 @@ export interface PluginContext {
   /** Apart from `articles`, so nothing lists them by accident. */
   readonly hidden: readonly ArticleEntry[]
   readonly pages: readonly PageEntry[]
+  /** Where `route` is on this site: a link there is followed without a reload. */
+  readonly href: (route: Route) => string
   /** Format-agnostic work goes here. */
   readonly onRendered: (handler: RenderedHandler) => void
   /** Called with the scheme now, and again whenever it changes. A theme's colours reach you only through the shared tokens `--bbg-fg`, `--bbg-muted`, `--bbg-accent`, `--bbg-on-accent`, `--bbg-bg`, `--bbg-surface`, `--bbg-border`, `--bbg-radius` and `--bbg-shadow`, any of which may be unset, so read each with a fallback. */
@@ -54,6 +56,8 @@ export interface PluginContext {
   readonly registerRenderer: (extension: string, render: Renderer) => void
   /** Asked about the address the site opens at and every same-origin link followed within it; the first route any plugin gives wins. */
   readonly registerRedirect: (redirect: Redirect) => void
+  /** During setup only: a button the theme draws among its bar's controls. */
+  readonly registerAction: (action: ShellAction) => void
   /** The API of a plugin declared as a dependency in plugin.json; throws otherwise. */
   readonly require: <T extends PluginApi>(name: string) => T
 }
@@ -61,7 +65,7 @@ export interface PluginContext {
 /** Runs before the runtime reads the address, so it may still move it with `history.replaceState`. */
 export type PluginSetup = (context: PluginContext) => PluginApi | void
 
-/** A plugin's module namespace is this shape, the way a theme's is `ThemeModule`. It may also define a `bbg-<its name>` element, which authors place with a fence of that name: the fence's content arrives in `data-source`, and in `data-base` the directory the document resolves its own relative links against. Style what you draw unlayered, so a theme's resets cannot flatten it, and document any `--bbg-<your name>-*` property a theme may set to fit you in. Give your buttons the `bbg-button` class: the runtime draws a plain one from the shared tokens, a theme may draw it its own way or add effects such as a ripple, and any rule of yours outranks the runtime's. Mark what you put into a view with `data-bbg-plugin` set to your name, and leave what others marked alone when you act on a view's content. */
+/** A plugin's module namespace is this shape, the way a theme's is `ThemeModule`. It may also define a `bbg-<its name>` element, which authors place with a fence of that name: the fence's content arrives in `data-source`, which marks what the element shows as drawn from it rather than the document's own words, and in `data-base` the directory the document resolves its own relative links against. Style what you draw unlayered, so a theme's resets cannot flatten it, and document any `--bbg-<your name>-*` property a theme may set to fit you in. Give your buttons the `bbg-button` class: the runtime draws a plain one from the shared tokens, a theme may draw it its own way or add effects such as a ripple, and any rule of yours outranks the runtime's. Mark what you put into a view with `data-bbg-plugin` set to your name, and leave what others marked alone when you act on a view's content. */
 export interface PluginModule {
   readonly setup: PluginSetup
 }

@@ -44,7 +44,7 @@ const manifest: Manifest = {
 }
 
 describe('the site', () => {
-  const site = createSite(manifest, renderers)
+  const site = createSite(manifest, renderers, [])
 
   it('marks the list in the shell on any of its pages, not only the first', () => {
     expect(site.shell({ type: 'home', page: 2 }).home.current).toBe(true)

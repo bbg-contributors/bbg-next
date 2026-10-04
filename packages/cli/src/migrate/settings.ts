@@ -50,7 +50,8 @@ export function migrateSettings(
   }
 
   const writes = new Map<string, string>()
-  const plugins = ['legacy-routes']
+  // The old theme always had its search.
+  const plugins = ['legacy-routes', 'search']
 
   if (documents.friends !== null) {
     plugins.push('friends')

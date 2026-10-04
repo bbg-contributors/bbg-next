@@ -1,0 +1,131 @@
+/* The original's search box, a Bootstrap modal, from the shared tokens. Set out in full, as a theme's resets may leave a dialog and its controls bare. */
+
+.bbg-search {
+  box-sizing: border-box;
+  width: calc(100% - 1rem);
+  max-width: 500px;
+  max-height: calc(100% - 3.5rem);
+  margin: 1.75rem auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--bbg-radius, 0.3rem);
+  background: var(--bbg-surface, Canvas);
+  box-shadow: var(--bbg-shadow, 0 0.5rem 1rem rgb(0 0 0 / 15%));
+  color: var(--bbg-fg, CanvasText);
+}
+
+/* Only while open, or it would outrank the browser's own `display: none` for a closed dialog. */
+.bbg-search[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.bbg-search::backdrop {
+  background: rgb(0 0 0 / 50%);
+}
+
+.bbg-search svg {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+}
+
+.bbg-search-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--bbg-border, #dee2e6);
+}
+
+.bbg-search-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Bootstrap's: a faint cross, padded out for the finger without growing the header. */
+.bbg-search-close {
+  display: grid;
+  place-items: center;
+  margin: -0.5rem;
+  padding: 0.5rem;
+  border-radius: var(--bbg-radius, 4px);
+  background: none;
+  color: inherit;
+  font-size: 1.25rem;
+  opacity: 0.5;
+}
+
+.bbg-search-close:hover {
+  opacity: 0.75;
+}
+
+.bbg-search-input {
+  box-sizing: border-box;
+  margin: 1rem 1rem 0;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--bbg-border, #999);
+  border-radius: var(--bbg-radius, 4px);
+  background: var(--bbg-bg, transparent);
+  color: inherit;
+  font: inherit;
+  appearance: none;
+}
+
+.bbg-search-results {
+  padding: 0 1rem 1rem;
+  overflow: auto;
+}
+
+.bbg-search-heading {
+  margin: 1rem 0 0.5rem;
+  color: var(--bbg-muted, inherit);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.bbg-search-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bbg-search-list a,
+.bbg-search-here {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--bbg-radius, 4px);
+  background: none;
+  color: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+.bbg-search-list a:hover,
+.bbg-search-here:hover {
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+
+.bbg-search-name {
+  display: block;
+  color: var(--bbg-accent, LinkText);
+  font-weight: 500;
+}
+
+.bbg-search-excerpt,
+.bbg-search-tags {
+  display: block;
+  color: var(--bbg-muted, inherit);
+  font-size: 0.875rem;
+}
+
+.bbg-search-nothing {
+  margin: 1rem 0 0;
+  color: var(--bbg-muted, inherit);
+}

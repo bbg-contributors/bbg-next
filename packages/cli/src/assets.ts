@@ -92,6 +92,7 @@ const pluginKind: AssetKind<PluginMeta> = {
     ['live2d', '@bbg-next/plugin-live2d'],
     ['math', '@bbg-next/plugin-math'],
     ['rustaline', '@bbg-next/plugin-rustaline'],
+    ['search', '@bbg-next/plugin-search'],
     ['twikoo', '@bbg-next/plugin-twikoo'],
     ['waline', '@bbg-next/plugin-waline'],
   ]),

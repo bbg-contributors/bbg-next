@@ -1,7 +1,7 @@
 {
-  "name": "@bbg-next/default-theme",
+  "name": "@bbg-next/plugin-search",
   "version": "0.0.0",
-  "description": "The default bbg-next theme, built with custom elements",
+  "description": "Searches the articles, and the page on screen, from a button in the bar",
   "files": [
     "dist"
   ],
@@ -22,13 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@bbg-next/default-theme-shared": "workspace:*",
-    "@bbg-next/view": "workspace:*",
+    "@bbg-next/plugin": "workspace:*",
     "lucide": "^1.51.0"
-  },
-  "devDependencies": {
-    "@bbg-next/runtime": "workspace:*",
-    "@tailwindcss/vite": "^4.3.3",
-    "tailwindcss": "^4.3.3"
   }
 }

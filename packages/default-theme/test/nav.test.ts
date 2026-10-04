@@ -12,6 +12,7 @@ const shell: ShellModel = {
   home: { href: '#/', current: true },
   archive: { href: '#/archive', current: false },
   links: [about],
+  actions: [],
 }
 
 beforeAll(() => void customElements.define('bbg-nav', BbgNav))
@@ -37,14 +38,19 @@ describe('the bar', () => {
     expect(nav.querySelectorAll('.bbg-site-nav a')).toHaveLength(2)
   })
 
-  it('folds the menu away once a link in it is chosen', () => {
-    const nav = bar(shell)
-    nav.querySelector('button')?.click()
+  it('folds the menu away once a link or an action in it is chosen', () => {
+    let pressed = 0
+    const nav = bar({ ...shell, actions: [{ label: 'Search', icon: '<svg></svg>', run: () => void (pressed += 1) }] })
+    const [toggle, action] = nav.querySelectorAll('button')
+
+    toggle?.click()
     expect(nav.querySelector('[data-open]')).not.toBeNull()
-
-    const link = nav.querySelector('.bbg-site-nav a') as HTMLAnchorElement
-    link.click()
-
+    nav.querySelector<HTMLAnchorElement>('.bbg-site-nav a')?.click()
     expect(nav.querySelector('[data-open]')).toBeNull()
+
+    toggle?.click()
+    action?.click()
+    expect(nav.querySelector('[data-open]')).toBeNull()
+    expect(pressed).toBe(1)
   })
 })

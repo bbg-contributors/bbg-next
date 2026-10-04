@@ -13,6 +13,14 @@ export interface ViewLink {
   readonly current: boolean
 }
 
+/** Something a plugin offers wherever the reader is, a search say. */
+export interface ShellAction {
+  readonly label: string
+  /** An SVG's markup, drawn in `currentColor`, for you to size. */
+  readonly icon: string
+  readonly run: () => void
+}
+
 /** Sent again whenever it changes, as the `current` flags follow the reader. The shell stays on screen throughout, so update only what differs rather than drawing it anew. */
 export interface ShellModel {
   readonly title: string
@@ -24,6 +32,8 @@ export interface ShellModel {
   /** Current on a tag's page too, which is the archive narrowed to one tag. */
   readonly archive: ViewLink
   readonly links: readonly NavLink[]
+  /** In the plugins' load order, and the same for the whole visit: draw each as a button among your bar's controls, its icon and label on it, calling `run` when pressed. */
+  readonly actions: readonly ShellAction[]
 }
 
 export interface TagLink {
@@ -75,7 +85,7 @@ export interface ArticleModel {
   readonly tags: readonly TagLink[]
   readonly created: number
   readonly updated: number
-  /** Safe to insert: rendered with raw HTML disabled. A markdown heading opens with an empty `a.bbg-anchor` permalink, left for the theme to draw, a task list is a `ul.bbg-task-list` whose `li.bbg-task` items open with a disabled `input.bbg-task-checkbox`, and a fence named after a `bbg-` element comes out as that element. */
+  /** Safe to insert: rendered with raw HTML disabled. Put it into an element of class `bbg-content`, where plugins find the document itself. A markdown heading opens with an empty `a.bbg-anchor` permalink, left for the theme to draw, a task list is a `ul.bbg-task-list` whose `li.bbg-task` items open with a disabled `input.bbg-task-checkbox`, and a fence named after a `bbg-` element comes out as that element. */
   readonly html: string
   /** So a theme can mark it unlisted. */
   readonly unlisted: boolean
@@ -87,7 +97,7 @@ export interface ArticleModel {
 
 export interface PageModel {
   readonly title: string
-  /** Rendered as an article's is. */
+  /** Rendered and placed as an article's is. */
   readonly html: string
 }
 

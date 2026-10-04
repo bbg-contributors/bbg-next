@@ -8,9 +8,9 @@ import type {
   RenderedView,
   Renderer,
 } from '@bbg-next/plugin'
-import type { ColorSchemeControl, PluginInfo } from '@bbg-next/view'
+import type { ColorSchemeControl, PluginInfo, ShellAction } from '@bbg-next/view'
 import { createMarkdown, defaultExtensions, pluginConfigPath, pluginPath, serializeRoute } from '@bbg-next/core'
-import { loadOptions, resolve } from './site.ts'
+import { loadOptions, resolve, routerOf } from './site.ts'
 
 type Options = PluginContext['options']
 
@@ -32,6 +32,7 @@ interface PluginHost {
   readonly redirect: (url: URL) => Route | null
   /** The plugins whose setup went through, in load order: what the theme is told is running. */
   readonly started: readonly PluginInfo[]
+  readonly actions: readonly ShellAction[]
 }
 
 const markdownPlugin = 'markdown'
@@ -72,6 +73,7 @@ export async function setupPlugins(
 ): Promise<PluginHost> {
   const renderers = new Map<string, Renderer>()
   const redirects: Redirect[] = []
+  const actions: ShellAction[] = []
   const apis = new Map<string, PluginApi>()
   const ready = new Set([markdownPlugin])
 
@@ -79,7 +81,7 @@ export async function setupPlugins(
   const schemes = handlers<ColorScheme>('a colour scheme change')
   colorScheme.subscribe(schemes.fire)
 
-  const { router } = manifest.site
+  const router = routerOf(manifest)
   const md = createMarkdown(
     router.mode === 'hash' ? (route, fragment) => serializeRoute(route, router, fragment) : undefined,
   )
@@ -109,6 +111,7 @@ export async function setupPlugins(
       articles: manifest.articles,
       hidden: manifest.hidden,
       pages: manifest.pages,
+      href: route => serializeRoute(route, router),
       onRendered: rendered.add,
       // Subscribed only once it has survived the first call, so a plugin that fails to start stays out.
       onColorScheme: handler => {
@@ -120,6 +123,7 @@ export async function setupPlugins(
         if (!renderers.has(extension)) renderers.set(extension, render)
       },
       registerRedirect: redirect => void redirects.push(redirect),
+      registerAction: action => void actions.push(action),
       require: <T extends PluginApi>(name: string): T => {
         if (!Object.hasOwn(entry.dependencies, name)) {
           throw new Error(`Plugin ${entry.name} requires ${JSON.stringify(name)} without declaring it in plugin.json`)
@@ -154,6 +158,7 @@ export async function setupPlugins(
 
   return {
     started,
+    actions,
     rendered: rendered.fire,
 
     redirect: url => {

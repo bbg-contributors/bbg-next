@@ -4,7 +4,6 @@
 
 ## On the site
 
-- Site search, which looked through article titles and excerpts and the text of the article on screen.
 - The buttons under an article that copy its text or download its Markdown.
 - The licence notice under each article and page, maybe we can declare it on the front matter.
 - Hint boxes (`<info-hint>`, `<warning-hint>`, `<success-hint>`, `<danger-hint>`) and references (`<ref>`, which bbg gathered into a list at the end of the article). Both show as written.

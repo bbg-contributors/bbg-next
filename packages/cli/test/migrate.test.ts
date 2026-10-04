@@ -260,7 +260,7 @@ describe('settings', () => {
 
     const { site } = await migrate(vfs)
 
-    expect(site.plugins).toEqual(['legacy-routes', 'announcement', 'image-viewer', 'waline', 'live2d'])
+    expect(site.plugins).toEqual(['legacy-routes', 'search', 'announcement', 'image-viewer', 'waline', 'live2d'])
     expect(JSON.parse(await vfs.readFile('data/plugins/announcement.json'))).toEqual({
       text: 'Hi **all**',
       routes: ['home', 'article', 'page'],
@@ -396,7 +396,7 @@ describe('what was written for the old theme', () => {
       { 'data/articles/code.md': '```js\nconst a = 1\n```\n', 'data/articles/maths.md': 'So $a^2+b^2=c^2$.\n' },
     )
 
-    expect((await migrate(vfs)).site.plugins).toEqual(['legacy-routes', 'image-viewer', 'highlight', 'math'])
+    expect((await migrate(vfs)).site.plugins).toEqual(['legacy-routes', 'search', 'image-viewer', 'highlight', 'math'])
   })
 
   it('takes no price for a formula, nor one on a page, where the old theme never typeset them', async () => {

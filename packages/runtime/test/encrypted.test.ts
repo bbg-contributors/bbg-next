@@ -28,6 +28,15 @@ describe('an encrypted block', () => {
 
   afterEach(() => void vi.restoreAllMocks())
 
+  // Plugins tell the document's own words from what a fence's element draws by its `data-source`.
+  it('opens into the document’s own words, letting go of its source', async () => {
+    const block = place(payload)
+    submit(block, 'hunter2')
+
+    await vi.waitFor(() => expect(block.textContent).toBe('Hello *there*.'))
+    expect(block.hasAttribute('data-source')).toBe(false)
+  })
+
   it('says so when the password is wrong, and lets the reader try again', async () => {
     const block = place(payload)
     submit(block, 'hunter3')

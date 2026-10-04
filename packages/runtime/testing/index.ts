@@ -422,6 +422,27 @@ export function describeThemeContract(theme: ThemeModule): void {
       expect(seen[2]?.[1]).not.toBe(seen[1]?.[1])
     })
 
+    it('puts a page’s content where plugins find an article’s', async () => {
+      await boot('#/page/about')
+
+      expect(outlet().querySelector('bbg-page-view .bbg-content')?.textContent).toContain('About body.')
+    })
+
+    it('draws an action a plugin offers in the bar, and runs it when pressed', async () => {
+      let pressed = 0
+
+      await boot(
+        '',
+        context => void context.registerAction({ label: 'Probe', icon: '<svg></svg>', run: () => void (pressed += 1) }),
+      )
+      const probe = [...outlet().querySelectorAll('bbg-nav button')].find(
+        button => button.textContent?.trim() === 'Probe',
+      )
+      click(probe as Element)
+
+      expect(pressed).toBe(1)
+    })
+
     it('leaves what a plugin put into the view where it is while the view stays', async () => {
       const mark = document.createElement('aside')
       let placed = false

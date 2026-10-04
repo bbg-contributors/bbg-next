@@ -1,7 +1,7 @@
 import type { RendererRegistry } from './plugins.ts'
 import type { Wording } from './wording.ts'
 import type { ArticleEntry, Manifest, PageEntry, Route, RouterConfig } from '@bbg-next/core'
-import type { ShellModel } from '@bbg-next/view'
+import type { ShellAction, ShellModel } from '@bbg-next/view'
 import { manifestPath, parseOptions, serializeRoute } from '@bbg-next/core'
 import { wordingFor } from './wording.ts'
 
@@ -47,13 +47,14 @@ export async function loadOptions(path: string): Promise<Readonly<Record<string,
   }
 }
 
+/** From the document, not the manifest, so the two cannot disagree about where the site is served. */
+export function routerOf(manifest: Manifest): RouterConfig {
+  return { mode: manifest.site.router.mode, base: new URL('./', document.baseURI).pathname }
+}
+
 /** Split from `loadManifest` so plugins set up in between: the footer is rendered here. */
-export function createSite(manifest: Manifest, renderers: RendererRegistry): Site {
-  // From the document, not the manifest, so the two cannot disagree about where the site is served.
-  const router: RouterConfig = {
-    mode: manifest.site.router.mode,
-    base: new URL('./', document.baseURI).pathname,
-  }
+export function createSite(manifest: Manifest, renderers: RendererRegistry, actions: readonly ShellAction[]): Site {
+  const router = routerOf(manifest)
 
   const bySlug = new Map<string, { entry: ArticleEntry; unlisted: boolean }>()
   for (const entry of manifest.articles) bySlug.set(entry.slug, { entry, unlisted: false })
@@ -91,6 +92,7 @@ export function createSite(manifest: Manifest, renderers: RendererRegistry): Sit
         href,
         current: route?.type === 'page' && route.slug === slug,
       })),
+      actions,
     }),
   }
 }

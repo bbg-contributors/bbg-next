@@ -44,7 +44,7 @@ export async function start(loadTheme: ThemeLoader = importTheme, loadPlugin?: P
 
   // Before createSite, which renders the footer.
   const plugins = await setupPlugins(manifest, colorScheme, loadPlugin)
-  const site = createSite(manifest, plugins.renderers)
+  const site = createSite(manifest, plugins.renderers, plugins.actions)
 
   // A block decrypted later renders the way the document around it did.
   let context: RenderContext = {}

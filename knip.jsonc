@@ -14,6 +14,7 @@
         "@bbg-next/plugin-legacy-routes",
         "@bbg-next/plugin-math",
         "@bbg-next/plugin-rustaline",
+        "@bbg-next/plugin-search",
         "@bbg-next/plugin-twikoo",
         "@bbg-next/plugin-waline",
         "@bbg-next/runtime",

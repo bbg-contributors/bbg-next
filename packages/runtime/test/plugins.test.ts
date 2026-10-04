@@ -224,6 +224,24 @@ describe('setupPlugins', () => {
     })
   })
 
+  describe('links', () => {
+    beforeEach(() => void document.head.append(Object.assign(document.createElement('base'), { href: '/blog/' })))
+
+    afterEach(() => void document.querySelector('base')?.remove())
+
+    it('lead where the document is served, as the runtime’s own do, whatever site.json says', async () => {
+      const manifest = manifestWith([entry('linker')])
+      let href = ''
+
+      await setup(
+        { ...manifest, site: { ...manifest.site, router: { mode: 'path', base: '/' } } },
+        loaderFor({ linker: { setup: context => void (href = context.href({ type: 'article', slug: 'a' })) } }),
+      )
+
+      expect(href).toBe('/blog/article/a/')
+    })
+  })
+
   describe('config', () => {
     /** Records every request, so a test can assert on what was asked for. */
     function serve(configs: Readonly<Record<string, unknown>>): string[] {
